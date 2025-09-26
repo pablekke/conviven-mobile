@@ -1,3 +1,4 @@
+import "react-native-gesture-handler";
 import "../global.css";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -14,7 +15,7 @@ import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AppProviders } from "@/src/providers/AppProviders";
-import { convivenFonts } from "@/src/theme/fonts";
+import { getConvivenFonts } from "@/src/theme/fonts";
 import { LoadingScreen } from "@/src/shared/ui/LoadingScreen";
 
 SplashScreen.preventAutoHideAsync().catch(() => {
@@ -28,7 +29,7 @@ export const unstable_settings = {
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [providersReady, setProvidersReady] = useState(false);
-  const [fontsLoaded] = useFonts(convivenFonts);
+  const [fontsLoaded] = useFonts(getConvivenFonts());
 
   useEffect(() => {
     SystemUI.setBackgroundColorAsync(

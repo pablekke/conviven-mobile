@@ -8,10 +8,18 @@ import {
   type PropsWithChildren,
 } from "react";
 
-import { setCredentials, clearCredentials, type AuthUser } from "@/src/features/auth/authSlice";
+import {
+  setCredentials,
+  clearCredentials,
+  type AuthUser,
+} from "@/src/features/auth/authSlice";
 import { useAuth } from "@/src/features/auth/hooks/useAuth";
 import { useAppDispatch } from "@/src/core/store/hooks";
-import { deleteSecureItem, getSecureItem, saveSecureItem } from "@/src/core/utils/secureStorage";
+import {
+  deleteSecureItem,
+  getSecureItem,
+  saveSecureItem,
+} from "@/src/core/utils/secureStorage";
 
 const AUTH_STORAGE_KEY = "conviven-auth";
 
@@ -37,7 +45,9 @@ type StoredAuthSnapshot = {
 export const AuthProvider = ({ children, onReady }: AuthProviderProps) => {
   const dispatch = useAppDispatch();
   const { accessToken, user } = useAuth();
-  const [status, setStatus] = useState<"checking" | "authenticated" | "unauthenticated">("checking");
+  const [status, setStatus] = useState<
+    "checking" | "authenticated" | "unauthenticated"
+  >("checking");
 
   useEffect(() => {
     let isMounted = true;
@@ -119,7 +129,13 @@ export const useAuthContext = () => {
   const context = useContext(AuthContext);
 
   if (!context) {
-    throw new Error("useAuthContext must be used within an AuthProvider");
+    return {
+      status: "unauthenticated",
+      user: null,
+      accessToken: null,
+      login: async () => undefined,
+      logout: async () => undefined,
+    } as AuthContextValue;
   }
 
   return context;
