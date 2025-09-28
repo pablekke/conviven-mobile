@@ -1,81 +1,88 @@
-import "react-native-gesture-handler";
-import "../global.css";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from "@react-navigation/native";
-import { Stack } from "expo-router";
+import { Stack, useSegments, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useFonts } from "expo-font";
-import * as SplashScreen from "expo-splash-screen";
-import * as SystemUI from "expo-system-ui";
-import "react-native-reanimated";
+import { useEffect, useCallback } from "react";
+import { Text, View, ActivityIndicator } from "react-native";
 
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { AppProviders } from "@/src/providers/AppProviders";
-import { getConvivenFonts } from "@/src/theme/fonts";
-import { LoadingScreen } from "@/src/shared/ui/LoadingScreen";
+import { AuthProvider, useAuth } from "../context/AuthContext";
 
-SplashScreen.preventAutoHideAsync().catch(() => {
-  /* noop */
-});
+import "../global.css";
 
-export const unstable_settings = {
-  anchor: "(tabs)",
-};
+function AuthRoot() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [providersReady, setProvidersReady] = useState(false);
-  const [fontsLoaded] = useFonts(getConvivenFonts());
+  const handleNavigation = useCallback(() => {
+    const inAuthGroup = segments[0] === "auth";
 
-  useEffect(() => {
-    SystemUI.setBackgroundColorAsync(
-      colorScheme === "dark" ? "#000000" : "#FFFFFF"
-    ).catch(() => undefined);
-  }, [colorScheme]);
-
-  const handleProvidersReady = useCallback(() => {
-    setProvidersReady(true);
-  }, []);
-
-  const hideSplash = useCallback(async () => {
-    if (providersReady && fontsLoaded) {
-      try {
-        await SplashScreen.hideAsync();
-      } catch (error) {
-        console.warn("Failed to hide splash screen", error);
-      }
+    if (isLoading) {
+      return;
     }
-  }, [fontsLoaded, providersReady]);
+
+    if (!isAuthenticated && !inAuthGroup) {
+      router.replace("/auth/login");
+    } else if (isAuthenticated && inAuthGroup) {
+      router.replace("/");
+    }
+  }, [isAuthenticated, segments, isLoading]);
 
   useEffect(() => {
-    hideSplash();
-  }, [hideSplash]);
+    handleNavigation();
+  }, [handleNavigation]);
 
-  const theme = useMemo(
-    () => (colorScheme === "dark" ? DarkTheme : DefaultTheme),
-    [colorScheme]
-  );
+  if (isLoading) {
+    return (
+      <View className="flex-1 items-center justify-center bg-white">
+        <ActivityIndicator size="large" color="#4338ca" />
+        <Text className="text-gray-600 mt-4">Loading...</Text>
+      </View>
+    );
+  }
 
   return (
-    <AppProviders onReady={handleProvidersReady}>
-      {fontsLoaded && providersReady ? (
-        <ThemeProvider value={theme}>
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen
-              name="modal"
-              options={{ presentation: "modal", title: "Modal" }}
-            />
-          </Stack>
-          <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
-        </ThemeProvider>
-      ) : (
-        <LoadingScreen />
-      )}
-    </AppProviders>
+    <>
+      <StatusBar style="auto" />
+      <Stack
+        screenOptions={{
+          headerStyle: {
+            backgroundColor: "#4338ca",
+          },
+          headerTintColor: "#fff",
+          headerTitleStyle: {
+            fontWeight: "bold",
+          },
+        }}
+      >
+        <Stack.Screen
+          name="(app)"
+          options={{
+            headerShown: false,
+          }}
+        />
+
+        <Stack.Screen
+          name="auth/login"
+          options={{
+            title: "Login",
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="auth/register"
+          options={{
+            title: "Create Account",
+            headerShown: false,
+          }}
+        />
+      </Stack>
+    </>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <AuthRoot />
+    </AuthProvider>
   );
 }
