@@ -20,6 +20,7 @@ import {
   getSecureItem,
   saveSecureItem,
 } from "@/src/core/utils/secureStorage";
+import { apiClient } from "@/src/core/api/apiClient";
 
 const AUTH_STORAGE_KEY = "conviven-auth";
 
@@ -48,6 +49,16 @@ export const AuthProvider = ({ children, onReady }: AuthProviderProps) => {
   const [status, setStatus] = useState<
     "checking" | "authenticated" | "unauthenticated"
   >("checking");
+
+  useEffect(() => {
+    apiClient.setAccessToken(accessToken);
+  }, [accessToken]);
+
+  useEffect(() => {
+    return () => {
+      apiClient.setAccessToken(null);
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -106,6 +117,14 @@ export const AuthProvider = ({ children, onReady }: AuthProviderProps) => {
     dispatch(clearCredentials());
     setStatus("unauthenticated");
   }, [dispatch]);
+
+  useEffect(() => {
+    apiClient.setUnauthorizedHandler(logout);
+
+    return () => {
+      apiClient.setUnauthorizedHandler(null);
+    };
+  }, [logout]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
