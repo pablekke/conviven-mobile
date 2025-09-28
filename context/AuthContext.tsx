@@ -43,7 +43,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const user = await AuthService.getCurrentUser();
           setState({
             user,
-            isAuthenticated: true,
+            isAuthenticated: !!user,
             isLoading: false,
             error: null,
           });
@@ -69,9 +69,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = async (credentials: LoginCredentials) => {
-    try {
-      setState({ ...state, isLoading: true, error: null });
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
 
+    try {
       const user = await AuthService.login(credentials);
 
       setState({
@@ -81,19 +81,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         error: null,
       });
     } catch (error) {
-      setState({
-        ...state,
+      const message = error instanceof Error ? error.message : "Login failed";
+
+      setState(prev => ({
+        ...prev,
         isLoading: false,
-        error: error instanceof Error ? error.message : "Login failed",
-      });
+        error: message,
+      }));
+
       throw error;
     }
   };
 
   const register = async (credentials: RegisterCredentials) => {
-    try {
-      setState({ ...state, isLoading: true, error: null });
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
 
+    try {
       const user = await AuthService.register(credentials);
 
       setState({
@@ -103,19 +106,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         error: null,
       });
     } catch (error) {
-      setState({
-        ...state,
+      const message = error instanceof Error ? error.message : "Registration failed";
+
+      setState(prev => ({
+        ...prev,
         isLoading: false,
-        error: error instanceof Error ? error.message : "Registration failed",
-      });
+        error: message,
+      }));
+
       throw error;
     }
   };
 
   const logout = async () => {
-    try {
-      setState({ ...state, isLoading: true, error: null });
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
 
+    try {
       await AuthService.logout();
 
       setState({
@@ -125,17 +131,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         error: null,
       });
     } catch (error) {
-      setState({
-        ...state,
+      const message = error instanceof Error ? error.message : "Logout failed";
+
+      setState(prev => ({
+        ...prev,
         isLoading: false,
-        error: error instanceof Error ? error.message : "Logout failed",
-      });
+        error: message,
+      }));
+
       Alert.alert("Logout Error", "Failed to log out. Please try again.");
     }
   };
 
   const clearError = () => {
-    setState({ ...state, error: null });
+    setState(prev => ({ ...prev, error: null }));
   };
 
   const contextValue: AuthContextType = {

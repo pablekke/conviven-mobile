@@ -1,137 +1,121 @@
 # Authentication System Documentation
 
-This document outlines the authentication system implemented in this Expo application.
+Este documento describe el sistema de autenticación implementado en esta aplicación Expo.
 
-## Overview
+## Panorama general
 
-The authentication system provides a complete flow for user authentication, including:
+El sistema de autenticación cubre el flujo completo de acceso de usuarios, incluyendo:
 
-- Login and registration forms
-- Protected routes with redirection
-- User session management
-- Error handling for authentication processes
-- Tab-based navigation for authenticated users
+- Formularios de login y registro
+- Rutas protegidas con redirección automática
+- Gestión de sesión con persistencia de token JWT
+- Manejo de errores para las operaciones de autenticación
+- Navegación tabular para usuarios autenticados
 
-## Architecture
+## Arquitectura
 
-The authentication system follows a clean architecture approach with the following components:
+La implementación sigue una arquitectura limpia con los siguientes componentes:
 
-### 1. Auth Service
+### 1. Servicio de autenticación
 
-Located in `services/authService.ts`, this service is responsible for handling all authentication operations:
+Ubicado en `services/authService.ts`, concentra todas las operaciones contra el backend real (`https://conviven-backend.onrender.com/api`):
 
-- Login
-- Registration
-- Logout
-- Session checking
-- User information retrieval
+- Login (`POST /auth/login`)
+- Registro (`POST /users/register`)
+- Logout (limpieza local de credenciales)
+- Verificación de sesión
+- Obtención del perfil (`GET /users/me`)
 
-In the current implementation, the service uses AsyncStorage to persist authentication state locally. In a production application, this would typically make API calls to a backend service.
+El servicio persiste el token JWT en AsyncStorage, recupera el perfil actual desde el backend y lo cachea para acceso offline básico. Los errores HTTP se traducen a mensajes legibles para la interfaz.
 
-### 2. Auth Context
+### 2. Contexto de autenticación
 
-Located in `context/AuthContext.tsx`, this provides a global state management solution for authentication:
+Definido en `context/AuthContext.tsx`, expone mediante React Context:
 
-- User information
-- Authentication status
-- Loading states
-- Error handling
-- Authentication operations (login, register, logout)
+- Información del usuario autenticado
+- Estado de autenticación
+- Estados de carga y error
+- Operaciones de login, registro y logout
 
-Components can access the authentication state and operations using the `useAuth` hook provided by the context.
+Los componentes acceden a este estado a través del hook `useAuth`.
 
-### 3. Auth Flow with Expo Router
+### 3. Flujo con Expo Router
 
-Located in `app/_layout.tsx`, the application implements a protected route system using Expo Router:
+`app/_layout.tsx` implementa un layout protegido que:
 
-- Redirects unauthenticated users to the login screen
-- Redirects authenticated users away from auth screens
-- Handles loading states during authentication checks
-- Provides a clean separation between authenticated and unauthenticated UI
+- Redirige usuarios no autenticados a las pantallas de login/registro
+- Evita que usuarios autenticados vuelvan a las pantallas públicas
+- Gestiona estados de carga al restaurar la sesión
+- Separa claramente la navegación pública de la privada
 
-### 4. UI Components
+### 4. Componentes de UI
 
-- `LoginForm.tsx` - Form for user login
-- `RegisterForm.tsx` - Form for user registration
-- `LoadingScreen.tsx` - Display during authentication operations
-- `Button.tsx` - Reusable button component with support for various states
+- `LoginForm.tsx`: formulario de ingreso
+- `RegisterForm.tsx`: formulario de registro con todos los campos requeridos por el backend
+- `LoadingScreen.tsx`: indicador durante operaciones de autenticación
+- `Button.tsx`: botón reutilizable con distintos estados
 
-## Usage
+## Uso
 
-### Accessing Auth State
-
-To access the authentication state in any component:
+### Acceder al estado de autenticación
 
 ```tsx
 import { useAuth } from "../context/AuthContext";
 
-function MyComponent() {
+function MiComponente() {
   const { user, isAuthenticated, isLoading, error } = useAuth();
 
-  // Use auth state in your component
+  // Consumir estado de autenticación
 }
 ```
 
-### Authentication Operations
-
-To perform authentication operations:
+### Operaciones de autenticación
 
 ```tsx
 import { useAuth } from "../context/AuthContext";
 
-function MyComponent() {
+function MiComponente() {
   const { login, register, logout } = useAuth();
 
-  // Login example
   const handleLogin = async () => {
     try {
-      await login({ email: "user@example.com", password: "password" });
-      // Success - the router will automatically redirect
+      await login({ email: "firulete@ejemplo.com", password: "contraseña123" });
     } catch (error) {
-      // Handle errors
+      // Manejar errores devueltos por el backend
     }
   };
 
-  // Logout example
-  const handleLogout = async () => {
-    await logout();
-    // User will be redirected to login
+  const handleRegister = async () => {
+    await register({
+      email: "firulete@ejemplo.com",
+      password: "contraseña123",
+      firstName: "kamicaze",
+      lastName: "fernanDeZ",
+      birthDate: "2001-06-28",
+      gender: "MALE",
+      departmentId: "a2f0e079-c922-44f2-8712-e2710fad74e3",
+      neighborhoodId: "23a75a72-2deb-4fd0-b8bb-98c48b03fa14",
+    });
   };
 }
 ```
 
-### Protected Routes
+### Rutas protegidas
 
-The application uses a group layout system to protect routes:
+Las rutas se organizan mediante grupos en Expo Router:
 
-- `(app)/*` - Protected routes, requires authentication
-- `auth/*` - Public routes for authentication
+- `(app)/*`: rutas privadas, requieren autenticación
+- `auth/*`: pantallas públicas de login/registro
 
-Navigation between these routes is handled automatically by the auth system based on the user's authentication state.
+La navegación entre ambos grupos se resuelve automáticamente según el estado de sesión.
 
-## Implementation Details
+## Manejo de errores
 
-### Mock Data
+El servicio de autenticación convierte respuestas HTTP no exitosas en instancias de `Error` con mensajes proporcionados por el backend cuando están disponibles. Estos mensajes se propagan al contexto y pueden mostrarse en pantalla para brindar feedback claro.
 
-For demonstration purposes, the auth service includes mock data:
+## Próximos pasos sugeridos
 
-- Test user credentials: `test@example.com` / `password`
-- User data is stored in AsyncStorage
-
-### Error Handling
-
-The system includes utilities for error handling located in `utils/errorHandling.ts`:
-
-- Error message extraction
-- Error categorization
-- Consistent error formatting
-
-## Next Steps
-
-To extend this authentication system for production:
-
-1. Connect to a real backend API
-2. Implement token refresh mechanisms
-3. Add additional security features (biometrics, 2FA)
-4. Improve error handling with more specific error types
-5. Add account recovery flows
+1. Implementar refresh de tokens si el backend lo expone
+2. Agregar recuperación de contraseña
+3. Validar y formatear datos adicionales del perfil (p. ej. nombres de departamento/barrios)
+4. Considerar almacenamiento seguro del token (SecureStore) para builds de producción
