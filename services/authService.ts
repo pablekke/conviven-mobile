@@ -4,7 +4,19 @@ import { User, LoginCredentials, RegisterCredentials } from "../types/user";
 
 const API_BASE_URL = "https://conviven-backend.onrender.com/api";
 const AUTH_TOKEN_KEY = "auth_token";
+const REFRESH_TOKEN_KEY = "refresh_token";
 const USER_DATA_KEY = "user_data";
+
+class HttpError extends Error {
+  status: number;
+  payload: any;
+
+  constructor(status: number, message: string, payload: any) {
+    super(message);
+    this.status = status;
+    this.payload = payload;
+  }
+}
 
 function buildUrl(path: string): string {
   return `${API_BASE_URL}${path}`;
@@ -27,7 +39,7 @@ async function parseResponse(response: Response): Promise<any> {
         ? payload
         : payload?.message || payload?.error || `Request failed with status ${response.status}`;
 
-    throw new Error(message);
+    throw new HttpError(response.status, message, payload);
   }
 
   return payload;
@@ -140,6 +152,50 @@ async function persistUser(user: User): Promise<void> {
   await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(user));
 }
 
+async function persistTokens(accessToken: string, refreshToken?: string): Promise<void> {
+  await AsyncStorage.setItem(AUTH_TOKEN_KEY, accessToken);
+
+  if (refreshToken) {
+    await AsyncStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+  }
+}
+
+async function getRefreshToken(): Promise<string | null> {
+  return AsyncStorage.getItem(REFRESH_TOKEN_KEY);
+}
+
+function extractRefreshToken(data: any): string | null {
+  if (!data || typeof data !== "object") {
+    return null;
+  }
+
+  const possibleRefreshToken =
+    data.refreshToken ||
+    data.refresh_token ||
+    data.refresh?.token ||
+    data.tokens?.refreshToken ||
+    data.data?.refreshToken;
+
+  if (typeof possibleRefreshToken === "string") {
+    return possibleRefreshToken;
+  }
+
+  if (Array.isArray(data)) {
+    for (const item of data) {
+      const token = extractRefreshToken(item);
+      if (token) {
+        return token;
+      }
+    }
+  }
+
+  if (data.data) {
+    return extractRefreshToken(data.data);
+  }
+
+  return null;
+}
+
 export default class AuthService {
   static async login(credentials: LoginCredentials): Promise<User> {
     const response = await fetch(buildUrl("/auth/login"), {
@@ -158,7 +214,9 @@ export default class AuthService {
       throw new Error("No authentication token returned by the server");
     }
 
-    await AsyncStorage.setItem(AUTH_TOKEN_KEY, token);
+    const refreshToken = extractRefreshToken(data) ?? (await getRefreshToken());
+
+    await persistTokens(token, refreshToken ?? undefined);
 
     const userPayload = data.user || data.data?.user;
     let user: User;
@@ -195,6 +253,7 @@ export default class AuthService {
     const data = await parseResponse(response);
 
     let token = extractToken(data);
+    let refreshToken = extractRefreshToken(data) ?? (await getRefreshToken());
 
     if (!token) {
       // If the register endpoint doesn't return a token, attempt to log in with the same credentials
@@ -206,7 +265,7 @@ export default class AuthService {
       return user;
     }
 
-    await AsyncStorage.setItem(AUTH_TOKEN_KEY, token);
+    await persistTokens(token, refreshToken ?? undefined);
 
     const userPayload = data.user || data.data?.user;
     let user: User;
@@ -223,14 +282,14 @@ export default class AuthService {
   }
 
   static async logout(): Promise<void> {
-    await AsyncStorage.multiRemove([AUTH_TOKEN_KEY, USER_DATA_KEY]);
+    await AsyncStorage.multiRemove([AUTH_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_DATA_KEY]);
   }
 
   static async getCurrentUser(): Promise<User | null> {
     const token = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
 
     if (!token) {
-      return null;
+      return this.tryRefreshSession();
     }
 
     try {
@@ -238,6 +297,13 @@ export default class AuthService {
       await persistUser(user);
       return user;
     } catch (error) {
+      if (error instanceof HttpError && error.status === 401) {
+        const refreshedUser = await this.tryRefreshSession();
+        if (refreshedUser) {
+          return refreshedUser;
+        }
+      }
+
       console.error("Get current user error:", error);
       const cachedUser = await AsyncStorage.getItem(USER_DATA_KEY);
       return cachedUser ? (JSON.parse(cachedUser) as User) : null;
@@ -246,7 +312,8 @@ export default class AuthService {
 
   static async isAuthenticated(): Promise<boolean> {
     const token = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
-    return !!token;
+    const refreshToken = await getRefreshToken();
+    return !!token || !!refreshToken;
   }
 
   private static async fetchCurrentUserWithToken(token: string): Promise<User> {
@@ -262,5 +329,43 @@ export default class AuthService {
     const userPayload = data.user || data.data || data;
     const user = mapUser(userPayload);
     return user;
+  }
+
+  private static async tryRefreshSession(): Promise<User | null> {
+    const refreshToken = await getRefreshToken();
+
+    if (!refreshToken) {
+      await AsyncStorage.removeItem(AUTH_TOKEN_KEY);
+      return null;
+    }
+
+    try {
+      const response = await fetch(buildUrl("/auth/refresh"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ refreshToken }),
+      });
+
+      const data = await parseResponse(response);
+      const newAccessToken = extractToken(data);
+      const newRefreshToken = extractRefreshToken(data) ?? refreshToken;
+
+      if (!newAccessToken) {
+        throw new Error("No se recibió un nuevo token de acceso al refrescar la sesión");
+      }
+
+      await persistTokens(newAccessToken, newRefreshToken);
+
+      const user = await this.fetchCurrentUserWithToken(newAccessToken);
+      await persistUser(user);
+
+      return user;
+    } catch (refreshError) {
+      console.error("Token refresh failed:", refreshError);
+      await AsyncStorage.multiRemove([AUTH_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_DATA_KEY]);
+      return null;
+    }
   }
 }

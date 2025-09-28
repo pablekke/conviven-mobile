@@ -25,8 +25,9 @@ Ubicado en `services/authService.ts`, concentra todas las operaciones contra el 
 - Logout (limpieza local de credenciales)
 - Verificación de sesión
 - Obtención del perfil (`GET /users/me`)
+- Refresh de tokens (`POST /auth/refresh`)
 
-El servicio persiste el token JWT en AsyncStorage, recupera el perfil actual desde el backend y lo cachea para acceso offline básico. Los errores HTTP se traducen a mensajes legibles para la interfaz.
+El servicio persiste el token JWT junto con el refresh token en AsyncStorage, recupera el perfil actual desde el backend y lo cachea para acceso offline básico. Al expirar el access token, automáticamente solicita uno nuevo mediante el refresh token y reintenta obtener el perfil. Los errores HTTP se traducen a mensajes legibles para la interfaz.
 
 ### 2. Contexto de autenticación
 
@@ -115,7 +116,6 @@ El servicio de autenticación convierte respuestas HTTP no exitosas en instancia
 
 ## Próximos pasos sugeridos
 
-1. Implementar refresh de tokens si el backend lo expone
-2. Agregar recuperación de contraseña
-3. Validar y formatear datos adicionales del perfil (p. ej. nombres de departamento/barrios)
-4. Considerar almacenamiento seguro del token (SecureStore) para builds de producción
+1. Agregar recuperación de contraseña
+2. Validar y formatear datos adicionales del perfil (p. ej. nombres de departamento/barrios)
+3. Considerar almacenamiento seguro del token (SecureStore) para builds de producción
