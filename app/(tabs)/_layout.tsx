@@ -19,7 +19,7 @@ export default function TabLayout() {
           borderTopColor: Colors[colorScheme ?? "light"].icon,
         },
         tabBarLabelStyle: {
-          fontFamily: Fonts?.default?.sans ?? "InterRegular",
+          fontFamily: Fonts.sans,
         },
         headerShown: false,
         tabBarButton: HapticTab,

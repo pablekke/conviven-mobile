@@ -8,6 +8,23 @@ module.exports = function (api) {
     ],
     plugins: [
       "expo-router/babel",
+      [
+        "module-resolver",
+        {
+          root: ["."],
+          alias: {
+            "@": "./",
+          },
+          extensions: [
+            ".ios.js",
+            ".android.js",
+            ".js",
+            ".ts",
+            ".tsx",
+            ".json",
+          ],
+        },
+      ],
       "react-native-reanimated/plugin",
     ],
   };
