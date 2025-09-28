@@ -2,6 +2,7 @@ import { Stack, useSegments, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useCallback } from "react";
 import { Text, View, ActivityIndicator } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { AuthProvider, useAuth } from "../context/AuthContext";
 
@@ -81,8 +82,10 @@ function AuthRoot() {
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <AuthRoot />
-    </AuthProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <AuthRoot />
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }

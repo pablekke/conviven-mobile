@@ -1,10 +1,14 @@
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { View, Text, Alert, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, Alert, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
 
 import RegisterForm from "../../components/RegisterForm";
 import { useAuth } from "../../context/AuthContext";
 import { RegisterCredentials } from "../../types/user";
+
+const styles = StyleSheet.create({
+  contentContainer: { flexGrow: 1 },
+});
 
 export default function RegisterScreen() {
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +28,7 @@ export default function RegisterScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+    <ScrollView contentContainerStyle={styles.contentContainer} keyboardShouldPersistTaps="handled">
       <View className="flex-1 justify-center items-center p-4 bg-white">
         <View className="w-full max-w-sm">
           <View className="items-center mb-8">
