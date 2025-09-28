@@ -8,6 +8,24 @@ type Props = {
   fullWidth?: boolean;
 };
 
+const VARIANT_STYLES: Record<
+  NonNullable<Props["variant"]>,
+  { container: string; text: string }
+> = {
+  primary: {
+    container: "bg-primary",
+    text: "text-primary-foreground",
+  },
+  secondary: {
+    container: "bg-secondary",
+    text: "text-secondary-foreground",
+  },
+  danger: {
+    container: "bg-destructive",
+    text: "text-destructive-foreground",
+  },
+};
+
 export default function Button({
   label,
   onPress,
@@ -15,36 +33,34 @@ export default function Button({
   disabled = false,
   fullWidth = true,
 }: Props) {
-  const getBackgroundColor = () => {
-    if (disabled) return "bg-gray-400";
+  const { container, text } = VARIANT_STYLES[variant];
 
-    switch (variant) {
-      case "primary":
-        return "bg-indigo-700";
-      case "secondary":
-        return "bg-gray-600";
-      case "danger":
-        return "bg-red-600";
-      default:
-        return "bg-indigo-700";
-    }
-  };
+  const containerClasses = [
+    "rounded-xl",
+    "items-center",
+    "justify-center",
+    "px-5",
+    "py-3",
+    fullWidth ? "w-full" : "self-start",
+    disabled ? "bg-muted opacity-60" : container,
+  ].join(" ");
+
+  const textClasses = [
+    "text-base",
+    "font-conviven-semibold",
+    disabled ? "text-muted-foreground" : text,
+  ].join(" ");
 
   return (
     <Pressable
-      className={`
-        rounded-lg items-center justify-center p-4 
-        ${getBackgroundColor()}
-        ${fullWidth ? "w-full" : "px-6"}
-        ${disabled ? "opacity-70" : ""}
-      `}
+      className={containerClasses}
       onPress={disabled ? undefined : onPress}
       disabled={disabled}
       style={({ pressed }) => ({
-        opacity: pressed ? 0.8 : 1,
+        opacity: pressed && !disabled ? 0.9 : 1,
       })}
     >
-      <Text className="color-white font-bold text-center text-base">{label}</Text>
+      <Text className={`${textClasses} text-center`}>{label}</Text>
     </Pressable>
   );
 }

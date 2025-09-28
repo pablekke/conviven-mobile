@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { View, TextInput, Text, ActivityIndicator } from "react-native";
+import { ActivityIndicator, Text, TextInput, View } from "react-native";
 
-import Button from "./Button";
+import { useTheme } from "../context/ThemeContext";
 import { RegisterCredentials } from "../types/user";
+import Button from "./Button";
 
 interface RegisterFormProps {
   onSubmit: (credentials: RegisterCredentials) => Promise<void>;
@@ -32,6 +33,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
     departmentId?: string;
     neighborhoodId?: string;
   }>({});
+  const { colors } = useTheme();
 
   const validate = (): boolean => {
     const newErrors: typeof errors = {};
@@ -103,152 +105,162 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
     }
   };
 
+  const inputClass = (hasError?: boolean) =>
+    `p-4 border rounded-xl ${hasError ? "border-destructive" : "border-input"} bg-background/90 text-foreground`;
+
+  const labelClass = "mb-2 text-sm font-conviven text-foreground";
+  const helperClass = "mt-1 text-xs font-conviven text-muted-foreground";
+  const errorClass = "mt-1 text-sm font-conviven text-destructive";
+
   return (
-    <View className="w-full p-4">
+    <View className="w-full p-5 bg-card rounded-2xl border border-border">
       <View className="mb-4">
-        <Text className="mb-2 text-gray-700">First Name</Text>
+        <Text className={labelClass}>First Name</Text>
         <TextInput
-          className={`p-4 border rounded-md ${errors.firstName ? "border-red-500" : "border-gray-300"}`}
+          className={inputClass(errors.firstName)}
           value={firstName}
           onChangeText={text => {
             setFirstName(text);
             setErrors(prev => ({ ...prev, firstName: undefined }));
           }}
           placeholder="Your first name"
+          placeholderTextColor={colors.mutedForeground}
           autoCapitalize="words"
         />
-        {errors.firstName && <Text className="mt-1 text-red-500">{errors.firstName}</Text>}
+        {errors.firstName && <Text className={errorClass}>{errors.firstName}</Text>}
       </View>
 
       <View className="mb-4">
-        <Text className="mb-2 text-gray-700">Last Name</Text>
+        <Text className={labelClass}>Last Name</Text>
         <TextInput
-          className={`p-4 border rounded-md ${errors.lastName ? "border-red-500" : "border-gray-300"}`}
+          className={inputClass(errors.lastName)}
           value={lastName}
           onChangeText={text => {
             setLastName(text);
             setErrors(prev => ({ ...prev, lastName: undefined }));
           }}
           placeholder="Your last name"
+          placeholderTextColor={colors.mutedForeground}
           autoCapitalize="words"
         />
-        {errors.lastName && <Text className="mt-1 text-red-500">{errors.lastName}</Text>}
+        {errors.lastName && <Text className={errorClass}>{errors.lastName}</Text>}
       </View>
 
       <View className="mb-4">
-        <Text className="mb-2 text-gray-700">Email</Text>
+        <Text className={labelClass}>Email</Text>
         <TextInput
-          className={`p-4 border rounded-md ${errors.email ? "border-red-500" : "border-gray-300"}`}
+          className={inputClass(errors.email)}
           value={email}
           onChangeText={text => {
             setEmail(text);
             setErrors(prev => ({ ...prev, email: undefined }));
           }}
           placeholder="your@email.com"
+          placeholderTextColor={colors.mutedForeground}
           autoCapitalize="none"
           keyboardType="email-address"
         />
-        {errors.email && <Text className="mt-1 text-red-500">{errors.email}</Text>}
+        {errors.email && <Text className={errorClass}>{errors.email}</Text>}
       </View>
 
       <View className="mb-4">
-        <Text className="mb-2 text-gray-700">Password</Text>
+        <Text className={labelClass}>Password</Text>
         <TextInput
-          className={`p-4 border rounded-md ${errors.password ? "border-red-500" : "border-gray-300"}`}
+          className={inputClass(errors.password)}
           value={password}
           onChangeText={text => {
             setPassword(text);
             setErrors(prev => ({ ...prev, password: undefined }));
           }}
           placeholder="Your password"
+          placeholderTextColor={colors.mutedForeground}
           secureTextEntry
         />
-        {errors.password && <Text className="mt-1 text-red-500">{errors.password}</Text>}
+        {errors.password && <Text className={errorClass}>{errors.password}</Text>}
       </View>
 
       <View className="mb-4">
-        <Text className="mb-2 text-gray-700">Confirm Password</Text>
+        <Text className={labelClass}>Confirm Password</Text>
         <TextInput
-          className={`p-4 border rounded-md ${errors.confirmPassword ? "border-red-500" : "border-gray-300"}`}
+          className={inputClass(errors.confirmPassword)}
           value={confirmPassword}
           onChangeText={text => {
             setConfirmPassword(text);
             setErrors(prev => ({ ...prev, confirmPassword: undefined }));
           }}
           placeholder="Confirm your password"
+          placeholderTextColor={colors.mutedForeground}
           secureTextEntry
         />
-        {errors.confirmPassword && (
-          <Text className="mt-1 text-red-500">{errors.confirmPassword}</Text>
-        )}
+        {errors.confirmPassword && <Text className={errorClass}>{errors.confirmPassword}</Text>}
       </View>
 
       <View className="mb-4">
-        <Text className="mb-2 text-gray-700">Birth Date</Text>
+        <Text className={labelClass}>Birth Date</Text>
         <TextInput
-          className={`p-4 border rounded-md ${errors.birthDate ? "border-red-500" : "border-gray-300"}`}
+          className={inputClass(errors.birthDate)}
           value={birthDate}
           onChangeText={text => {
             setBirthDate(text);
             setErrors(prev => ({ ...prev, birthDate: undefined }));
           }}
           placeholder="2001-06-28"
+          placeholderTextColor={colors.mutedForeground}
           autoCapitalize="none"
         />
-        <Text className="mt-1 text-xs text-gray-500">Formato requerido: AAAA-MM-DD</Text>
-        {errors.birthDate && <Text className="mt-1 text-red-500">{errors.birthDate}</Text>}
+        <Text className={helperClass}>Formato requerido: AAAA-MM-DD</Text>
+        {errors.birthDate && <Text className={errorClass}>{errors.birthDate}</Text>}
       </View>
 
       <View className="mb-4">
-        <Text className="mb-2 text-gray-700">Gender</Text>
+        <Text className={labelClass}>Gender</Text>
         <TextInput
-          className={`p-4 border rounded-md ${errors.gender ? "border-red-500" : "border-gray-300"}`}
+          className={inputClass(errors.gender)}
           value={gender}
           onChangeText={text => {
             setGender(text);
             setErrors(prev => ({ ...prev, gender: undefined }));
           }}
           placeholder={`One of: ${GENDERS.join(", ")}`}
+          placeholderTextColor={colors.mutedForeground}
           autoCapitalize="characters"
         />
-        <Text className="mt-1 text-xs text-gray-500">Valores permitidos: {GENDERS.join(", ")}</Text>
-        {errors.gender && <Text className="mt-1 text-red-500">{errors.gender}</Text>}
+        <Text className={helperClass}>Valores permitidos: {GENDERS.join(", ")}</Text>
+        {errors.gender && <Text className={errorClass}>{errors.gender}</Text>}
       </View>
 
       <View className="mb-4">
-        <Text className="mb-2 text-gray-700">Department ID</Text>
+        <Text className={labelClass}>Department ID</Text>
         <TextInput
-          className={`p-4 border rounded-md ${errors.departmentId ? "border-red-500" : "border-gray-300"}`}
+          className={inputClass(errors.departmentId)}
           value={departmentId}
           onChangeText={text => {
             setDepartmentId(text);
             setErrors(prev => ({ ...prev, departmentId: undefined }));
           }}
           placeholder="Department identifier"
+          placeholderTextColor={colors.mutedForeground}
           autoCapitalize="none"
         />
-        <Text className="mt-1 text-xs text-gray-500">
-          Ejemplo: a2f0e079-c922-44f2-8712-e2710fad74e3
-        </Text>
-        {errors.departmentId && <Text className="mt-1 text-red-500">{errors.departmentId}</Text>}
+        <Text className={helperClass}>Ejemplo: a2f0e079-c922-44f2-8712-e2710fad74e3</Text>
+        {errors.departmentId && <Text className={errorClass}>{errors.departmentId}</Text>}
       </View>
 
       <View className="mb-6">
-        <Text className="mb-2 text-gray-700">Neighborhood ID</Text>
+        <Text className={labelClass}>Neighborhood ID</Text>
         <TextInput
-          className={`p-4 border rounded-md ${errors.neighborhoodId ? "border-red-500" : "border-gray-300"}`}
+          className={inputClass(errors.neighborhoodId)}
           value={neighborhoodId}
           onChangeText={text => {
             setNeighborhoodId(text);
             setErrors(prev => ({ ...prev, neighborhoodId: undefined }));
           }}
           placeholder="Neighborhood identifier"
+          placeholderTextColor={colors.mutedForeground}
           autoCapitalize="none"
         />
-        <Text className="mt-1 text-xs text-gray-500">
-          Ejemplo: 23a75a72-2deb-4fd0-b8bb-98c48b03fa14
-        </Text>
-        {errors.neighborhoodId && <Text className="mt-1 text-red-500">{errors.neighborhoodId}</Text>}
+        <Text className={helperClass}>Ejemplo: 23a75a72-2deb-4fd0-b8bb-98c48b03fa14</Text>
+        {errors.neighborhoodId && <Text className={errorClass}>{errors.neighborhoodId}</Text>}
       </View>
 
       <Button
@@ -257,7 +269,11 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
         disabled={isLoading}
       />
 
-      {isLoading && <ActivityIndicator size="small" color="#4338ca" className="mt-4" />}
+      {isLoading && (
+        <View className="mt-4 items-center">
+          <ActivityIndicator size="small" color={colors.primary} />
+        </View>
+      )}
     </View>
   );
 }

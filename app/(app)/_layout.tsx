@@ -2,10 +2,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import React from "react";
 
+import { useTheme } from "../../context/ThemeContext";
+
 /**
  * This is the layout for the authenticated app with tab navigation
  */
 export default function AppLayout() {
+  const { colors, theme } = useTheme();
+
   const getTabBarIcon = (name: keyof typeof Ionicons.glyphMap) => {
     return ({ color, size }: { color: string; size: number }) => (
       <Ionicons name={name} size={size} color={color} />
@@ -14,25 +18,28 @@ export default function AppLayout() {
 
   return (
     <Tabs
+      sceneContainerStyle={{
+        backgroundColor: colors.background,
+      }}
       screenOptions={{
-        tabBarActiveTintColor: "#4338ca", // indigo-700
-        tabBarInactiveTintColor: "#6b7280", // gray-500
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: theme === "dark" ? colors.mutedForeground : "#6b7280",
         tabBarStyle: {
           paddingVertical: 5,
-          backgroundColor: "#ffffff",
+          backgroundColor: colors.sidebarBackground,
           borderTopWidth: 1,
-          borderTopColor: "#e5e7eb", // gray-200
+          borderTopColor: colors.sidebarBorder,
         },
         tabBarLabelStyle: {
           fontSize: 12,
-          fontWeight: "500",
+          fontFamily: "Inter-Medium",
         },
         headerStyle: {
-          backgroundColor: "#4338ca", // indigo-700
+          backgroundColor: colors.primary,
         },
-        headerTintColor: "#ffffff",
+        headerTintColor: colors.primaryForeground,
         headerTitleStyle: {
-          fontWeight: "bold",
+          fontFamily: "Inter-SemiBold",
         },
       }}
     >

@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, ScrollView } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 
 import Button from "../../components/Button";
 import { useAuth } from "../../context/AuthContext";
@@ -12,40 +12,41 @@ export default function HomeScreen() {
   const email = user?.email ?? "No email";
 
   return (
-    <ScrollView className="flex-1 bg-white">
-      <View className="p-6">
-        <View className="bg-indigo-50 rounded-xl p-5 mb-6">
-          <Text className="text-xl font-bold text-indigo-800 mb-2">👋 Welcome, {name}!</Text>
-          <Text className="text-indigo-700 mb-4">You've successfully logged into the app.</Text>
-          <View className="bg-white p-4 rounded-lg">
-            <Text className="text-gray-500 mb-1">Your email:</Text>
-            <Text className="font-semibold mb-2">{email}</Text>
-            <Text className="text-gray-500 mb-1">User ID:</Text>
-            <Text className="font-semibold">{user?.id ?? "Not available"}</Text>
+    <ScrollView className="flex-1 bg-background">
+      <View className="p-6 space-y-6">
+        <View className="rounded-2xl bg-accent/60 p-5">
+          <Text className="text-xl font-conviven-bold text-foreground mb-2">👋 Welcome, {name}!</Text>
+          <Text className="font-conviven text-muted-foreground mb-4">
+            You&apos;ve successfully logged into the app.
+          </Text>
+          <View className="bg-card border border-border p-4 rounded-xl">
+            <Text className="font-conviven text-sm text-muted-foreground mb-1">Your email:</Text>
+            <Text className="font-conviven-semibold text-foreground mb-3">{email}</Text>
+            <Text className="font-conviven text-sm text-muted-foreground mb-1">User ID:</Text>
+            <Text className="font-conviven-semibold text-foreground">{user?.id ?? "Not available"}</Text>
           </View>
         </View>
 
-        <Text className="text-xl font-bold mb-4">Features</Text>
+        <View className="space-y-4">
+          <Text className="text-xl font-conviven-bold text-foreground">Features</Text>
 
-        <View className="space-y-4 mb-8">
-          <View className="bg-gray-50 p-4 rounded-lg">
-            <Text className="font-semibold mb-1">Authentication Ready</Text>
-            <Text className="text-gray-600">
-              The app connects to the Conviven backend for login, registration and profile
-              retrieval.
+          <View className="bg-muted/60 p-4 rounded-xl border border-border">
+            <Text className="font-conviven-semibold text-foreground mb-1">Authentication Ready</Text>
+            <Text className="font-conviven text-muted-foreground">
+              The app connects to the Conviven backend for login, registration and profile retrieval.
             </Text>
           </View>
 
-          <View className="bg-gray-50 p-4 rounded-lg">
-            <Text className="font-semibold mb-1">Clean Architecture</Text>
-            <Text className="text-gray-600">
+          <View className="bg-muted/60 p-4 rounded-xl border border-border">
+            <Text className="font-conviven-semibold text-foreground mb-1">Clean Architecture</Text>
+            <Text className="font-conviven text-muted-foreground">
               Follows domain-driven design with clear separation of concerns.
             </Text>
           </View>
 
-          <View className="bg-gray-50 p-4 rounded-lg">
-            <Text className="font-semibold mb-1">Modern UI</Text>
-            <Text className="text-gray-600">
+          <View className="bg-muted/60 p-4 rounded-xl border border-border">
+            <Text className="font-conviven-semibold text-foreground mb-1">Modern UI</Text>
+            <Text className="font-conviven text-muted-foreground">
               Beautiful, responsive UI with NativeWind (Tailwind CSS).
             </Text>
           </View>

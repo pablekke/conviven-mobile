@@ -1,15 +1,19 @@
 import React from "react";
-import { View, Text, ActivityIndicator } from "react-native";
+import { ActivityIndicator, Text, View } from "react-native";
+
+import { useTheme } from "../context/ThemeContext";
 
 interface LoadingScreenProps {
   message?: string;
 }
 
 export default function LoadingScreen({ message = "Loading..." }: LoadingScreenProps) {
+  const { colors } = useTheme();
+
   return (
-    <View className="flex-1 items-center justify-center bg-white">
-      <ActivityIndicator size="large" color="#4338ca" />
-      <Text className="text-gray-600 mt-4">{message}</Text>
+    <View className="flex-1 items-center justify-center bg-background">
+      <ActivityIndicator size="large" color={colors.primary} />
+      <Text className="text-muted-foreground mt-4 font-conviven">{message}</Text>
     </View>
   );
 }

@@ -1,8 +1,16 @@
 import React, { useState } from "react";
-import { View, TextInput, Text, Alert, ActivityIndicator, TouchableOpacity } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-import Button from "./Button";
+import { useTheme } from "../context/ThemeContext";
 import { LoginCredentials } from "../types/user";
+import Button from "./Button";
 
 interface LoginFormProps {
   onSubmit: (credentials: LoginCredentials) => Promise<void>;
@@ -13,6 +21,7 @@ export default function LoginForm({ onSubmit, isLoading = false }: LoginFormProp
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const { colors } = useTheme();
 
   const validate = (): boolean => {
     const newErrors: { email?: string; password?: string } = {};
@@ -44,32 +53,40 @@ export default function LoginForm({ onSubmit, isLoading = false }: LoginFormProp
   };
 
   return (
-    <View className="w-full p-4">
+    <View className="w-full p-5 bg-card rounded-2xl border border-border">
       <View className="mb-4">
-        <Text className="mb-2 text-gray-700">Email</Text>
+        <Text className="mb-2 text-sm font-conviven text-foreground">Email</Text>
         <TextInput
-          className={`p-4 border rounded-md ${errors.email ? "border-red-500" : "border-gray-300"}`}
+          className={`p-4 border rounded-xl ${errors.email ? "border-destructive" : "border-input"} bg-background/90 text-foreground`}
           value={email}
           onChangeText={setEmail}
           placeholder="your@email.com"
+          placeholderTextColor={colors.mutedForeground}
           autoCapitalize="none"
           keyboardType="email-address"
           onFocus={() => setErrors({ ...errors, email: undefined })}
         />
-        {errors.email && <Text className="mt-1 text-red-500">{errors.email}</Text>}
+        {errors.email && (
+          <Text className="mt-1 text-sm font-conviven text-destructive">{errors.email}</Text>
+        )}
       </View>
 
-      <View className="mb-6">
-        <Text className="mb-2 text-gray-700">Password</Text>
+      <View className="mb-2">
+        <Text className="mb-2 text-sm font-conviven text-foreground">Password</Text>
         <TextInput
-          className={`p-4 border rounded-md ${errors.password ? "border-red-500" : "border-gray-300"}`}
+          className={`p-4 border rounded-xl ${
+            errors.password ? "border-destructive" : "border-input"
+          } bg-background/90 text-foreground`}
           value={password}
           onChangeText={setPassword}
           placeholder="Your password"
+          placeholderTextColor={colors.mutedForeground}
           secureTextEntry
           onFocus={() => setErrors({ ...errors, password: undefined })}
         />
-        {errors.password && <Text className="mt-1 text-red-500">{errors.password}</Text>}
+        {errors.password && (
+          <Text className="mt-1 text-sm font-conviven text-destructive">{errors.password}</Text>
+        )}
       </View>
 
       <TouchableOpacity
@@ -80,8 +97,9 @@ export default function LoginForm({ onSubmit, isLoading = false }: LoginFormProp
             "This feature would redirect to a password reset flow in a real app.",
           )
         }
+        activeOpacity={0.7}
       >
-        <Text className="text-blue-600">Forgot password?</Text>
+        <Text className="font-conviven-semibold text-primary">Forgot password?</Text>
       </TouchableOpacity>
 
       <Button
@@ -90,7 +108,11 @@ export default function LoginForm({ onSubmit, isLoading = false }: LoginFormProp
         disabled={isLoading}
       />
 
-      {isLoading && <ActivityIndicator size="small" color="#4338ca" className="mt-4" />}
+      {isLoading && (
+        <View className="mt-4 items-center">
+          <ActivityIndicator size="small" color={colors.primary} />
+        </View>
+      )}
     </View>
   );
 }

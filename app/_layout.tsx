@@ -1,17 +1,23 @@
-import { Stack, useSegments, useRouter } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useCallback } from "react";
-import { Text, View, ActivityIndicator } from "react-native";
+import * as SplashScreen from "expo-splash-screen";
+import { useCallback, useEffect } from "react";
+import { ActivityIndicator, Text, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { useFonts } from "expo-font";
 
 import { AuthProvider, useAuth } from "../context/AuthContext";
+import { ThemeProvider, useTheme } from "../context/ThemeContext";
 
 import "../global.css";
+
+SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 function AuthRoot() {
   const { isAuthenticated, isLoading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const { colors, theme } = useTheme();
 
   const handleNavigation = useCallback(() => {
     const inAuthGroup = segments[0] === "auth";
@@ -25,7 +31,7 @@ function AuthRoot() {
     } else if (isAuthenticated && inAuthGroup) {
       router.replace("/");
     }
-  }, [isAuthenticated, segments, isLoading]);
+  }, [isAuthenticated, segments, isLoading, router]);
 
   useEffect(() => {
     handleNavigation();
@@ -33,24 +39,27 @@ function AuthRoot() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color="#4338ca" />
-        <Text className="text-gray-600 mt-4">Loading...</Text>
+      <View className="flex-1 items-center justify-center bg-background">
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text className="text-muted-foreground mt-4 font-conviven">Loading...</Text>
       </View>
     );
   }
 
   return (
     <>
-      <StatusBar style="auto" />
+      <StatusBar style={theme === "dark" ? "light" : "dark"} backgroundColor={colors.background} />
       <Stack
         screenOptions={{
           headerStyle: {
-            backgroundColor: "#4338ca",
+            backgroundColor: colors.primary,
           },
-          headerTintColor: "#fff",
+          headerTintColor: colors.primaryForeground,
           headerTitleStyle: {
-            fontWeight: "bold",
+            fontFamily: "Inter-SemiBold",
+          },
+          contentStyle: {
+            backgroundColor: colors.background,
           },
         }}
       >
@@ -81,11 +90,30 @@ function AuthRoot() {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({
+    "Inter-Regular": { uri: "https://rsms.me/inter/font-files/Inter-Regular.ttf" },
+    "Inter-Medium": { uri: "https://rsms.me/inter/font-files/Inter-Medium.ttf" },
+    "Inter-SemiBold": { uri: "https://rsms.me/inter/font-files/Inter-SemiBold.ttf" },
+    "Inter-Bold": { uri: "https://rsms.me/inter/font-files/Inter-Bold.ttf" },
+  });
+
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      SplashScreen.hideAsync().catch(() => undefined);
+    }
+  }, [fontError, fontsLoaded]);
+
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
+
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <AuthRoot />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <AuthRoot />
+        </AuthProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }

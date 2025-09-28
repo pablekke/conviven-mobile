@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, Image, ScrollView } from "react-native";
+import { Image, ScrollView, Text, View } from "react-native";
 
 import Button from "../../components/Button";
 import { useAuth } from "../../context/AuthContext";
@@ -28,65 +28,65 @@ export default function ProfileScreen() {
   const neighborhood = user?.neighborhoodName ?? user?.neighborhoodId ?? "Not provided";
 
   return (
-    <ScrollView className="flex-1 bg-white">
+    <ScrollView className="flex-1 bg-background">
       <View className="items-center p-6">
         <View className="mb-6 items-center">
           {avatar ? (
             <Image source={{ uri: avatar }} className="w-28 h-28 rounded-full" />
           ) : (
-            <View className="w-28 h-28 rounded-full bg-indigo-100 items-center justify-center">
-              <Text className="text-3xl font-semibold text-indigo-700">
+            <View className="w-28 h-28 rounded-full bg-secondary/70 items-center justify-center">
+              <Text className="text-3xl font-conviven-bold text-secondary-foreground">
                 {name?.charAt(0) || "U"}
               </Text>
             </View>
           )}
-          <Text className="text-2xl font-bold mt-4">{name}</Text>
-          <Text className="text-gray-500">{email}</Text>
+          <Text className="text-2xl font-conviven-bold text-foreground mt-4">{name}</Text>
+          <Text className="font-conviven text-muted-foreground">{email}</Text>
         </View>
 
-        <View className="w-full bg-white rounded-xl shadow-sm mb-4">
-          <View className="p-4 border-b border-gray-100">
-            <Text className="text-lg font-semibold mb-2">Profile Information</Text>
-            <View className="space-y-2">
+        <View className="w-full bg-card rounded-2xl border border-border shadow-sm">
+          <View className="p-5 border-b border-border/70">
+            <Text className="text-lg font-conviven-semibold text-foreground mb-3">Profile Information</Text>
+            <View className="gap-3">
               <View>
-                <Text className="text-gray-500 text-sm">Name</Text>
-                <Text className="font-medium">{name}</Text>
+                <Text className="text-sm font-conviven text-muted-foreground">Name</Text>
+                <Text className="font-conviven-semibold text-foreground">{name}</Text>
               </View>
               <View>
-                <Text className="text-gray-500 text-sm">Email</Text>
-                <Text className="font-medium">{email}</Text>
+                <Text className="text-sm font-conviven text-muted-foreground">Email</Text>
+                <Text className="font-conviven-semibold text-foreground">{email}</Text>
               </View>
               <View>
-                <Text className="text-gray-500 text-sm">User ID</Text>
-                <Text className="font-medium">{formatLabel(user?.id)}</Text>
+                <Text className="text-sm font-conviven text-muted-foreground">User ID</Text>
+                <Text className="font-conviven-semibold text-foreground">{formatLabel(user?.id)}</Text>
               </View>
               <View>
-                <Text className="text-gray-500 text-sm">Birth Date</Text>
-                <Text className="font-medium">{birthDate}</Text>
+                <Text className="text-sm font-conviven text-muted-foreground">Birth Date</Text>
+                <Text className="font-conviven-semibold text-foreground">{birthDate}</Text>
               </View>
               <View>
-                <Text className="text-gray-500 text-sm">Gender</Text>
-                <Text className="font-medium">{gender}</Text>
+                <Text className="text-sm font-conviven text-muted-foreground">Gender</Text>
+                <Text className="font-conviven-semibold text-foreground">{gender}</Text>
               </View>
               <View>
-                <Text className="text-gray-500 text-sm">Department</Text>
-                <Text className="font-medium">{department}</Text>
+                <Text className="text-sm font-conviven text-muted-foreground">Department</Text>
+                <Text className="font-conviven-semibold text-foreground">{department}</Text>
               </View>
               <View>
-                <Text className="text-gray-500 text-sm">Neighborhood</Text>
-                <Text className="font-medium">{neighborhood}</Text>
+                <Text className="text-sm font-conviven text-muted-foreground">Neighborhood</Text>
+                <Text className="font-conviven-semibold text-foreground">{neighborhood}</Text>
               </View>
               <View>
-                <Text className="text-gray-500 text-sm">Bio</Text>
-                <Text className="font-medium">{bio}</Text>
+                <Text className="text-sm font-conviven text-muted-foreground">Bio</Text>
+                <Text className="font-conviven text-foreground">{bio}</Text>
               </View>
               <View>
-                <Text className="text-gray-500 text-sm">Location</Text>
-                <Text className="font-medium">{location}</Text>
+                <Text className="text-sm font-conviven text-muted-foreground">Location</Text>
+                <Text className="font-conviven text-foreground">{location}</Text>
               </View>
               <View>
-                <Text className="text-gray-500 text-sm">Phone</Text>
-                <Text className="font-medium">{phone}</Text>
+                <Text className="text-sm font-conviven text-muted-foreground">Phone</Text>
+                <Text className="font-conviven text-foreground">{phone}</Text>
               </View>
             </View>
           </View>
