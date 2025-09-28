@@ -15,7 +15,8 @@ const formatLabel = (label?: string | null) => {
 export default function ProfileScreen() {
   const { user } = useAuth();
 
-  const name = user?.name ?? [user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Anonymous";
+  const name =
+    user?.name ?? ([user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Anonymous");
   const email = user?.email ?? "No email provided";
   const avatar = user?.avatar ?? null;
   const bio = user?.bio ?? "No bio provided";
@@ -34,7 +35,9 @@ export default function ProfileScreen() {
             <Image source={{ uri: avatar }} className="w-28 h-28 rounded-full" />
           ) : (
             <View className="w-28 h-28 rounded-full bg-indigo-100 items-center justify-center">
-              <Text className="text-3xl font-semibold text-indigo-700">{name?.charAt(0) || "U"}</Text>
+              <Text className="text-3xl font-semibold text-indigo-700">
+                {name?.charAt(0) || "U"}
+              </Text>
             </View>
           )}
           <Text className="text-2xl font-bold mt-4">{name}</Text>

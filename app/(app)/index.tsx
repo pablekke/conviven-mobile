@@ -7,7 +7,8 @@ import { useAuth } from "../../context/AuthContext";
 export default function HomeScreen() {
   const { user, logout } = useAuth();
 
-  const name = user?.name ?? [user?.firstName, user?.lastName].filter(Boolean).join(" ") || "User";
+  const name =
+    user?.name ?? ([user?.firstName, user?.lastName].filter(Boolean).join(" ") || "User");
   const email = user?.email ?? "No email";
 
   return (
@@ -30,7 +31,8 @@ export default function HomeScreen() {
           <View className="bg-gray-50 p-4 rounded-lg">
             <Text className="font-semibold mb-1">Authentication Ready</Text>
             <Text className="text-gray-600">
-              The app connects to the Conviven backend for login, registration and profile retrieval.
+              The app connects to the Conviven backend for login, registration and profile
+              retrieval.
             </Text>
           </View>
 
