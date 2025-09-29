@@ -4,6 +4,7 @@ import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "rea
 
 import RegisterForm from "../../components/RegisterForm";
 import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 import { RegisterCredentials } from "../../types/user";
 
 const styles = StyleSheet.create({
@@ -13,6 +14,7 @@ const styles = StyleSheet.create({
 export default function RegisterScreen() {
   const [error, setError] = useState<string | null>(null);
   const { register, isLoading } = useAuth();
+  const { colors } = useTheme();
 
   const handleRegister = async (credentials: RegisterCredentials) => {
     try {
@@ -35,8 +37,12 @@ export default function RegisterScreen() {
       contentContainerStyle={styles.contentContainer}
       keyboardShouldPersistTaps="handled"
       className="bg-background"
+      style={{ backgroundColor: colors.background }}
     >
-      <View className="flex-1 justify-center items-center p-4">
+      <View
+        className="flex-1 justify-center items-center p-4"
+        style={{ backgroundColor: colors.background }}
+      >
         <View className="w-full max-w-lg">
           <View className="items-center mb-8">
             <View className="w-20 h-20 bg-primary rounded-full mb-4 items-center justify-center">

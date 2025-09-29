@@ -4,6 +4,7 @@ import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "rea
 
 import LoginForm from "../../components/LoginForm";
 import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 import { LoginCredentials } from "../../types/user";
 
 const styles = StyleSheet.create({
@@ -13,6 +14,7 @@ const styles = StyleSheet.create({
 export default function LoginScreen() {
   const [error, setError] = useState<string | null>(null);
   const { login, isLoading } = useAuth();
+  const { colors } = useTheme();
   const handleLogin = async (credentials: LoginCredentials) => {
     try {
       setError(null);
@@ -28,8 +30,12 @@ export default function LoginScreen() {
       contentContainerStyle={styles.contentContainer}
       keyboardShouldPersistTaps="handled"
       className="bg-background"
+      style={{ backgroundColor: colors.background }}
     >
-      <View className="flex-1 justify-center items-center p-4">
+      <View
+        className="flex-1 justify-center items-center p-4"
+        style={{ backgroundColor: colors.background }}
+      >
         <View className="w-full max-w-sm">
           <View className="items-center mb-8">
             <View className="w-20 h-20 bg-primary rounded-full mb-4 items-center justify-center">

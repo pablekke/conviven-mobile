@@ -22,6 +22,10 @@ export default function LoginForm({ onSubmit, isLoading = false }: LoginFormProp
   const [password, setPassword] = useState("contraseña123");
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const { colors } = useTheme();
+  const inputStyle = {
+    backgroundColor: colors.card,
+    color: colors.foreground,
+  };
 
   const validate = (): boolean => {
     const newErrors: { email?: string; password?: string } = {};
@@ -57,7 +61,7 @@ export default function LoginForm({ onSubmit, isLoading = false }: LoginFormProp
       <View className="mb-4">
         <Text className="mb-2 text-sm font-conviven text-foreground">Email</Text>
         <TextInput
-          className={`p-4 border rounded-xl ${errors.email ? "border-destructive" : "border-input"} bg-background/90 text-foreground`}
+          className={`p-4 border rounded-xl ${errors.email ? "border-destructive" : "border-input"} bg-card text-foreground`}
           value={email}
           onChangeText={setEmail}
           placeholder="your@email.com"
@@ -65,6 +69,7 @@ export default function LoginForm({ onSubmit, isLoading = false }: LoginFormProp
           autoCapitalize="none"
           keyboardType="email-address"
           onFocus={() => setErrors({ ...errors, email: undefined })}
+          style={inputStyle}
         />
         {errors.email && (
           <Text className="mt-1 text-sm font-conviven text-destructive">{errors.email}</Text>
@@ -76,13 +81,14 @@ export default function LoginForm({ onSubmit, isLoading = false }: LoginFormProp
         <TextInput
           className={`p-4 border rounded-xl ${
             errors.password ? "border-destructive" : "border-input"
-          } bg-background/90 text-foreground`}
+          } bg-card text-foreground`}
           value={password}
           onChangeText={setPassword}
           placeholder="Your password"
           placeholderTextColor={colors.mutedForeground}
           secureTextEntry
           onFocus={() => setErrors({ ...errors, password: undefined })}
+          style={inputStyle}
         />
         {errors.password && (
           <Text className="mt-1 text-sm font-conviven text-destructive">{errors.password}</Text>

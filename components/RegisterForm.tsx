@@ -34,6 +34,10 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
     neighborhoodId?: string;
   }>({});
   const { colors } = useTheme();
+  const inputStyle = {
+    backgroundColor: colors.card,
+    color: colors.foreground,
+  };
 
   const validate = (): boolean => {
     const newErrors: typeof errors = {};
@@ -106,7 +110,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
   };
 
   const inputClass = (hasError?: boolean) =>
-    `p-4 border rounded-xl ${hasError ? "border-destructive" : "border-input"} bg-background/90 text-foreground`;
+    `p-4 border rounded-xl ${hasError ? "border-destructive" : "border-input"} bg-card text-foreground`;
 
   const labelClass = "mb-2 text-sm font-conviven text-foreground";
   const helperClass = "mt-1 text-xs font-conviven text-muted-foreground";
@@ -126,6 +130,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
           placeholder="Your first name"
           placeholderTextColor={colors.mutedForeground}
           autoCapitalize="words"
+          style={inputStyle}
         />
         {errors.firstName && <Text className={errorClass}>{errors.firstName}</Text>}
       </View>
@@ -142,6 +147,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
           placeholder="Your last name"
           placeholderTextColor={colors.mutedForeground}
           autoCapitalize="words"
+          style={inputStyle}
         />
         {errors.lastName && <Text className={errorClass}>{errors.lastName}</Text>}
       </View>
@@ -159,6 +165,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
           placeholderTextColor={colors.mutedForeground}
           autoCapitalize="none"
           keyboardType="email-address"
+          style={inputStyle}
         />
         {errors.email && <Text className={errorClass}>{errors.email}</Text>}
       </View>
@@ -175,6 +182,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
           placeholder="Your password"
           placeholderTextColor={colors.mutedForeground}
           secureTextEntry
+          style={inputStyle}
         />
         {errors.password && <Text className={errorClass}>{errors.password}</Text>}
       </View>
@@ -191,6 +199,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
           placeholder="Confirm your password"
           placeholderTextColor={colors.mutedForeground}
           secureTextEntry
+          style={inputStyle}
         />
         {errors.confirmPassword && <Text className={errorClass}>{errors.confirmPassword}</Text>}
       </View>
@@ -207,6 +216,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
           placeholder="2001-06-28"
           placeholderTextColor={colors.mutedForeground}
           autoCapitalize="none"
+          style={inputStyle}
         />
         <Text className={helperClass}>Formato requerido: AAAA-MM-DD</Text>
         {errors.birthDate && <Text className={errorClass}>{errors.birthDate}</Text>}
@@ -224,6 +234,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
           placeholder={`One of: ${GENDERS.join(", ")}`}
           placeholderTextColor={colors.mutedForeground}
           autoCapitalize="characters"
+          style={inputStyle}
         />
         <Text className={helperClass}>Valores permitidos: {GENDERS.join(", ")}</Text>
         {errors.gender && <Text className={errorClass}>{errors.gender}</Text>}
@@ -241,6 +252,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
           placeholder="Department identifier"
           placeholderTextColor={colors.mutedForeground}
           autoCapitalize="none"
+          style={inputStyle}
         />
         <Text className={helperClass}>Ejemplo: a2f0e079-c922-44f2-8712-e2710fad74e3</Text>
         {errors.departmentId && <Text className={errorClass}>{errors.departmentId}</Text>}
@@ -258,6 +270,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
           placeholder="Neighborhood identifier"
           placeholderTextColor={colors.mutedForeground}
           autoCapitalize="none"
+          style={inputStyle}
         />
         <Text className={helperClass}>Ejemplo: 23a75a72-2deb-4fd0-b8bb-98c48b03fa14</Text>
         {errors.neighborhoodId && <Text className={errorClass}>{errors.neighborhoodId}</Text>}
