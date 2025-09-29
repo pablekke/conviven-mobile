@@ -3,7 +3,7 @@ import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
 import { useCallback, useEffect } from "react";
 import { ActivityIndicator, Text, View, Text as RNText } from "react-native";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useFonts } from "expo-font";
 
 import { AuthProvider, useAuth } from "../context/AuthContext";
@@ -135,6 +135,14 @@ export default function RootLayout() {
 }
 
 function ThemedTree() {
-  const { theme } = useTheme();
-  return <AuthRoot key={theme} />;
+  const { theme, colors } = useTheme();
+  return (
+    <SafeAreaView
+      key={theme}
+      style={{ flex: 1, backgroundColor: colors.background }}
+      edges={["top", "left", "right"]}
+    >
+      <AuthRoot />
+    </SafeAreaView>
+  );
 }

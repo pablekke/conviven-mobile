@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Alert, ScrollView, Switch, Text, TouchableOpacity, View } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import Button from "../../components/Button";
 import { useAuth } from "../../context/AuthContext";
@@ -40,9 +41,13 @@ const SettingItem: React.FC<SettingItemProps> = ({
         <Ionicons name={icon} size={22} color={colors.primary} />
       </View>
       <View className="flex-1 ml-3">
-        <Text className="text-base font-conviven-semibold text-foreground">{title}</Text>
+        <Text className="text-base font-conviven-semibold" style={{ color: colors.foreground }}>
+          {title}
+        </Text>
         {description && (
-          <Text className="text-sm font-conviven text-muted-foreground mt-1">{description}</Text>
+          <Text className="text-sm font-conviven mt-1" style={{ color: colors.mutedForeground }}>
+            {description}
+          </Text>
         )}
       </View>
       {showToggle && (
@@ -80,9 +85,14 @@ export default function SettingsScreen() {
   };
 
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
-    <ScrollView className="flex-1" style={{ backgroundColor: colors.background }}>
+    <ScrollView
+      className="flex-1"
+      style={{ backgroundColor: colors.background }}
+      contentContainerStyle={{ paddingTop: insets.top }}
+    >
       <View className="px-4 py-6 gap-6">
         <View>
           <Text
