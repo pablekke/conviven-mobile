@@ -71,9 +71,22 @@ export default function Button({
       style={({ pressed }) => ({
         opacity: pressed && !disabled ? 0.9 : 1,
         backgroundColor: resolveBackgroundColor(variant),
+        borderColor: variant === "primary" ? colors.primary : colors.border,
+        borderWidth: 1,
+        minHeight: 48,
+        shadowColor: "#000000",
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 4,
       })}
     >
-      <Text className={`${textClasses} text-center`} style={{ color: resolveTextColor(variant) }}>
+      <Text
+        className={`${textClasses} text-center`}
+        style={{
+          color: resolveTextColor(variant),
+        }}
+      >
         {label}
       </Text>
     </Pressable>

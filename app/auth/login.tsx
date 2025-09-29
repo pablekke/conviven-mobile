@@ -1,20 +1,34 @@
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  Dimensions,
+} from "react-native";
 
 import LoginForm from "../../components/LoginForm";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { LoginCredentials } from "../../types/user";
 
+const { width, height } = Dimensions.get("window");
+
 const styles = StyleSheet.create({
-  contentContainer: { flexGrow: 1 },
+  contentContainer: {
+    flexGrow: 1,
+    minHeight: height,
+  },
 });
 
 export default function LoginScreen() {
   const [error, setError] = useState<string | null>(null);
   const { login, isLoading } = useAuth();
   const { colors } = useTheme();
+
   const handleLogin = async (credentials: LoginCredentials) => {
     try {
       setError(null);
@@ -29,43 +43,138 @@ export default function LoginScreen() {
     <ScrollView
       contentContainerStyle={styles.contentContainer}
       keyboardShouldPersistTaps="handled"
-      className="bg-background"
       style={{ backgroundColor: colors.background }}
+      showsVerticalScrollIndicator={false}
     >
       <View
-        className="flex-1 justify-center items-center p-4"
-        style={{ backgroundColor: colors.background }}
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          paddingHorizontal: 20,
+          paddingVertical: 40,
+          backgroundColor: colors.background,
+        }}
       >
-        <View className="w-full max-w-sm">
-          <View className="items-center mb-8">
-            <View className="w-20 h-20 bg-primary rounded-full mb-4 items-center justify-center">
-              <Text className="text-xl font-conviven-bold text-primary-foreground">LOGO</Text>
-            </View>
-            <Text className="text-3xl font-conviven-bold text-foreground mb-1 text-center">
-              Welcome Back
-            </Text>
-            <Text className="font-conviven text-muted-foreground mb-8 text-center">
-              Sign in to continue to your account
-            </Text>
-          </View>
-
-          {error && (
-            <View className="bg-destructive/10 border border-destructive/40 p-3 rounded-xl mb-4">
-              <Text className="text-sm font-conviven text-destructive">{error}</Text>
-            </View>
-          )}
-
-          <LoginForm onSubmit={handleLogin} isLoading={isLoading} />
-
-          <View className="mt-6 flex-row justify-center">
-            <Text className="font-conviven text-muted-foreground">Don&apos;t have an account? </Text>
-            <TouchableOpacity
-              onPress={() => router.push("/auth/register")}
-              activeOpacity={0.7}
+        {/* Header Section */}
+        <View style={{ alignItems: "center", marginBottom: 48 }}>
+          {/* Logo */}
+          <View
+            style={{
+              width: 80,
+              height: 80,
+              borderRadius: 40,
+              backgroundColor: colors.primary,
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: 24,
+              shadowColor: colors.primary,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3,
+              shadowRadius: 8,
+              elevation: 8,
+            }}
+          >
+            <Text
+              style={{
+                color: colors.primaryForeground,
+                fontSize: 20,
+                fontWeight: "bold",
+                fontFamily: "Inter-Bold",
+              }}
             >
-              <Text className="font-conviven-semibold text-primary">Sign Up</Text>
-            </TouchableOpacity>
+              LOGO
+            </Text>
           </View>
+
+          {/* Title */}
+          <Text
+            style={{
+              color: colors.foreground,
+              fontSize: 32,
+              fontWeight: "bold",
+              textAlign: "center",
+              marginBottom: 8,
+              fontFamily: "Inter-Bold",
+            }}
+          >
+            Welcome Back
+          </Text>
+
+          {/* Subtitle */}
+          <Text
+            style={{
+              color: colors.mutedForeground,
+              fontSize: 16,
+              textAlign: "center",
+              lineHeight: 24,
+              fontFamily: "Inter-Regular",
+            }}
+          >
+            Sign in to continue to your account
+          </Text>
+        </View>
+
+        {/* Error Message */}
+        {error && (
+          <View
+            style={{
+              width: width * 0.9,
+              maxWidth: 400,
+              backgroundColor: `${colors.destructive}15`,
+              borderWidth: 1,
+              borderColor: `${colors.destructive}30`,
+              borderRadius: 16,
+              padding: 16,
+              marginBottom: 24,
+            }}
+          >
+            <Text
+              style={{
+                color: colors.destructive,
+                fontSize: 14,
+                textAlign: "center",
+                fontFamily: "Inter-Regular",
+              }}
+            >
+              {error}
+            </Text>
+          </View>
+        )}
+
+        {/* Login Form */}
+        <LoginForm onSubmit={handleLogin} isLoading={isLoading} />
+
+        {/* Sign Up Link */}
+        <View
+          style={{
+            marginTop: 32,
+            flexDirection: "row",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <Text
+            style={{
+              color: colors.mutedForeground,
+              fontSize: 16,
+              fontFamily: "Inter-Regular",
+            }}
+          >
+            Don&apos;t have an account?{" "}
+          </Text>
+          <TouchableOpacity onPress={() => router.push("/auth/register")} activeOpacity={0.7}>
+            <Text
+              style={{
+                color: colors.primary,
+                fontSize: 16,
+                fontWeight: "600",
+                fontFamily: "Inter-SemiBold",
+              }}
+            >
+              Sign Up
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
     </ScrollView>

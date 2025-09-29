@@ -28,7 +28,10 @@ export default function RegisterScreen() {
       ]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to register");
-      Alert.alert("Registration Failed", err instanceof Error ? err.message : "Something went wrong");
+      Alert.alert(
+        "Registration Failed",
+        err instanceof Error ? err.message : "Something went wrong",
+      );
     }
   };
 
@@ -45,32 +48,55 @@ export default function RegisterScreen() {
       >
         <View className="w-full max-w-lg">
           <View className="items-center mb-8">
-            <View className="w-20 h-20 bg-primary rounded-full mb-4 items-center justify-center">
-              <Text className="text-xl font-conviven-bold text-primary-foreground">LOGO</Text>
+            <View
+              className="w-20 h-20 rounded-full mb-4 items-center justify-center"
+              style={{ backgroundColor: colors.primary }}
+            >
+              <Text
+                className="text-xl font-conviven-bold"
+                style={{ color: colors.primaryForeground }}
+              >
+                LOGO
+              </Text>
             </View>
-            <Text className="text-3xl font-conviven-bold text-foreground mb-1 text-center">
+            <Text
+              className="text-3xl font-conviven-bold mb-1 text-center"
+              style={{ color: colors.foreground }}
+            >
               Create Account
             </Text>
-            <Text className="font-conviven text-muted-foreground mb-8 text-center">
+            <Text
+              className="font-conviven mb-8 text-center"
+              style={{ color: colors.mutedForeground }}
+            >
               Fill out the details below to get started
             </Text>
           </View>
 
           {error && (
-            <View className="bg-destructive/10 border border-destructive/40 p-3 rounded-xl mb-4">
-              <Text className="text-sm font-conviven text-destructive">{error}</Text>
+            <View
+              className="border p-3 rounded-xl mb-4"
+              style={{
+                backgroundColor: `${colors.destructive}20`,
+                borderColor: `${colors.destructive}40`,
+              }}
+            >
+              <Text className="text-sm font-conviven" style={{ color: colors.destructive }}>
+                {error}
+              </Text>
             </View>
           )}
 
           <RegisterForm onSubmit={handleRegister} isLoading={isLoading} />
 
           <View className="mt-6 flex-row justify-center">
-            <Text className="font-conviven text-muted-foreground">Already have an account? </Text>
-            <TouchableOpacity
-              onPress={() => router.push("/auth/login")}
-              activeOpacity={0.7}
-            >
-              <Text className="font-conviven-semibold text-primary">Sign In</Text>
+            <Text className="font-conviven" style={{ color: colors.mutedForeground }}>
+              Already have an account?
+            </Text>
+            <TouchableOpacity onPress={() => router.push("/auth/login")} activeOpacity={0.7}>
+              <Text className="font-conviven-semibold" style={{ color: colors.primary }}>
+                Sign In
+              </Text>
             </TouchableOpacity>
           </View>
         </View>

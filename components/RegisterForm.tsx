@@ -1,11 +1,27 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import {
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+  Dimensions,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
 
 import { useTheme } from "../context/ThemeContext";
 import { RegisterCredentials } from "../types/user";
 import { City, Department, Neighborhood } from "../types/location";
-import { getCitiesByDepartment, getDepartments, getNeighborhoodsByCity } from "../services/locationService";
-import Button from "./Button";
+import {
+  getCitiesByDepartment,
+  getDepartments,
+  getNeighborhoodsByCity,
+} from "../services/locationService";
+
+const { width } = Dimensions.get("window");
 
 interface RegisterFormProps {
   onSubmit: (credentials: RegisterCredentials) => Promise<void>;
@@ -32,13 +48,13 @@ interface SelectFieldProps {
 }
 
 export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFormProps) {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [birthDate, setBirthDate] = useState("");
-  const [gender, setGender] = useState("MALE");
+  const [firstName, setFirstName] = useState("Antonella");
+  const [lastName, setLastName] = useState("Martinez");
+  const [email, setEmail] = useState("anto@anto.com");
+  const [password, setPassword] = useState("123456");
+  const [confirmPassword, setConfirmPassword] = useState("123456");
+  const [birthDate, setBirthDate] = useState("2003-06-30");
+  const [gender, setGender] = useState("FEMALE");
   const [departmentId, setDepartmentId] = useState("");
   const [cityId, setCityId] = useState("");
   const [neighborhoodId, setNeighborhoodId] = useState("");
@@ -66,10 +82,110 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
     neighborhoodId?: string;
   }>({});
   const { colors } = useTheme();
-  const inputStyle = {
-    backgroundColor: colors.card,
-    color: colors.foreground,
-  };
+
+  const styles = StyleSheet.create({
+    container: {
+      width: width * 0.9,
+      maxWidth: 380,
+      backgroundColor: colors.card,
+      borderRadius: 20,
+      padding: 28,
+      shadowColor: colors.conviven.blue,
+      shadowOffset: { width: 0, height: 12 },
+      shadowOpacity: 0.15,
+      shadowRadius: 20,
+      elevation: 12,
+      borderWidth: 0,
+    },
+    fieldContainer: {
+      marginBottom: 20,
+    },
+    label: {
+      color: colors.foreground,
+      fontSize: 14,
+      fontWeight: "600",
+      marginBottom: 8,
+      fontFamily: "Inter-SemiBold",
+      marginLeft: 4,
+    },
+    inputContainer: {
+      position: "relative",
+    },
+    input: {
+      backgroundColor: colors.background,
+      borderWidth: 1.5,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      fontSize: 16,
+      color: colors.foreground,
+      fontFamily: "Inter-Regular",
+    },
+    inputFocused: {
+      borderColor: colors.conviven.blue,
+      shadowColor: colors.conviven.blue,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.2,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    inputError: {
+      borderColor: colors.destructive,
+    },
+    errorText: {
+      color: colors.destructive,
+      fontSize: 12,
+      marginTop: 6,
+      fontFamily: "Inter-Regular",
+      marginLeft: 4,
+    },
+    helperText: {
+      color: colors.mutedForeground,
+      fontSize: 12,
+      marginTop: 6,
+      fontFamily: "Inter-Regular",
+      marginLeft: 4,
+    },
+    buttonContainer: {
+      marginTop: 16,
+      marginBottom: 16,
+    },
+    button: {
+      backgroundColor: colors.conviven.blue,
+      borderRadius: 12,
+      paddingVertical: 16,
+      alignItems: "center",
+      justifyContent: "center",
+      shadowColor: colors.conviven.blue,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 6,
+    },
+    buttonDisabled: {
+      backgroundColor: colors.muted,
+      shadowOpacity: 0.1,
+    },
+    buttonText: {
+      color: colors.background,
+      fontSize: 16,
+      fontWeight: "700",
+      fontFamily: "Inter-Bold",
+    },
+    buttonTextDisabled: {
+      color: colors.background,
+    },
+    loadingContainer: {
+      marginTop: 16,
+      alignItems: "center",
+    },
+    loadingText: {
+      color: colors.mutedForeground,
+      fontSize: 14,
+      fontFamily: "Inter-Regular",
+      marginTop: 8,
+    },
+  });
 
   useEffect(() => {
     departmentIdRef.current = departmentId;
@@ -123,7 +239,9 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
       }
     } catch (error) {
       if (departmentIdRef.current === selectedDepartmentId) {
-        setCityFetchError(error instanceof Error ? error.message : "No fue posible cargar las ciudades");
+        setCityFetchError(
+          error instanceof Error ? error.message : "No fue posible cargar las ciudades",
+        );
         setCities([]);
       }
     } finally {
@@ -160,51 +278,51 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
     const newErrors: typeof errors = {};
 
     if (!firstName) {
-      newErrors.firstName = "First name is required";
+      newErrors.firstName = "El nombre es requerido";
     }
 
     if (!lastName) {
-      newErrors.lastName = "Last name is required";
+      newErrors.lastName = "El apellido es requerido";
     }
 
     if (!email) {
-      newErrors.email = "Email is required";
+      newErrors.email = "El email es requerido";
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = "Email is invalid";
+      newErrors.email = "El email no es válido";
     }
 
     if (!password) {
-      newErrors.password = "Password is required";
+      newErrors.password = "La contraseña es requerida";
     } else if (password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
+      newErrors.password = "La contraseña debe tener al menos 6 caracteres";
     }
 
     if (password !== confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
+      newErrors.confirmPassword = "Las contraseñas no coinciden";
     }
 
     if (!birthDate) {
-      newErrors.birthDate = "Birth date is required";
+      newErrors.birthDate = "La fecha de nacimiento es requerida";
     } else if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
-      newErrors.birthDate = "Use YYYY-MM-DD format";
+      newErrors.birthDate = "Usa el formato AAAA-MM-DD";
     }
 
     if (!gender) {
-      newErrors.gender = "Gender is required";
+      newErrors.gender = "El género es requerido";
     } else if (!GENDERS.includes(gender.toUpperCase())) {
-      newErrors.gender = `Gender must be one of: ${GENDERS.join(", ")}`;
+      newErrors.gender = `El género debe ser uno de: ${GENDERS.join(", ")}`;
     }
 
     if (!departmentId) {
-      newErrors.departmentId = "Department is required";
+      newErrors.departmentId = "El departamento es requerido";
     }
 
     if (!cityId) {
-      newErrors.cityId = "City is required";
+      newErrors.cityId = "La ciudad es requerida";
     }
 
     if (!neighborhoodId) {
-      newErrors.neighborhoodId = "Neighborhood is required";
+      newErrors.neighborhoodId = "El barrio es requerido";
     }
 
     setErrors(newErrors);
@@ -230,140 +348,147 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
     }
   };
 
-  const inputClass = (hasError?: boolean) =>
-    `p-4 border rounded-xl ${hasError ? "border-destructive" : "border-input"} bg-card text-foreground`;
-
-  const labelClass = "mb-2 text-sm font-conviven text-foreground";
-  const helperClass = "mt-1 text-xs font-conviven text-muted-foreground";
-  const errorClass = "mt-1 text-sm font-conviven text-destructive";
-
   return (
-    <View className="w-full p-5 bg-card rounded-2xl border border-border">
-      <View className="mb-4">
-        <Text className={labelClass}>First Name</Text>
-        <TextInput
-          className={inputClass(errors.firstName)}
-          value={firstName}
-          onChangeText={text => {
-            setFirstName(text);
-            setErrors(prev => ({ ...prev, firstName: undefined }));
-          }}
-          placeholder="Your first name"
-          placeholderTextColor={colors.mutedForeground}
-          autoCapitalize="words"
-          style={inputStyle}
-        />
-        {errors.firstName && <Text className={errorClass}>{errors.firstName}</Text>}
+    <View style={styles.container}>
+      {/* First Name Field */}
+      <View style={styles.fieldContainer}>
+        <Text style={styles.label}>Nombre</Text>
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={[styles.input, errors.firstName ? styles.inputError : styles.inputFocused]}
+            value={firstName}
+            onChangeText={text => {
+              setFirstName(text);
+              setErrors(prev => ({ ...prev, firstName: undefined }));
+            }}
+            placeholder="Tu nombre"
+            placeholderTextColor={colors.mutedForeground}
+            autoCapitalize="words"
+          />
+        </View>
+        {errors.firstName && <Text style={styles.errorText}>{errors.firstName}</Text>}
       </View>
 
-      <View className="mb-4">
-        <Text className={labelClass}>Last Name</Text>
-        <TextInput
-          className={inputClass(errors.lastName)}
-          value={lastName}
-          onChangeText={text => {
-            setLastName(text);
-            setErrors(prev => ({ ...prev, lastName: undefined }));
-          }}
-          placeholder="Your last name"
-          placeholderTextColor={colors.mutedForeground}
-          autoCapitalize="words"
-          style={inputStyle}
-        />
-        {errors.lastName && <Text className={errorClass}>{errors.lastName}</Text>}
+      {/* Last Name Field */}
+      <View style={styles.fieldContainer}>
+        <Text style={styles.label}>Apellido</Text>
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={[styles.input, errors.lastName ? styles.inputError : styles.inputFocused]}
+            value={lastName}
+            onChangeText={text => {
+              setLastName(text);
+              setErrors(prev => ({ ...prev, lastName: undefined }));
+            }}
+            placeholder="Tu apellido"
+            placeholderTextColor={colors.mutedForeground}
+            autoCapitalize="words"
+          />
+        </View>
+        {errors.lastName && <Text style={styles.errorText}>{errors.lastName}</Text>}
       </View>
 
-      <View className="mb-4">
-        <Text className={labelClass}>Email</Text>
-        <TextInput
-          className={inputClass(errors.email)}
-          value={email}
-          onChangeText={text => {
-            setEmail(text);
-            setErrors(prev => ({ ...prev, email: undefined }));
-          }}
-          placeholder="your@email.com"
-          placeholderTextColor={colors.mutedForeground}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          style={inputStyle}
-        />
-        {errors.email && <Text className={errorClass}>{errors.email}</Text>}
+      {/* Email Field */}
+      <View style={styles.fieldContainer}>
+        <Text style={styles.label}>Correo electrónico</Text>
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={[styles.input, errors.email ? styles.inputError : styles.inputFocused]}
+            value={email}
+            onChangeText={text => {
+              setEmail(text);
+              setErrors(prev => ({ ...prev, email: undefined }));
+            }}
+            placeholder="tu@email.com"
+            placeholderTextColor={colors.mutedForeground}
+            autoCapitalize="none"
+            keyboardType="email-address"
+          />
+        </View>
+        {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
       </View>
 
-      <View className="mb-4">
-        <Text className={labelClass}>Password</Text>
-        <TextInput
-          className={inputClass(errors.password)}
-          value={password}
-          onChangeText={text => {
-            setPassword(text);
-            setErrors(prev => ({ ...prev, password: undefined }));
-          }}
-          placeholder="Your password"
-          placeholderTextColor={colors.mutedForeground}
-          secureTextEntry
-          style={inputStyle}
-        />
-        {errors.password && <Text className={errorClass}>{errors.password}</Text>}
+      {/* Password Field */}
+      <View style={styles.fieldContainer}>
+        <Text style={styles.label}>Contraseña</Text>
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={[styles.input, errors.password ? styles.inputError : styles.inputFocused]}
+            value={password}
+            onChangeText={text => {
+              setPassword(text);
+              setErrors(prev => ({ ...prev, password: undefined }));
+            }}
+            placeholder="Tu contraseña"
+            placeholderTextColor={colors.mutedForeground}
+            secureTextEntry
+          />
+        </View>
+        {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
       </View>
 
-      <View className="mb-4">
-        <Text className={labelClass}>Confirm Password</Text>
-        <TextInput
-          className={inputClass(errors.confirmPassword)}
-          value={confirmPassword}
-          onChangeText={text => {
-            setConfirmPassword(text);
-            setErrors(prev => ({ ...prev, confirmPassword: undefined }));
-          }}
-          placeholder="Confirm your password"
-          placeholderTextColor={colors.mutedForeground}
-          secureTextEntry
-          style={inputStyle}
-        />
-        {errors.confirmPassword && <Text className={errorClass}>{errors.confirmPassword}</Text>}
+      {/* Confirm Password Field */}
+      <View style={styles.fieldContainer}>
+        <Text style={styles.label}>Confirmar contraseña</Text>
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={[styles.input, errors.confirmPassword ? styles.inputError : styles.inputFocused]}
+            value={confirmPassword}
+            onChangeText={text => {
+              setConfirmPassword(text);
+              setErrors(prev => ({ ...prev, confirmPassword: undefined }));
+            }}
+            placeholder="Confirma tu contraseña"
+            placeholderTextColor={colors.mutedForeground}
+            secureTextEntry
+          />
+        </View>
+        {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
       </View>
 
-      <View className="mb-4">
-        <Text className={labelClass}>Birth Date</Text>
-        <TextInput
-          className={inputClass(errors.birthDate)}
-          value={birthDate}
-          onChangeText={text => {
-            setBirthDate(text);
-            setErrors(prev => ({ ...prev, birthDate: undefined }));
-          }}
-          placeholder="2001-06-28"
-          placeholderTextColor={colors.mutedForeground}
-          autoCapitalize="none"
-          style={inputStyle}
-        />
-        <Text className={helperClass}>Formato requerido: AAAA-MM-DD</Text>
-        {errors.birthDate && <Text className={errorClass}>{errors.birthDate}</Text>}
+      {/* Birth Date Field */}
+      <View style={styles.fieldContainer}>
+        <Text style={styles.label}>Fecha de nacimiento</Text>
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={[styles.input, errors.birthDate ? styles.inputError : styles.inputFocused]}
+            value={birthDate}
+            onChangeText={text => {
+              setBirthDate(text);
+              setErrors(prev => ({ ...prev, birthDate: undefined }));
+            }}
+            placeholder="2001-06-28"
+            placeholderTextColor={colors.mutedForeground}
+            autoCapitalize="none"
+          />
+        </View>
+        <Text style={styles.helperText}>Formato requerido: AAAA-MM-DD</Text>
+        {errors.birthDate && <Text style={styles.errorText}>{errors.birthDate}</Text>}
       </View>
 
-      <View className="mb-4">
-        <Text className={labelClass}>Gender</Text>
-        <TextInput
-          className={inputClass(errors.gender)}
-          value={gender}
-          onChangeText={text => {
-            setGender(text);
-            setErrors(prev => ({ ...prev, gender: undefined }));
-          }}
-          placeholder={`One of: ${GENDERS.join(", ")}`}
-          placeholderTextColor={colors.mutedForeground}
-          autoCapitalize="characters"
-          style={inputStyle}
-        />
-        <Text className={helperClass}>Valores permitidos: {GENDERS.join(", ")}</Text>
-        {errors.gender && <Text className={errorClass}>{errors.gender}</Text>}
+      {/* Gender Field */}
+      <View style={styles.fieldContainer}>
+        <Text style={styles.label}>Género</Text>
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={[styles.input, errors.gender ? styles.inputError : styles.inputFocused]}
+            value={gender}
+            onChangeText={text => {
+              setGender(text);
+              setErrors(prev => ({ ...prev, gender: undefined }));
+            }}
+            placeholder={`Uno de: ${GENDERS.join(", ")}`}
+            placeholderTextColor={colors.mutedForeground}
+            autoCapitalize="characters"
+          />
+        </View>
+        <Text style={styles.helperText}>Valores permitidos: {GENDERS.join(", ")}</Text>
+        {errors.gender && <Text style={styles.errorText}>{errors.gender}</Text>}
       </View>
 
       <SelectField
-        label="Department"
-        placeholder="Select a department"
+        label="Departamento"
+        placeholder="Selecciona un departamento"
         options={departments.map(item => ({ label: item.name, value: item.id }))}
         selectedValue={departmentId}
         onSelect={value => {
@@ -386,14 +511,18 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
           }
         }}
         error={errors.departmentId ?? departmentFetchError ?? undefined}
-        helperText={!errors.departmentId && !departmentFetchError ? "Seleccioná el departamento donde vivís" : undefined}
+        helperText={
+          !errors.departmentId && !departmentFetchError
+            ? "Seleccioná el departamento donde vivís"
+            : undefined
+        }
         disabled={isLoadingDepartments}
         loading={isLoadingDepartments}
       />
 
       <SelectField
-        label="City"
-        placeholder={departmentId ? "Select a city" : "Choose a department first"}
+        label="Ciudad"
+        placeholder={departmentId ? "Selecciona una ciudad" : "Elige un departamento primero"}
         options={cities.map(item => ({ label: item.name, value: item.id }))}
         selectedValue={cityId}
         onSelect={value => {
@@ -416,8 +545,8 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
       />
 
       <SelectField
-        label="Neighborhood"
-        placeholder={cityId ? "Select a neighborhood" : "Choose a city first"}
+        label="Barrio"
+        placeholder={cityId ? "Selecciona un barrio" : "Elige una ciudad primero"}
         options={neighborhoods.map(item => ({ label: item.name, value: item.id }))}
         selectedValue={neighborhoodId}
         onSelect={value => {
@@ -425,20 +554,34 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
           setErrors(prev => ({ ...prev, neighborhoodId: undefined }));
         }}
         error={errors.neighborhoodId ?? neighborhoodFetchError ?? undefined}
-        helperText={!errors.neighborhoodId && !neighborhoodFetchError ? "Necesitamos tu barrio para completar el registro" : undefined}
+        helperText={
+          !errors.neighborhoodId && !neighborhoodFetchError
+            ? "Necesitamos tu barrio para completar el registro"
+            : undefined
+        }
         disabled={!cityId || isLoadingNeighborhoods || isLoadingCities}
         loading={isLoadingNeighborhoods}
       />
 
-      <Button
-        label={isLoading ? "Creating account..." : "Sign Up"}
-        onPress={handleSubmit}
-        disabled={isLoading}
-      />
+      {/* Register Button */}
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          style={[styles.button, isLoading && styles.buttonDisabled]}
+          onPress={handleSubmit}
+          disabled={isLoading}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.buttonText, isLoading && styles.buttonTextDisabled]}>
+            {isLoading ? "Creando cuenta..." : "Crear Cuenta"}
+          </Text>
+        </TouchableOpacity>
+      </View>
 
+      {/* Loading Indicator */}
       {isLoading && (
-        <View className="mt-4 items-center">
-          <ActivityIndicator size="small" color={colors.primary} />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="small" color={colors.conviven.blue} />
+          <Text style={styles.loadingText}>Por favor espera...</Text>
         </View>
       )}
     </View>
@@ -472,35 +615,137 @@ function SelectField({
     setIsVisible(false);
   };
 
+  const selectStyles = StyleSheet.create({
+    container: {
+      marginBottom: 20,
+    },
+    label: {
+      color: colors.foreground,
+      fontSize: 14,
+      fontWeight: "600",
+      marginBottom: 8,
+      fontFamily: "Inter-SemiBold",
+      marginLeft: 4,
+    },
+    pressable: {
+      backgroundColor: colors.background,
+      borderWidth: 1.5,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    pressableFocused: {
+      borderColor: colors.conviven.blue,
+      shadowColor: colors.conviven.blue,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.2,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    pressableError: {
+      borderColor: colors.destructive,
+    },
+    pressableDisabled: {
+      opacity: 0.6,
+    },
+    text: {
+      fontSize: 16,
+      color: colors.foreground,
+      fontFamily: "Inter-Regular",
+      flex: 1,
+      paddingRight: 16,
+    },
+    textPlaceholder: {
+      color: colors.mutedForeground,
+    },
+    helperText: {
+      color: colors.mutedForeground,
+      fontSize: 12,
+      marginTop: 6,
+      fontFamily: "Inter-Regular",
+      marginLeft: 4,
+    },
+    errorText: {
+      color: colors.destructive,
+      fontSize: 12,
+      marginTop: 6,
+      fontFamily: "Inter-Regular",
+      marginLeft: 4,
+    },
+    modalOverlay: {
+      flex: 1,
+      justifyContent: "flex-end",
+      backgroundColor: "rgba(0, 0, 0, 0.4)",
+    },
+    modalContent: {
+      backgroundColor: colors.card,
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      padding: 16,
+      maxHeight: 480,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: "600",
+      color: colors.foreground,
+      fontFamily: "Inter-SemiBold",
+      marginBottom: 16,
+    },
+    modalScrollView: {
+      maxHeight: 420,
+    },
+    optionItem: {
+      paddingVertical: 12,
+    },
+    optionText: {
+      fontSize: 16,
+      color: colors.foreground,
+      fontFamily: "Inter-Regular",
+    },
+    optionTextSelected: {
+      color: colors.conviven.blue,
+      fontWeight: "600",
+      fontFamily: "Inter-SemiBold",
+    },
+    noOptionsText: {
+      fontSize: 16,
+      color: colors.mutedForeground,
+      fontFamily: "Inter-Regular",
+      textAlign: "center",
+      paddingVertical: 20,
+    },
+    modalOverlayPressable: {
+      flex: 1,
+    },
+  });
+
   return (
-    <View className="mb-4">
-      <Text className="mb-2 text-sm font-conviven text-foreground">{label}</Text>
+    <View style={selectStyles.container}>
+      <Text style={selectStyles.label}>{label}</Text>
       <Pressable
-        className={`p-4 border rounded-xl flex-row items-center justify-between ${
-          error ? "border-destructive" : "border-input"
-        }`}
+        style={[
+          selectStyles.pressable,
+          error ? selectStyles.pressableError : selectStyles.pressableFocused,
+          disabled && selectStyles.pressableDisabled,
+        ]}
         onPress={handleOpen}
         disabled={disabled}
-        style={({ pressed }) => [
-          {
-            backgroundColor: colors.card,
-            borderColor: error ? colors.destructive : colors.input,
-            opacity: disabled ? 0.6 : pressed ? 0.85 : 1,
-          },
-        ]}
       >
         <Text
-          className={`font-conviven flex-1 pr-4 ${selectedOption ? "text-foreground" : "text-muted-foreground"}`}
+          style={[selectStyles.text, !selectedOption && selectStyles.textPlaceholder]}
           numberOfLines={1}
         >
           {selectedOption?.label ?? placeholder}
         </Text>
         {loading && <ActivityIndicator size="small" color={colors.mutedForeground} />}
       </Pressable>
-      {helperText && !error && (
-        <Text className="mt-1 text-xs font-conviven text-muted-foreground">{helperText}</Text>
-      )}
-      {error && <Text className="mt-1 text-sm font-conviven text-destructive">{error}</Text>}
+      {helperText && !error && <Text style={selectStyles.helperText}>{helperText}</Text>}
+      {error && <Text style={selectStyles.errorText}>{error}</Text>}
 
       <Modal
         visible={isVisible}
@@ -508,29 +753,29 @@ function SelectField({
         animationType="fade"
         onRequestClose={() => setIsVisible(false)}
       >
-        <View className="flex-1 justify-end bg-black/40">
-          <Pressable className="flex-1" onPress={() => setIsVisible(false)} accessibilityRole="button" />
-          <View
-            className="bg-card rounded-t-3xl p-4 border-t border-border"
-            style={{ maxHeight: 480 }}
-          >
-            <Text className="text-lg font-conviven-semibold text-foreground mb-4">{label}</Text>
-            <ScrollView style={{ maxHeight: 420 }}>
+        <View style={selectStyles.modalOverlay}>
+          <Pressable
+            style={selectStyles.modalOverlayPressable}
+            onPress={() => setIsVisible(false)}
+            accessibilityRole="button"
+          />
+          <View style={selectStyles.modalContent}>
+            <Text style={selectStyles.modalTitle}>{label}</Text>
+            <ScrollView style={selectStyles.modalScrollView}>
               {options.length === 0 ? (
-                <Text className="font-conviven text-muted-foreground">No hay opciones disponibles</Text>
+                <Text style={selectStyles.noOptionsText}>No hay opciones disponibles</Text>
               ) : (
                 options.map(option => (
                   <Pressable
                     key={option.value}
-                    className="py-3"
+                    style={selectStyles.optionItem}
                     onPress={() => handleSelect(option.value)}
                   >
                     <Text
-                      className={`font-conviven text-base ${
-                        option.value === selectedValue
-                          ? "text-primary font-conviven-semibold"
-                          : "text-foreground"
-                      }`}
+                      style={[
+                        selectStyles.optionText,
+                        option.value === selectedValue && selectStyles.optionTextSelected,
+                      ]}
                     >
                       {option.label}
                     </Text>
