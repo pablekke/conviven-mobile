@@ -1,10 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Alert, ScrollView, Switch, Text, TouchableOpacity, View } from "react-native";
+import { useTheme } from "../../context/ThemeContext";
 
 import Button from "../../components/Button";
 import { useAuth } from "../../context/AuthContext";
-import { useTheme } from "../../context/ThemeContext";
 
 type SettingItemProps = {
   icon: keyof typeof Ionicons.glyphMap;
@@ -49,8 +49,8 @@ const SettingItem: React.FC<SettingItemProps> = ({
         <Switch
           value={value}
           onValueChange={onValueChange}
-          trackColor={{ false: colors.muted, true: colors.conviven.blue }}
-          thumbColor={value ? colors.primary : colors.card}
+          trackColor={{ false: colors.border, true: colors.primary }}
+          thumbColor={value ? colors.primaryForeground : colors.card}
         />
       )}
       {showArrow && !showToggle && (
@@ -79,14 +79,22 @@ export default function SettingsScreen() {
     ]);
   };
 
+  const { colors } = useTheme();
+
   return (
-    <ScrollView className="flex-1 bg-background">
+    <ScrollView className="flex-1" style={{ backgroundColor: colors.background }}>
       <View className="px-4 py-6 gap-6">
         <View>
-          <Text className="px-4 pb-2 text-sm font-conviven-semibold text-muted-foreground uppercase">
+          <Text
+            style={{ color: colors.mutedForeground }}
+            className="px-4 pb-2 text-sm font-conviven-semibold uppercase"
+          >
             Preferences
           </Text>
-          <View className="bg-card rounded-2xl border border-border">
+          <View
+            className="rounded-2xl border"
+            style={{ backgroundColor: colors.card, borderColor: colors.border }}
+          >
             <SettingItem
               icon="notifications-outline"
               title="Notifications"
@@ -95,7 +103,7 @@ export default function SettingsScreen() {
               value={notifications}
               onValueChange={setNotifications}
             />
-            <View className="h-px bg-border mx-4" />
+            <View className="h-px mx-4" style={{ backgroundColor: colors.border }} />
             <SettingItem
               icon="moon-outline"
               title="Dark Mode"
@@ -104,7 +112,7 @@ export default function SettingsScreen() {
               value={theme === "dark"}
               onValueChange={value => setTheme(value ? "dark" : "light")}
             />
-            <View className="h-px bg-border mx-4" />
+            <View className="h-px mx-4" style={{ backgroundColor: colors.border }} />
             <SettingItem
               icon="language-outline"
               title="Language"
@@ -115,16 +123,22 @@ export default function SettingsScreen() {
         </View>
 
         <View>
-          <Text className="px-4 pb-2 text-sm font-conviven-semibold text-muted-foreground uppercase">
+          <Text
+            style={{ color: colors.mutedForeground }}
+            className="px-4 pb-2 text-sm font-conviven-semibold uppercase"
+          >
             Account
           </Text>
-          <View className="bg-card rounded-2xl border border-border">
+          <View
+            className="rounded-2xl border"
+            style={{ backgroundColor: colors.card, borderColor: colors.border }}
+          >
             <SettingItem
               icon="person-outline"
               title="Edit Profile"
               onPress={() => Alert.alert("Edit Profile", "Profile edit screen would appear here")}
             />
-            <View className="h-px bg-border mx-4" />
+            <View className="h-px mx-4" style={{ backgroundColor: colors.border }} />
             <SettingItem
               icon="lock-closed-outline"
               title="Change Password"
@@ -132,7 +146,7 @@ export default function SettingsScreen() {
                 Alert.alert("Change Password", "Password change screen would appear here")
               }
             />
-            <View className="h-px bg-border mx-4" />
+            <View className="h-px mx-4" style={{ backgroundColor: colors.border }} />
             <SettingItem
               icon="shield-checkmark-outline"
               title="Privacy Settings"
@@ -144,16 +158,22 @@ export default function SettingsScreen() {
         </View>
 
         <View>
-          <Text className="px-4 pb-2 text-sm font-conviven-semibold text-muted-foreground uppercase">
+          <Text
+            style={{ color: colors.mutedForeground }}
+            className="px-4 pb-2 text-sm font-conviven-semibold uppercase"
+          >
             Support
           </Text>
-          <View className="bg-card rounded-2xl border border-border">
+          <View
+            className="rounded-2xl border"
+            style={{ backgroundColor: colors.card, borderColor: colors.border }}
+          >
             <SettingItem
               icon="help-circle-outline"
               title="Help Center"
               onPress={() => Alert.alert("Help Center", "Help center screen would appear here")}
             />
-            <View className="h-px bg-border mx-4" />
+            <View className="h-px mx-4" style={{ backgroundColor: colors.border }} />
             <SettingItem
               icon="chatbubble-outline"
               title="Contact Us"

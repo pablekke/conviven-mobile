@@ -1,14 +1,17 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import React from "react";
+import { TouchableOpacity } from "react-native";
 
 import { useTheme } from "../../context/ThemeContext";
+import { useAuth } from "../../context/AuthContext";
 
 /**
  * This is the layout for the authenticated app with tab navigation
  */
 export default function AppLayout() {
   const { colors, theme } = useTheme();
+  const { logout } = useAuth();
 
   const getTabBarIcon = (name: keyof typeof Ionicons.glyphMap) => {
     return ({ color, size }: { color: string; size: number }) => (
@@ -18,9 +21,6 @@ export default function AppLayout() {
 
   return (
     <Tabs
-      sceneContainerStyle={{
-        backgroundColor: colors.background,
-      }}
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: theme === "dark" ? colors.mutedForeground : "#6b7280",
@@ -41,6 +41,11 @@ export default function AppLayout() {
         headerTitleStyle: {
           fontFamily: "Inter-SemiBold",
         },
+        headerRight: () => (
+          <TouchableOpacity onPress={logout} accessibilityLabel="Logout" className="pr-3">
+            <Ionicons name="log-out-outline" size={20} color={colors.primaryForeground} />
+          </TouchableOpacity>
+        ),
       }}
     >
       <Tabs.Screen

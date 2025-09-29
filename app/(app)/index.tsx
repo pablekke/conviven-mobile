@@ -1,10 +1,12 @@
 import React from "react";
 import { ScrollView, Text, View } from "react-native";
+import { useTheme } from "../../context/ThemeContext";
 
 import Button from "../../components/Button";
 import { useAuth } from "../../context/AuthContext";
 
 export default function HomeScreen() {
+  const { colors } = useTheme();
   const { user, logout } = useAuth();
 
   const name =
@@ -12,10 +14,12 @@ export default function HomeScreen() {
   const email = user?.email ?? "No email";
 
   return (
-    <ScrollView className="flex-1 bg-background">
+    <ScrollView className="flex-1" style={{ backgroundColor: colors.background }}>
       <View className="p-6 space-y-6">
         <View className="rounded-2xl bg-accent/60 p-5">
-          <Text className="text-xl font-conviven-bold text-foreground mb-2">👋 Welcome, {name}!</Text>
+          <Text className="text-xl font-conviven-bold text-foreground mb-2">
+            👋 Welcome, {name}!
+          </Text>
           <Text className="font-conviven text-muted-foreground mb-4">
             You&apos;ve successfully logged into the app.
           </Text>
@@ -23,7 +27,9 @@ export default function HomeScreen() {
             <Text className="font-conviven text-sm text-muted-foreground mb-1">Your email:</Text>
             <Text className="font-conviven-semibold text-foreground mb-3">{email}</Text>
             <Text className="font-conviven text-sm text-muted-foreground mb-1">User ID:</Text>
-            <Text className="font-conviven-semibold text-foreground">{user?.id ?? "Not available"}</Text>
+            <Text className="font-conviven-semibold text-foreground">
+              {user?.id ?? "Not available"}
+            </Text>
           </View>
         </View>
 
@@ -31,9 +37,12 @@ export default function HomeScreen() {
           <Text className="text-xl font-conviven-bold text-foreground">Features</Text>
 
           <View className="bg-muted/60 p-4 rounded-xl border border-border">
-            <Text className="font-conviven-semibold text-foreground mb-1">Authentication Ready</Text>
+            <Text className="font-conviven-semibold text-foreground mb-1">
+              Authentication Ready
+            </Text>
             <Text className="font-conviven text-muted-foreground">
-              The app connects to the Conviven backend for login, registration and profile retrieval.
+              The app connects to the Conviven backend for login, registration and profile
+              retrieval.
             </Text>
           </View>
 

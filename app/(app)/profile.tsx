@@ -1,5 +1,6 @@
 import React from "react";
 import { Image, ScrollView, Text, View } from "react-native";
+import { useTheme } from "../../context/ThemeContext";
 
 import Button from "../../components/Button";
 import { useAuth } from "../../context/AuthContext";
@@ -13,6 +14,7 @@ const formatLabel = (label?: string | null) => {
 };
 
 export default function ProfileScreen() {
+  const { colors } = useTheme();
   const { user } = useAuth();
 
   const name =
@@ -28,7 +30,7 @@ export default function ProfileScreen() {
   const neighborhood = user?.neighborhoodName ?? user?.neighborhoodId ?? "Not provided";
 
   return (
-    <ScrollView className="flex-1 bg-background">
+    <ScrollView className="flex-1" style={{ backgroundColor: colors.background }}>
       <View className="items-center p-6">
         <View className="mb-6 items-center">
           {avatar ? (
@@ -46,7 +48,9 @@ export default function ProfileScreen() {
 
         <View className="w-full bg-card rounded-2xl border border-border shadow-sm">
           <View className="p-5 border-b border-border/70">
-            <Text className="text-lg font-conviven-semibold text-foreground mb-3">Profile Information</Text>
+            <Text className="text-lg font-conviven-semibold text-foreground mb-3">
+              Profile Information
+            </Text>
             <View className="gap-3">
               <View>
                 <Text className="text-sm font-conviven text-muted-foreground">Name</Text>
@@ -58,7 +62,9 @@ export default function ProfileScreen() {
               </View>
               <View>
                 <Text className="text-sm font-conviven text-muted-foreground">User ID</Text>
-                <Text className="font-conviven-semibold text-foreground">{formatLabel(user?.id)}</Text>
+                <Text className="font-conviven-semibold text-foreground">
+                  {formatLabel(user?.id)}
+                </Text>
               </View>
               <View>
                 <Text className="text-sm font-conviven text-muted-foreground">Birth Date</Text>

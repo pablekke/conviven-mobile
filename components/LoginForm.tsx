@@ -18,8 +18,8 @@ interface LoginFormProps {
 }
 
 export default function LoginForm({ onSubmit, isLoading = false }: LoginFormProps) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("firulete@ejemplo.com");
+  const [password, setPassword] = useState("contraseña123");
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const { colors } = useTheme();
 

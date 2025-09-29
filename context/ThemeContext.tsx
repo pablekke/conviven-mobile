@@ -1,9 +1,4 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { NativeWindStyleSheet } from "nativewind";
-import {
-  Appearance,
-  AppearancePreferences,
-} from "react-native";
 import {
   createContext,
   useCallback,
@@ -13,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { Appearance } from "react-native";
 
 type ThemeMode = "light" | "dark";
 
@@ -115,8 +111,7 @@ const DARK_COLORS: ThemeColors = {
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
-const getSystemTheme = (): ThemeMode =>
-  Appearance.getColorScheme() === "dark" ? "dark" : "light";
+const getSystemTheme = (): ThemeMode => (Appearance.getColorScheme() === "dark" ? "dark" : "light");
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<ThemeMode>(getSystemTheme);
@@ -154,7 +149,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const handleAppearanceChange = ({ colorScheme }: AppearancePreferences) => {
+    const handleAppearanceChange = ({ colorScheme }: any) => {
       if (hasStoredPreference) {
         return;
       }
@@ -171,9 +166,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     };
   }, [hasStoredPreference]);
 
-  useEffect(() => {
-    NativeWindStyleSheet.setColorScheme(theme);
-  }, [theme]);
+  // NativeWind color scheme is controlled elsewhere via useColorScheme
 
   const setTheme = useCallback((nextTheme: ThemeMode) => {
     setHasStoredPreference(true);

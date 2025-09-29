@@ -1,4 +1,5 @@
 import { Pressable, Text } from "react-native";
+import { useTheme } from "../context/ThemeContext";
 
 type Props = {
   label: string;
@@ -8,23 +9,7 @@ type Props = {
   fullWidth?: boolean;
 };
 
-const VARIANT_STYLES: Record<
-  NonNullable<Props["variant"]>,
-  { container: string; text: string }
-> = {
-  primary: {
-    container: "bg-primary",
-    text: "text-primary-foreground",
-  },
-  secondary: {
-    container: "bg-secondary",
-    text: "text-secondary-foreground",
-  },
-  danger: {
-    container: "bg-destructive",
-    text: "text-destructive-foreground",
-  },
-};
+type Variant = NonNullable<Props["variant"]>;
 
 export default function Button({
   label,
@@ -33,7 +18,39 @@ export default function Button({
   disabled = false,
   fullWidth = true,
 }: Props) {
-  const { container, text } = VARIANT_STYLES[variant];
+  const { colors } = useTheme();
+
+  const resolveBackgroundColor = (v: Variant): string => {
+    if (disabled) {
+      return colors.muted;
+    }
+    switch (v) {
+      case "primary":
+        return colors.primary;
+      case "secondary":
+        return colors.secondary;
+      case "danger":
+        return colors.destructive;
+      default:
+        return colors.primary;
+    }
+  };
+
+  const resolveTextColor = (v: Variant): string => {
+    if (disabled) {
+      return colors.mutedForeground;
+    }
+    switch (v) {
+      case "primary":
+        return colors.primaryForeground;
+      case "secondary":
+        return colors.secondaryForeground;
+      case "danger":
+        return colors.destructiveForeground;
+      default:
+        return colors.primaryForeground;
+    }
+  };
 
   const containerClasses = [
     "rounded-xl",
@@ -42,14 +59,9 @@ export default function Button({
     "px-5",
     "py-3",
     fullWidth ? "w-full" : "self-start",
-    disabled ? "bg-muted opacity-60" : container,
   ].join(" ");
 
-  const textClasses = [
-    "text-base",
-    "font-conviven-semibold",
-    disabled ? "text-muted-foreground" : text,
-  ].join(" ");
+  const textClasses = ["text-base", "font-conviven-semibold"].join(" ");
 
   return (
     <Pressable
@@ -58,9 +70,12 @@ export default function Button({
       disabled={disabled}
       style={({ pressed }) => ({
         opacity: pressed && !disabled ? 0.9 : 1,
+        backgroundColor: resolveBackgroundColor(variant),
       })}
     >
-      <Text className={`${textClasses} text-center`}>{label}</Text>
+      <Text className={`${textClasses} text-center`} style={{ color: resolveTextColor(variant) }}>
+        {label}
+      </Text>
     </Pressable>
   );
 }
