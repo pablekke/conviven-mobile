@@ -1,4 +1,5 @@
 import { Pressable, Text } from "react-native";
+import { useTheme } from "../context/ThemeContext";
 
 type Props = {
   label: string;
@@ -8,6 +9,8 @@ type Props = {
   fullWidth?: boolean;
 };
 
+type Variant = NonNullable<Props["variant"]>;
+
 export default function Button({
   label,
   onPress,
@@ -15,36 +18,64 @@ export default function Button({
   disabled = false,
   fullWidth = true,
 }: Props) {
-  const getBackgroundColor = () => {
-    if (disabled) return "bg-gray-400";
+  const { colors } = useTheme();
 
-    switch (variant) {
+  const resolveBackgroundColor = (v: Variant): string => {
+    if (disabled) {
+      return colors.muted;
+    }
+    switch (v) {
       case "primary":
-        return "bg-indigo-700";
+        return colors.primary;
       case "secondary":
-        return "bg-gray-600";
+        return colors.secondary;
       case "danger":
-        return "bg-red-600";
+        return colors.destructive;
       default:
-        return "bg-indigo-700";
+        return colors.primary;
     }
   };
 
+  const resolveTextColor = (v: Variant): string => {
+    if (disabled) {
+      return colors.mutedForeground;
+    }
+    switch (v) {
+      case "primary":
+        return colors.primaryForeground;
+      case "secondary":
+        return colors.secondaryForeground;
+      case "danger":
+        return colors.destructiveForeground;
+      default:
+        return colors.primaryForeground;
+    }
+  };
+
+  const containerClasses = [
+    "rounded-xl",
+    "items-center",
+    "justify-center",
+    "px-5",
+    "py-3",
+    fullWidth ? "w-full" : "self-start",
+  ].join(" ");
+
+  const textClasses = ["text-base", "font-conviven-semibold"].join(" ");
+
   return (
     <Pressable
-      className={`
-        rounded-lg items-center justify-center p-4 
-        ${getBackgroundColor()}
-        ${fullWidth ? "w-full" : "px-6"}
-        ${disabled ? "opacity-70" : ""}
-      `}
+      className={containerClasses}
       onPress={disabled ? undefined : onPress}
       disabled={disabled}
       style={({ pressed }) => ({
-        opacity: pressed ? 0.8 : 1,
+        opacity: pressed && !disabled ? 0.9 : 1,
+        backgroundColor: resolveBackgroundColor(variant),
       })}
     >
-      <Text className="color-white font-bold text-center text-base">{label}</Text>
+      <Text className={`${textClasses} text-center`} style={{ color: resolveTextColor(variant) }}>
+        {label}
+      </Text>
     </Pressable>
   );
 }

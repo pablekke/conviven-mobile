@@ -3,6 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { User, LoginCredentials, RegisterCredentials } from "../types/user";
 
 const API_BASE_URL = "https://conviven-backend.onrender.com/api";
+// const API_BASE_URL = "http://localhost:4000/api";
 const AUTH_TOKEN_KEY = "auth_token";
 const REFRESH_TOKEN_KEY = "refresh_token";
 const USER_DATA_KEY = "user_data";
@@ -71,11 +72,7 @@ function extractToken(data: any): string | null {
   }
 
   const tokensContainer =
-    data.tokens ||
-    data.tokenData ||
-    data.credentials ||
-    data.session ||
-    data.data?.tokens;
+    data.tokens || data.tokenData || data.credentials || data.session || data.data?.tokens;
 
   if (tokensContainer) {
     const nestedToken = extractToken(tokensContainer);
@@ -135,7 +132,11 @@ function mapUser(data: any): User {
     name: name || "Usuario",
     firstName,
     lastName,
-    avatar: data.avatar || data.avatarUrl || undefined,
+    avatar:
+      data.photoUrl ||
+      (Array.isArray(data.secondaryPhotoUrls) ? data.secondaryPhotoUrls[0] : undefined) ||
+      data.profilePicture ||
+      undefined,
     bio: data.bio || undefined,
     location: data.location || data.address?.name || undefined,
     phone: data.phone || undefined,
@@ -252,8 +253,8 @@ export default class AuthService {
 
     const data = await parseResponse(response);
 
-    let token = extractToken(data);
-    let refreshToken = extractRefreshToken(data) ?? (await getRefreshToken());
+    const token = extractToken(data);
+    const refreshToken = extractRefreshToken(data) ?? (await getRefreshToken());
 
     if (!token) {
       // If the register endpoint doesn't return a token, attempt to log in with the same credentials

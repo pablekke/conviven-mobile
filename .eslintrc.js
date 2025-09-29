@@ -2,6 +2,12 @@ module.exports = {
   root: true,
   extends: ["universe/native", "universe/shared/typescript-analysis", "prettier"],
   plugins: ["react", "react-native", "@typescript-eslint", "prettier"],
+  rules: {
+    "prettier/prettier": "off",
+    "object-curly-newline": "off",
+    "import/order": "off",
+    "sort-imports": "off",
+  },
   overrides: [
     {
       files: ["*.ts", "*.tsx", "*.d.ts"],
