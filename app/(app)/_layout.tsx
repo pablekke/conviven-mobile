@@ -37,25 +37,25 @@ export default function AppLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
+          title: "Descubre",
           tabBarIcon: getTabBarIcon("home-outline"),
-          tabBarLabel: "Home",
+          tabBarLabel: "Descubre",
+        }}
+      />
+      <Tabs.Screen
+        name="chat"
+        options={{
+          title: "Chats",
+          tabBarIcon: getTabBarIcon("chatbubbles-outline"),
+          tabBarLabel: "Chats",
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Profile",
-          tabBarIcon: getTabBarIcon("person-outline"),
-          tabBarLabel: "Profile",
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: "Settings",
-          tabBarIcon: getTabBarIcon("settings-outline"),
-          tabBarLabel: "Settings",
+          title: "Perfil",
+          tabBarIcon: getTabBarIcon("person-circle-outline"),
+          tabBarLabel: "Perfil",
         }}
       />
     </Tabs>
