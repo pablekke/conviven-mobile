@@ -2,7 +2,7 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
 import { useCallback, useEffect } from "react";
-import { ActivityIndicator, Text, View, Text as RNText } from "react-native";
+import { ActivityIndicator, Text, View, Text as RNText, StyleSheet } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useFonts } from "expo-font";
 
@@ -41,7 +41,7 @@ function AuthRoot() {
     return (
       <View
         className="flex-1 items-center justify-center bg-background"
-        style={{ backgroundColor: colors.background }}
+        style={[styles.fullScreen, { backgroundColor: colors.background }]}
       >
         <ActivityIndicator size="large" color={colors.primary} />
         <Text className="text-muted-foreground mt-4 font-conviven">Loading...</Text>
@@ -139,10 +139,19 @@ function ThemedTree() {
   return (
     <SafeAreaView
       key={theme}
-      style={{ flex: 1, backgroundColor: colors.background }}
+      style={[styles.themedTree, { backgroundColor: colors.background }]}
       edges={["top", "left", "right"]}
     >
       <AuthRoot />
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  fullScreen: {
+    flex: 1,
+  },
+  themedTree: {
+    flex: 1,
+  },
+});
