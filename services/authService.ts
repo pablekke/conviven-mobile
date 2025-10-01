@@ -1,50 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { User, LoginCredentials, RegisterCredentials } from "../types/user";
-
-const API_BASE_URL = "https://conviven-backend.onrender.com/api";
-// const API_BASE_URL = "http://localhost:4000/api";
+import { buildUrl, parseResponse, HttpError } from "./apiClient";
 const AUTH_TOKEN_KEY = "auth_token";
 const REFRESH_TOKEN_KEY = "refresh_token";
 const USER_DATA_KEY = "user_data";
-
-class HttpError extends Error {
-  status: number;
-  payload: any;
-
-  constructor(status: number, message: string, payload: any) {
-    super(message);
-    this.status = status;
-    this.payload = payload;
-  }
-}
-
-function buildUrl(path: string): string {
-  return `${API_BASE_URL}${path}`;
-}
-
-async function parseResponse(response: Response): Promise<any> {
-  const contentType = response.headers.get("content-type");
-  let payload: any = null;
-
-  if (contentType?.includes("application/json")) {
-    payload = await response.json();
-  } else {
-    const text = await response.text();
-    payload = text || null;
-  }
-
-  if (!response.ok) {
-    const message =
-      typeof payload === "string"
-        ? payload
-        : payload?.message || payload?.error || `Request failed with status ${response.status}`;
-
-    throw new HttpError(response.status, message, payload);
-  }
-
-  return payload;
-}
 
 function extractToken(data: any): string | null {
   if (!data) {
@@ -163,6 +123,35 @@ async function persistTokens(accessToken: string, refreshToken?: string): Promis
 
 async function getRefreshToken(): Promise<string | null> {
   return AsyncStorage.getItem(REFRESH_TOKEN_KEY);
+}
+
+async function refreshTokens(): Promise<{ accessToken: string; refreshToken: string } | null> {
+  const storedRefreshToken = await getRefreshToken();
+
+  if (!storedRefreshToken) {
+    await AsyncStorage.removeItem(AUTH_TOKEN_KEY);
+    return null;
+  }
+
+  const response = await fetch(buildUrl("/auth/refresh"), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ refreshToken: storedRefreshToken }),
+  });
+
+  const data = await parseResponse(response);
+  const newAccessToken = extractToken(data);
+  const newRefreshToken = extractRefreshToken(data) ?? storedRefreshToken;
+
+  if (!newAccessToken) {
+    throw new Error("No se recibió un nuevo token de acceso al refrescar la sesión");
+  }
+
+  await persistTokens(newAccessToken, newRefreshToken);
+
+  return { accessToken: newAccessToken, refreshToken: newRefreshToken };
 }
 
 function extractRefreshToken(data: any): string | null {
@@ -317,6 +306,23 @@ export default class AuthService {
     return !!token || !!refreshToken;
   }
 
+  static async getAccessToken(): Promise<string | null> {
+    const storedToken = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
+
+    if (storedToken) {
+      return storedToken;
+    }
+
+    try {
+      const refreshed = await refreshTokens();
+      return refreshed?.accessToken ?? null;
+    } catch (error) {
+      console.error("Get access token error:", error);
+      await AsyncStorage.multiRemove([AUTH_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_DATA_KEY]);
+      return null;
+    }
+  }
+
   private static async fetchCurrentUserWithToken(token: string): Promise<User> {
     const response = await fetch(buildUrl("/users/me"), {
       method: "GET",
@@ -333,33 +339,14 @@ export default class AuthService {
   }
 
   private static async tryRefreshSession(): Promise<User | null> {
-    const refreshToken = await getRefreshToken();
-
-    if (!refreshToken) {
-      await AsyncStorage.removeItem(AUTH_TOKEN_KEY);
-      return null;
-    }
-
     try {
-      const response = await fetch(buildUrl("/auth/refresh"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ refreshToken }),
-      });
+      const refreshed = await refreshTokens();
 
-      const data = await parseResponse(response);
-      const newAccessToken = extractToken(data);
-      const newRefreshToken = extractRefreshToken(data) ?? refreshToken;
-
-      if (!newAccessToken) {
-        throw new Error("No se recibió un nuevo token de acceso al refrescar la sesión");
+      if (!refreshed) {
+        return null;
       }
 
-      await persistTokens(newAccessToken, newRefreshToken);
-
-      const user = await this.fetchCurrentUserWithToken(newAccessToken);
+      const user = await this.fetchCurrentUserWithToken(refreshed.accessToken);
       await persistUser(user);
 
       return user;
