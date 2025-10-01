@@ -28,7 +28,10 @@ export default function RegisterScreen() {
       ]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to register");
-      Alert.alert("Registration Failed", err instanceof Error ? err.message : "Something went wrong");
+      Alert.alert(
+        "Registration Failed",
+        err instanceof Error ? err.message : "Something went wrong",
+      );
     }
   };
 
@@ -66,10 +69,7 @@ export default function RegisterScreen() {
 
           <View className="mt-6 flex-row justify-center">
             <Text className="font-conviven text-muted-foreground">Already have an account? </Text>
-            <TouchableOpacity
-              onPress={() => router.push("/auth/login")}
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity onPress={() => router.push("/auth/login")} activeOpacity={0.7}>
               <Text className="font-conviven-semibold text-primary">Sign In</Text>
             </TouchableOpacity>
           </View>

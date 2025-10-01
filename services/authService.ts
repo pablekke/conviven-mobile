@@ -1,7 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { User, LoginCredentials, RegisterCredentials } from "../types/user";
+import { User, LoginCredentials, RegisterCredentials } from "@/types/user";
+
 import { buildUrl, parseResponse, HttpError } from "./apiClient";
+
 const AUTH_TOKEN_KEY = "auth_token";
 const REFRESH_TOKEN_KEY = "refresh_token";
 const USER_DATA_KEY = "user_data";

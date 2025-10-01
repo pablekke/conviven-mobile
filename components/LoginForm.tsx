@@ -1,12 +1,5 @@
 import React, { useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ActivityIndicator, Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 import { useTheme } from "../context/ThemeContext";
 import { LoginCredentials } from "../types/user";

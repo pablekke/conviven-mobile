@@ -60,7 +60,7 @@ export default function HomeScreen() {
   const nextRoomie = useMemo(() => ROOMIES[(currentIndex + 1) % ROOMIES.length], [currentIndex]);
 
   const handleChoice = () => {
-    setCurrentIndex((prev) => (prev + 1) % ROOMIES.length);
+    setCurrentIndex(prev => (prev + 1) % ROOMIES.length);
   };
 
   return (
@@ -71,7 +71,9 @@ export default function HomeScreen() {
             <Text className="text-xs uppercase tracking-[3px] text-muted-foreground font-conviven">
               Explora roomies
             </Text>
-            <Text className="text-3xl font-conviven-bold text-foreground mt-1">Descubre a tu match</Text>
+            <Text className="text-3xl font-conviven-bold text-foreground mt-1">
+              Descubre a tu match
+            </Text>
           </View>
           <View
             className="rounded-full items-center justify-center"
@@ -86,8 +88,14 @@ export default function HomeScreen() {
             className="flex-row items-center gap-2 px-3 py-1 rounded-full"
             style={{ backgroundColor: `${colors.conviven.blue}15` }}
           >
-            <View className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.conviven.blue }} />
-            <Text className="text-xs font-conviven-semibold" style={{ color: colors.conviven.blue }}>
+            <View
+              className="w-2 h-2 rounded-full"
+              style={{ backgroundColor: colors.conviven.blue }}
+            />
+            <Text
+              className="text-xs font-conviven-semibold"
+              style={{ color: colors.conviven.blue }}
+            >
               {activeRoomie.matchScore}% afinidad
             </Text>
           </View>
@@ -117,7 +125,11 @@ export default function HomeScreen() {
               className="rounded-3xl overflow-hidden border"
               style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
             >
-              <Image source={{ uri: activeRoomie.photo }} className="w-full h-72" resizeMode="cover" />
+              <Image
+                source={{ uri: activeRoomie.photo }}
+                className="w-full h-72"
+                resizeMode="cover"
+              />
 
               <View className="p-5 gap-3">
                 <View className="flex-row items-center justify-between">
@@ -133,7 +145,10 @@ export default function HomeScreen() {
                     <Text className="text-[10px] font-conviven text-muted-foreground uppercase tracking-wide">
                       match score
                     </Text>
-                    <Text className="text-xl font-conviven-semibold" style={{ color: colors.conviven.blue }}>
+                    <Text
+                      className="text-xl font-conviven-semibold"
+                      style={{ color: colors.conviven.blue }}
+                    >
                       {activeRoomie.matchScore}%
                     </Text>
                   </View>
@@ -144,13 +159,16 @@ export default function HomeScreen() {
                 </Text>
 
                 <View className="flex-row flex-wrap gap-2">
-                  {activeRoomie.interests.map((interest) => (
+                  {activeRoomie.interests.map(interest => (
                     <View
                       key={interest}
                       className="px-3 py-1 rounded-full"
                       style={{ backgroundColor: `${colors.conviven.blue}12` }}
                     >
-                      <Text className="text-xs font-conviven-semibold" style={{ color: colors.conviven.blue }}>
+                      <Text
+                        className="text-xs font-conviven-semibold"
+                        style={{ color: colors.conviven.blue }}
+                      >
                         #{interest}
                       </Text>
                     </View>
@@ -184,7 +202,10 @@ export default function HomeScreen() {
             accessibilityRole="button"
             onPress={handleChoice}
             className="w-16 h-16 rounded-full items-center justify-center"
-            style={[styles.outlineAction, { backgroundColor: colors.card, borderColor: colors.border }]}
+            style={[
+              styles.outlineAction,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
           >
             <Ionicons name="star" size={26} color={colors.conviven.orange} />
           </Pressable>

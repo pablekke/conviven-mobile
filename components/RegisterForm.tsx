@@ -121,7 +121,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
       <View className="mb-4">
         <Text className={labelClass}>First Name</Text>
         <TextInput
-          className={inputClass(errors.firstName)}
+          className={inputClass(!!errors.firstName)}
           value={firstName}
           onChangeText={text => {
             setFirstName(text);
@@ -138,7 +138,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
       <View className="mb-4">
         <Text className={labelClass}>Last Name</Text>
         <TextInput
-          className={inputClass(errors.lastName)}
+          className={inputClass(!!errors.lastName)}
           value={lastName}
           onChangeText={text => {
             setLastName(text);
@@ -155,7 +155,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
       <View className="mb-4">
         <Text className={labelClass}>Email</Text>
         <TextInput
-          className={inputClass(errors.email)}
+          className={inputClass(!!errors.email)}
           value={email}
           onChangeText={text => {
             setEmail(text);
@@ -173,7 +173,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
       <View className="mb-4">
         <Text className={labelClass}>Password</Text>
         <TextInput
-          className={inputClass(errors.password)}
+          className={inputClass(!!errors.password)}
           value={password}
           onChangeText={text => {
             setPassword(text);
@@ -190,7 +190,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
       <View className="mb-4">
         <Text className={labelClass}>Confirm Password</Text>
         <TextInput
-          className={inputClass(errors.confirmPassword)}
+          className={inputClass(!!errors.confirmPassword)}
           value={confirmPassword}
           onChangeText={text => {
             setConfirmPassword(text);
@@ -207,7 +207,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
       <View className="mb-4">
         <Text className={labelClass}>Birth Date</Text>
         <TextInput
-          className={inputClass(errors.birthDate)}
+          className={inputClass(!!errors.birthDate)}
           value={birthDate}
           onChangeText={text => {
             setBirthDate(text);
@@ -225,7 +225,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
       <View className="mb-4">
         <Text className={labelClass}>Gender</Text>
         <TextInput
-          className={inputClass(errors.gender)}
+          className={inputClass(!!errors.gender)}
           value={gender}
           onChangeText={text => {
             setGender(text);
@@ -243,7 +243,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
       <View className="mb-4">
         <Text className={labelClass}>Department ID</Text>
         <TextInput
-          className={inputClass(errors.departmentId)}
+          className={inputClass(!!errors.departmentId)}
           value={departmentId}
           onChangeText={text => {
             setDepartmentId(text);
@@ -261,7 +261,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
       <View className="mb-6">
         <Text className={labelClass}>Neighborhood ID</Text>
         <TextInput
-          className={inputClass(errors.neighborhoodId)}
+          className={inputClass(!!errors.neighborhoodId)}
           value={neighborhoodId}
           onChangeText={text => {
             setNeighborhoodId(text);

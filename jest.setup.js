@@ -20,7 +20,7 @@ jest.mock("react-native/Libraries/TurboModule/TurboModuleRegistry", () => {
             appSettings: {},
           }),
           get: () => null,
-          setValues: () => { },
+          setValues: () => {},
         };
       }
       if (name === "DeviceInfo") {

@@ -53,7 +53,7 @@ export default class MessageService {
       },
     });
 
-    const data = await parseResponse<any[]>(response);
+    const data = await parseResponse(response);
 
     if (!Array.isArray(data)) {
       throw new Error("Formato de mensajes inesperado");
@@ -83,7 +83,7 @@ export default class MessageService {
       body: JSON.stringify({ content: normalizedContent }),
     });
 
-    const data = await parseResponse<any>(response);
+    const data = await parseResponse(response);
     return mapMessage(data);
   }
 }

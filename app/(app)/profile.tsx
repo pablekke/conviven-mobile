@@ -44,7 +44,8 @@ export default function ProfileScreen() {
   const { user } = useAuth();
 
   const name = useMemo(
-    () => user?.name ?? [user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Sin nombre",
+    () =>
+      user?.name ?? ([user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Sin nombre"),
     [user?.firstName, user?.lastName, user?.name],
   );
 
@@ -54,17 +55,16 @@ export default function ProfileScreen() {
   }, [user?.neighborhoodId, user?.neighborhoodName]);
 
   const lifestyleBadges = useMemo(
-    () =>
-      [
-        formatLabel(user?.profession ?? user?.jobTitle, "Team orden"),
-        formatLabel(user?.petFriendly ? "Pet friendly" : undefined, "Buen roomie"),
-        formatLabel(user?.hobby, "Lover de espacios chill"),
-      ],
+    () => [
+      formatLabel(user?.profession ?? user?.jobTitle, "Team orden"),
+      formatLabel(user?.petFriendly ? "Pet friendly" : undefined, "Buen roomie"),
+      formatLabel(user?.hobby, "Lover de espacios chill"),
+    ],
     [user?.hobby, user?.petFriendly, user?.profession, user?.jobTitle],
   );
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}> 
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <ScrollView
         className="flex-1"
         contentContainerStyle={styles.scrollContent}
@@ -79,7 +79,10 @@ export default function ProfileScreen() {
                 className="w-28 h-28 rounded-full items-center justify-center"
                 style={{ backgroundColor: `${colors.conviven.blue}15` }}
               >
-                <Text className="text-3xl font-conviven-bold" style={{ color: colors.conviven.blue }}>
+                <Text
+                  className="text-3xl font-conviven-bold"
+                  style={{ color: colors.conviven.blue }}
+                >
                   {name.charAt(0).toUpperCase()}
                 </Text>
               </View>
@@ -96,7 +99,9 @@ export default function ProfileScreen() {
           <Text className="text-sm font-conviven text-muted-foreground mt-1">
             {formatLabel(user?.profession ?? user?.jobTitle, "Perfil roomie en construcción")}
           </Text>
-          <Text className="text-sm font-conviven text-muted-foreground mt-2">{formatLabel(user?.email)}</Text>
+          <Text className="text-sm font-conviven text-muted-foreground mt-2">
+            {formatLabel(user?.email)}
+          </Text>
 
           <View className="flex-row gap-2 mt-4 flex-wrap justify-center">
             {lifestyleBadges.map((badge, index) => (
@@ -112,7 +117,9 @@ export default function ProfileScreen() {
           <Text className="text-xs font-conviven-semibold uppercase tracking-[3px] text-muted-foreground">
             Tu vibe
           </Text>
-          <Text className="text-xl font-conviven-bold text-foreground mt-2 leading-7">{heroMessage}</Text>
+          <Text className="text-xl font-conviven-bold text-foreground mt-2 leading-7">
+            {heroMessage}
+          </Text>
           <Text className="text-sm font-conviven text-muted-foreground mt-3">
             Actualiza tu bio y preferencias para que encontremos roomies alineados a tu energía,
             horarios y estilo de vida.
@@ -130,8 +137,14 @@ export default function ProfileScreen() {
 
         <Section title="Ubicación y comunidad">
           <View className="gap-3">
-            <InfoRow label="Departamento" value={formatLabel(user?.departmentName ?? user?.departmentId)} />
-            <InfoRow label="Barrio" value={formatLabel(user?.neighborhoodName ?? user?.neighborhoodId)} />
+            <InfoRow
+              label="Departamento"
+              value={formatLabel(user?.departmentName ?? user?.departmentId)}
+            />
+            <InfoRow
+              label="Barrio"
+              value={formatLabel(user?.neighborhoodName ?? user?.neighborhoodId)}
+            />
             <InfoRow label="Dirección de referencia" value={formatLabel(user?.location)} />
           </View>
         </Section>
@@ -166,7 +179,10 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <View className="flex-row items-center justify-between">
       <Text className="text-sm font-conviven text-muted-foreground">{label}</Text>
-      <Text className="text-sm font-conviven-semibold text-foreground" style={{ color: colors.foreground }}>
+      <Text
+        className="text-sm font-conviven-semibold text-foreground"
+        style={{ color: colors.foreground }}
+      >
         {value}
       </Text>
     </View>

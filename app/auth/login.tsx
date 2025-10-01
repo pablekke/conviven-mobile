@@ -58,11 +58,10 @@ export default function LoginScreen() {
           <LoginForm onSubmit={handleLogin} isLoading={isLoading} />
 
           <View className="mt-6 flex-row justify-center">
-            <Text className="font-conviven text-muted-foreground">Don&apos;t have an account? </Text>
-            <TouchableOpacity
-              onPress={() => router.push("/auth/register")}
-              activeOpacity={0.7}
-            >
+            <Text className="font-conviven text-muted-foreground">
+              Don&apos;t have an account?{" "}
+            </Text>
+            <TouchableOpacity onPress={() => router.push("/auth/register")} activeOpacity={0.7}>
               <Text className="font-conviven-semibold text-primary">Sign Up</Text>
             </TouchableOpacity>
           </View>

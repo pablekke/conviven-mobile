@@ -60,7 +60,7 @@ export default function ChatScreen() {
 
       <FlatList
         data={CHAT_PREVIEWS}
-        keyExtractor={(item) => item.id}
+        keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (
           <View
@@ -73,7 +73,9 @@ export default function ChatScreen() {
             <Image source={{ uri: item.avatar }} className="w-14 h-14 rounded-full" />
             <View className="flex-1">
               <View className="flex-row items-center justify-between">
-                <Text className="text-base font-conviven-semibold text-foreground">{item.name}</Text>
+                <Text className="text-base font-conviven-semibold text-foreground">
+                  {item.name}
+                </Text>
                 <Text className="text-xs font-conviven text-muted-foreground">{item.time}</Text>
               </View>
               <Text className="text-sm font-conviven text-muted-foreground mt-1" numberOfLines={1}>
