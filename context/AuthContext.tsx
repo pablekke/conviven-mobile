@@ -1,14 +1,24 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+  useCallback,
+} from "react";
 import { Alert } from "react-native";
 
 import AuthService from "../services/authService";
-import { AuthState, LoginCredentials, RegisterCredentials } from "../types/user";
+import { AuthState, LoginCredentials, RegisterCredentials, User } from "../types/user";
 
 interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (credentials: RegisterCredentials) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
+  refreshUser: () => Promise<User | null>;
+  updateUser: (updates: Partial<User>) => Promise<void>;
+  setUser: (user: User | null) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -20,6 +30,9 @@ const AuthContext = createContext<AuthContextType>({
   register: async () => {},
   logout: async () => {},
   clearError: () => {},
+  refreshUser: async () => null,
+  updateUser: async () => {},
+  setUser: async () => {},
 });
 
 interface AuthProviderProps {
@@ -147,12 +160,74 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setState(prev => ({ ...prev, error: null }));
   };
 
+  const refreshUser = useCallback(async () => {
+    setState(prev => ({ ...prev, isLoading: true }));
+
+    try {
+      const refreshedUser = await AuthService.getCurrentUser();
+      await AuthService.saveUser(refreshedUser);
+
+      setState({
+        user: refreshedUser,
+        isAuthenticated: !!refreshedUser,
+        isLoading: false,
+        error: null,
+      });
+
+      return refreshedUser ?? null;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to refresh user";
+
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: message,
+      }));
+
+      return null;
+    }
+  }, []);
+
+  const setUserValue = useCallback(async (nextUser: User | null) => {
+    setState(prev => ({
+      ...prev,
+      user: nextUser,
+      isAuthenticated: !!nextUser,
+    }));
+
+    await AuthService.saveUser(nextUser);
+  }, []);
+
+  const updateUser = useCallback(async (updates: Partial<User>) => {
+    let mergedUser: User | null = null;
+
+    setState(prev => {
+      if (!prev.user) {
+        mergedUser = null;
+        return prev;
+      }
+
+      mergedUser = { ...prev.user, ...updates };
+
+      return {
+        ...prev,
+        user: mergedUser,
+        isAuthenticated: prev.isAuthenticated || !!mergedUser,
+      };
+    });
+
+    await AuthService.saveUser(mergedUser);
+  }, []);
+
   const contextValue: AuthContextType = {
     ...state,
     login,
     register,
     logout,
     clearError,
+    refreshUser,
+    updateUser,
+    setUser: setUserValue,
   };
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;

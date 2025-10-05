@@ -1,4 +1,4 @@
-import { Gender, User, UserRole, UserStatus, VerificationStatus } from "@/types/user";
+import { City, Department, Gender, User, UserRole, UserStatus, VerificationStatus } from "@/types/user";
 
 const normalizeString = (value: any): string | undefined => {
   if (typeof value === "string" && value.trim() !== "") {
@@ -83,8 +83,16 @@ export function mapUserFromApi(payload: any): User {
     normalizeString(payload.profile?.lastName) ??
     undefined;
 
-  const department = payload.department ?? payload.departmentInfo ?? {};
-  const neighborhood = payload.neighborhood ?? payload.neighborhoodInfo ?? {};
+  const department: Partial<Department> =
+    payload.department ?? payload.departmentInfo ?? payload.departmentData ?? {};
+  const neighborhood = payload.neighborhood ?? payload.neighborhoodInfo ?? payload.neighborhoodData ?? {};
+  const city: Partial<City> =
+    payload.city ??
+    payload.cityInfo ??
+    payload.cityData ??
+    neighborhood.city ??
+    neighborhood.cityInfo ??
+    {};
 
   const composedName = `${firstName ?? ""} ${lastName ?? ""}`.trim();
   const rawName = normalizeString(payload.name);
@@ -140,9 +148,24 @@ export function mapUserFromApi(payload: any): User {
     phone: normalizeString(payload.phone) ?? normalizeString(payload.phoneNumber),
     birthDate: normalizeString(payload.birthDate) ?? normalizeString(payload.birthdate),
     gender: parseGender(payload.gender),
-    departmentId: department.id ?? payload.departmentId ?? normalizeString(payload.department_id),
+    departmentId:
+      department.id ??
+      city.departmentId ??
+      payload.departmentId ??
+      normalizeString(payload.department_id),
     departmentName:
-      normalizeString(department.name) ?? normalizeString(payload.departmentName),
+      normalizeString(department.name) ??
+      normalizeString(city.department?.name) ??
+      normalizeString(payload.departmentName),
+    cityId:
+      city.id ??
+      payload.cityId ??
+      payload.city_id ??
+      (typeof neighborhood.cityId === "string" ? neighborhood.cityId : undefined),
+    cityName:
+      normalizeString(city.name) ??
+      normalizeString(payload.cityName) ??
+      normalizeString(neighborhood.cityName),
     neighborhoodId:
       neighborhood.id ??
       payload.neighborhoodId ??

@@ -240,6 +240,15 @@ export default class AuthService {
     return user;
   }
 
+  static async saveUser(user: User | null): Promise<void> {
+    if (!user) {
+      await AsyncStorage.removeItem(USER_DATA_KEY);
+      return;
+    }
+
+    await persistUser(user);
+  }
+
   static async logout(): Promise<void> {
     await AsyncStorage.multiRemove([AUTH_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_DATA_KEY]);
   }

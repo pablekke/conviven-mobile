@@ -1,142 +1,108 @@
-import { API_BASE_URL, API_TIMEOUT } from "@/config/env";
-import { City, Department, Neighborhood } from "@/types/location";
+import AuthService from "./authService";
+import { buildUrl, parseResponse } from "./apiClient";
+import { City, Department, Neighborhood } from "@/types/user";
 
-interface RequestOptions {
-  signal?: AbortSignal;
+async function request(path: string, options: RequestInit = {}): Promise<any> {
+  const token = await AuthService.getAccessToken();
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+    ...(options.headers ? (options.headers as Record<string, string>) : {}),
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(buildUrl(path), {
+    ...options,
+    headers,
+  });
+
+  return parseResponse(response);
 }
 
-async function request(path: string, options: RequestOptions = {}): Promise<any> {
-  const controller = options.signal ? null : new AbortController();
-  const signal = options.signal ?? controller?.signal;
-
-  const timeout = controller
-    ? setTimeout(() => {
-        if (!controller.signal.aborted) {
-          controller.abort();
-        }
-      }, API_TIMEOUT)
-    : null;
-
-  try {
-    const response = await fetch(`${API_BASE_URL}${path}`, { signal: signal ?? undefined });
-
-    const contentType = response.headers.get("content-type");
-    const isJson = contentType?.includes("application/json");
-    const payload = isJson ? await response.json() : await response.text();
-
-    if (!response.ok) {
-      const message =
-        typeof payload === "string"
-          ? payload || `Request failed with status ${response.status}`
-          : payload?.message || payload?.error || `Request failed with status ${response.status}`;
-
-      throw new Error(message);
-    }
-
-    return payload;
-  } finally {
-    if (timeout) {
-      clearTimeout(timeout);
-    }
+function mapDepartment(data: any): Department {
+  if (!data || typeof data !== "object") {
+    throw new Error("Invalid department payload");
   }
+
+  return {
+    id: String(data.id ?? data.uuid ?? ""),
+    name: String(data.name ?? ""),
+  };
 }
 
-function ensureArray(data: any): any[] {
-  if (Array.isArray(data)) {
-    return data;
+function mapCity(data: any): City {
+  if (!data || typeof data !== "object") {
+    throw new Error("Invalid city payload");
   }
 
-  if (data && typeof data === "object") {
-    if (Array.isArray(data.data)) {
-      return data.data;
-    }
+  const departmentRaw = data.department ?? data.departmentInfo ?? data.departmentData;
 
-    if (Array.isArray(data.items)) {
-      return data.items;
-    }
-
-    if (Array.isArray(data.results)) {
-      return data.results;
-    }
-
-    if (Array.isArray(data.content)) {
-      return data.content;
-    }
-
-    if (data.data && typeof data.data === "object") {
-      const nested = ensureArray(data.data);
-      if (nested.length > 0) {
-        return nested;
-      }
-    }
-  }
-
-  return [];
+  return {
+    id: String(data.id ?? data.uuid ?? ""),
+    name: String(data.name ?? ""),
+    departmentId: String(data.departmentId ?? data.department_id ?? departmentRaw?.id ?? ""),
+    department: departmentRaw ? mapDepartment(departmentRaw) : undefined,
+  };
 }
 
-function mapLocation<T extends { id: string; name: string }>(item: any): T | null {
-  if (!item || typeof item !== "object") {
-    return null;
+function mapNeighborhood(data: any): Neighborhood {
+  if (!data || typeof data !== "object") {
+    throw new Error("Invalid neighborhood payload");
   }
 
-  const id = String(item.id ?? item._id ?? item.value ?? item.code ?? "").trim();
-  const name = String(item.name ?? item.title ?? item.label ?? "").trim();
+  const cityRaw = data.city ?? data.cityInfo ?? data.cityData;
 
-  if (!id || !name) {
-    return null;
-  }
-
-  const base: any = { id, name };
-
-  if (item.departmentId || item.department?.id) {
-    base.departmentId = String(item.departmentId ?? item.department?.id);
-  }
-
-  if (item.cityId || item.city?.id) {
-    base.cityId = String(item.cityId ?? item.city?.id);
-  }
-
-  return base as T;
+  return {
+    id: String(data.id ?? data.uuid ?? ""),
+    name: String(data.name ?? ""),
+    cityId: String(data.cityId ?? data.city_id ?? cityRaw?.id ?? ""),
+    city: cityRaw ? mapCity(cityRaw) : undefined,
+  };
 }
 
-export async function getDepartments(options?: RequestOptions): Promise<Department[]> {
-  const payload = await request("/locations/departments?page=1&limit=200", options);
-  const list = ensureArray(payload);
-  return list
-    .map(item => mapLocation<Department>(item))
-    .filter((item): item is Department => Boolean(item));
-}
+const LocationService = {
+  async listDepartments(): Promise<Department[]> {
+    const data = await request("/departments");
+    const departmentsArray = Array.isArray(data) ? data : data?.data ?? [];
+    return departmentsArray.map(mapDepartment);
+  },
 
-export async function getCitiesByDepartment(
-  departmentId: string,
-  options?: RequestOptions,
-): Promise<City[]> {
-  if (!departmentId) {
-    return [];
-  }
+  async getDepartment(id: string): Promise<Department> {
+    const data = await request(`/departments/${id}`);
+    return mapDepartment(data?.department ?? data);
+  },
 
-  const payload = await request(
-    `/locations/cities?departmentId=${encodeURIComponent(departmentId)}`,
-    options,
-  );
-  const list = ensureArray(payload);
-  return list.map(item => mapLocation<City>(item)).filter((item): item is City => Boolean(item));
-}
+  async listCities(departmentId?: string): Promise<City[]> {
+    const data = await request("/cities");
+    const citiesArray = Array.isArray(data) ? data : data?.data ?? [];
+    const cities = citiesArray.map(mapCity);
+    if (!departmentId) {
+      return cities;
+    }
+    return cities.filter(city => city.departmentId === departmentId);
+  },
 
-export async function getNeighborhoodsByCity(
-  cityId: string,
-  options?: RequestOptions,
-): Promise<Neighborhood[]> {
-  if (!cityId) {
-    return [];
-  }
+  async getCity(id: string): Promise<City> {
+    const data = await request(`/cities/${id}`);
+    return mapCity(data?.city ?? data);
+  },
 
-  const payload = await request(
-    `/locations/neighborhoods?cityId=${encodeURIComponent(cityId)}`,
-    options,
-  );
-  const list = ensureArray(payload);
-  return list
-    .map(item => mapLocation<Neighborhood>(item))
-    .filter((item): item is Neighborhood => Boolean(item));
-}
+  async listNeighborhoods(cityId?: string): Promise<Neighborhood[]> {
+    const data = await request("/neighborhoods");
+    const neighborhoodsArray = Array.isArray(data) ? data : data?.data ?? [];
+    const neighborhoods = neighborhoodsArray.map(mapNeighborhood);
+    if (!cityId) {
+      return neighborhoods;
+    }
+    return neighborhoods.filter(neighborhood => neighborhood.cityId === cityId);
+  },
+
+  async getNeighborhood(id: string): Promise<Neighborhood> {
+    const data = await request(`/neighborhoods/${id}`);
+    return mapNeighborhood(data?.neighborhood ?? data);
+  },
+};
+
+export default LocationService;

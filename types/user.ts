@@ -34,6 +34,25 @@ export interface RoommatePreferences {
   notes?: string;
 }
 
+export interface Department {
+  id: string;
+  name: string;
+}
+
+export interface City {
+  id: string;
+  name: string;
+  departmentId: string;
+  department?: Department;
+}
+
+export interface Neighborhood {
+  id: string;
+  name: string;
+  cityId: string;
+  city?: City;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -48,6 +67,8 @@ export interface User {
   gender?: Gender;
   departmentId?: string;
   departmentName?: string;
+  cityId?: string;
+  cityName?: string;
   neighborhoodId?: string;
   neighborhoodName?: string;
   role?: UserRole;
@@ -119,6 +140,11 @@ export interface UpdateUserPayload {
   lastName?: string;
   phone?: string;
   bio?: string;
+  departmentId?: string;
+  neighborhoodId?: string;
+  gender?: Gender;
+  birthDate?: string;
+  location?: string;
 }
 
 export interface UserListQuery {

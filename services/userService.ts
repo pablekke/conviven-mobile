@@ -143,6 +143,32 @@ const UserService = {
     return mapUserFromApi(userPayload);
   },
 
+  async updateAvatar(
+    id: string,
+    asset: { uri: string; name?: string; type?: string },
+  ): Promise<User> {
+    const formData = new FormData();
+    formData.append(
+      "avatar",
+      {
+        uri: asset.uri,
+        name: asset.name ?? `avatar-${Date.now()}.jpg`,
+        type: asset.type ?? "image/jpeg",
+      } as any,
+    );
+
+    const data = await authorizedRequest(`/users/${id}/avatar`, {
+      method: "PUT",
+      body: formData,
+      headers: {
+        Accept: "application/json",
+      },
+    });
+
+    const userPayload = extractUserPayload(data);
+    return mapUserFromApi(userPayload);
+  },
+
   async remove(id: string): Promise<void> {
     await authorizedRequest(`/users/${id}`, {
       method: "DELETE",
