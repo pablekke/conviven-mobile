@@ -1,8 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { User, LoginCredentials, RegisterCredentials } from "@/types/user";
-
+import { mapUserFromApi } from "./mappers/userMapper";
 import { buildUrl, parseResponse, HttpError } from "./apiClient";
+import { API } from "@/constants";
 
 const AUTH_TOKEN_KEY = "auth_token";
 const REFRESH_TOKEN_KEY = "refresh_token";
@@ -71,46 +72,6 @@ function extractToken(data: any): string | null {
   return null;
 }
 
-function mapUser(data: any): User {
-  if (!data || typeof data !== "object") {
-    throw new Error("Invalid user payload received from server");
-  }
-
-  const firstName = data.firstName || data.firstname || data.name?.split(" ")?.[0] || undefined;
-  const lastName = data.lastName || data.lastname || undefined;
-  const department = data.department || {};
-  const neighborhood = data.neighborhood || {};
-
-  const composedName = `${firstName ?? ""} ${lastName ?? ""}`.trim();
-  const name =
-    (typeof data.name === "string" && data.name.trim()) ||
-    (composedName.length > 0 ? composedName : undefined) ||
-    data.email ||
-    undefined;
-
-  return {
-    id: data.id || data._id || "",
-    email: data.email || "",
-    name: name || "Usuario",
-    firstName,
-    lastName,
-    avatar:
-      data.photoUrl ||
-      (Array.isArray(data.secondaryPhotoUrls) ? data.secondaryPhotoUrls[0] : undefined) ||
-      data.profilePicture ||
-      undefined,
-    bio: data.bio || undefined,
-    location: data.location || data.address?.name || undefined,
-    phone: data.phone || undefined,
-    birthDate: data.birthDate || data.birthdate || undefined,
-    gender: data.gender || undefined,
-    departmentId: department.id || data.departmentId || undefined,
-    departmentName: department.name || undefined,
-    neighborhoodId: neighborhood.id || data.neighborhoodId || undefined,
-    neighborhoodName: neighborhood.name || undefined,
-  };
-}
-
 async function persistUser(user: User): Promise<void> {
   await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(user));
 }
@@ -135,7 +96,7 @@ async function refreshTokens(): Promise<{ accessToken: string; refreshToken: str
     return null;
   }
 
-  const response = await fetch(buildUrl("/auth/refresh"), {
+  const response = await fetch(buildUrl(API.REFRESH), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -190,7 +151,7 @@ function extractRefreshToken(data: any): string | null {
 
 export default class AuthService {
   static async login(credentials: LoginCredentials): Promise<User> {
-    const response = await fetch(buildUrl("/auth/login"), {
+    const response = await fetch(buildUrl(API.LOGIN), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -214,7 +175,7 @@ export default class AuthService {
     let user: User;
 
     if (userPayload) {
-      user = mapUser(userPayload);
+      user = mapUserFromApi(userPayload);
     } else {
       user = await this.fetchCurrentUserWithToken(token);
     }
@@ -225,21 +186,27 @@ export default class AuthService {
   }
 
   static async register(credentials: RegisterCredentials): Promise<User> {
+    const registerPayload: Record<string, unknown> = {
+      email: credentials.email,
+      password: credentials.password,
+      firstName: credentials.firstName,
+      lastName: credentials.lastName,
+      birthDate: credentials.birthDate,
+      gender: credentials.gender,
+      departmentId: credentials.departmentId,
+      neighborhoodId: credentials.neighborhoodId,
+    };
+
+    if (credentials.role) {
+      registerPayload.role = credentials.role;
+    }
+
     const response = await fetch(buildUrl("/users/register"), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        email: credentials.email,
-        password: credentials.password,
-        firstName: credentials.firstName,
-        lastName: credentials.lastName,
-        birthDate: credentials.birthDate,
-        gender: credentials.gender,
-        departmentId: credentials.departmentId,
-        neighborhoodId: credentials.neighborhoodId,
-      }),
+      body: JSON.stringify(registerPayload),
     });
 
     const data = await parseResponse(response);
@@ -263,7 +230,7 @@ export default class AuthService {
     let user: User;
 
     if (userPayload) {
-      user = mapUser(userPayload);
+      user = mapUserFromApi(userPayload);
     } else {
       user = await this.fetchCurrentUserWithToken(token);
     }
@@ -271,6 +238,15 @@ export default class AuthService {
     await persistUser(user);
 
     return user;
+  }
+
+  static async saveUser(user: User | null): Promise<void> {
+    if (!user) {
+      await AsyncStorage.removeItem(USER_DATA_KEY);
+      return;
+    }
+
+    await persistUser(user);
   }
 
   static async logout(): Promise<void> {
@@ -336,7 +312,7 @@ export default class AuthService {
     const data = await parseResponse(response);
 
     const userPayload = data.user || data.data || data;
-    const user = mapUser(userPayload);
+    const user = mapUserFromApi(userPayload);
     return user;
   }
 
