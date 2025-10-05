@@ -1,9 +1,13 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Text, TextInput, View } from "react-native";
+import { Picker } from "@react-native-picker/picker";
 
 import { useTheme } from "../context/ThemeContext";
 import { RegisterCredentials } from "../types/user";
+import { City, Department, Neighborhood } from "@/types/user";
 import Button from "./Button";
+import LocationService from "@/services/locationService";
+import { TEXTS } from "@/constants";
 
 interface RegisterFormProps {
   onSubmit: (credentials: RegisterCredentials) => Promise<void>;
@@ -21,7 +25,16 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
   const [birthDate, setBirthDate] = useState("");
   const [gender, setGender] = useState("MALE");
   const [departmentId, setDepartmentId] = useState("");
+  const [cityId, setCityId] = useState("");
   const [neighborhoodId, setNeighborhoodId] = useState("");
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [cities, setCities] = useState<City[]>([]);
+  const [neighborhoods, setNeighborhoods] = useState<Neighborhood[]>([]);
+  const [locationLoading, setLocationLoading] = useState({
+    departments: false,
+    cities: false,
+    neighborhoods: false,
+  });
   const [errors, setErrors] = useState<{
     firstName?: string;
     lastName?: string;
@@ -31,6 +44,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
     birthDate?: string;
     gender?: string;
     departmentId?: string;
+    cityId?: string;
     neighborhoodId?: string;
   }>({});
   const { colors } = useTheme();
@@ -82,6 +96,10 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
       newErrors.departmentId = "Department ID is required";
     }
 
+    if (!cityId) {
+      newErrors.cityId = "City ID is required";
+    }
+
     if (!neighborhoodId) {
       newErrors.neighborhoodId = "Neighborhood ID is required";
     }
@@ -101,6 +119,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
           birthDate,
           gender: gender.toUpperCase(),
           departmentId,
+          cityId,
           neighborhoodId,
         });
       } catch (error) {
@@ -111,10 +130,85 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
 
   const inputClass = (hasError?: boolean) =>
     `p-4 border rounded-xl ${hasError ? "border-destructive" : "border-input"} bg-card text-foreground`;
+  const pickerContainerClass = (hasError?: boolean) =>
+    `border rounded-xl ${hasError ? "border-destructive" : "border-input"} bg-card`;
 
   const labelClass = "mb-2 text-sm font-conviven text-foreground";
   const helperClass = "mt-1 text-xs font-conviven text-muted-foreground";
   const errorClass = "mt-1 text-sm font-conviven text-destructive";
+
+  useEffect(() => {
+    const loadDepartments = async () => {
+      setLocationLoading(prev => ({ ...prev, departments: true }));
+      try {
+        const data = await LocationService.listDepartments();
+        setDepartments(data);
+      } catch (error) {
+        console.error("Error loading departments:", error);
+        setDepartments([]);
+      } finally {
+        setLocationLoading(prev => ({ ...prev, departments: false }));
+      }
+    };
+
+    loadDepartments();
+  }, []);
+
+  const handleDepartmentChange = async (value: string) => {
+    setDepartmentId(value);
+    setErrors(prev => ({
+      ...prev,
+      departmentId: undefined,
+      cityId: undefined,
+      neighborhoodId: undefined,
+    }));
+    setCityId("");
+    setNeighborhoodId("");
+    setCities([]);
+    setNeighborhoods([]);
+
+    if (!value) {
+      return;
+    }
+
+    setLocationLoading(prev => ({ ...prev, cities: true }));
+    try {
+      const data = await LocationService.listCities(value);
+      setCities(data);
+    } catch (error) {
+      console.error("Error loading cities:", error);
+      setCities([]);
+    } finally {
+      setLocationLoading(prev => ({ ...prev, cities: false }));
+    }
+  };
+
+  const handleCityChange = async (value: string) => {
+    setCityId(value);
+    setErrors(prev => ({ ...prev, cityId: undefined, neighborhoodId: undefined }));
+    setNeighborhoodId("");
+    setNeighborhoods([]);
+
+    if (!value) {
+      return;
+    }
+
+    setLocationLoading(prev => ({ ...prev, neighborhoods: true }));
+    try {
+      const data = await LocationService.listNeighborhoods(value);
+      setNeighborhoods(data);
+    } catch (error) {
+      console.error("Error loading neighborhoods:", error);
+      setNeighborhoods([]);
+    } finally {
+      setLocationLoading(prev => ({ ...prev, neighborhoods: false }));
+    }
+  };
+
+  const handleNeighborhoodChange = (value: string) => {
+    setNeighborhoodId(value);
+    setErrors(prev => ({ ...prev, neighborhoodId: undefined }));
+  };
 
   return (
     <View className="w-full p-5 bg-card rounded-2xl border border-border">
@@ -242,37 +336,101 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
 
       <View className="mb-4">
         <Text className={labelClass}>Department ID</Text>
-        <TextInput
-          className={inputClass(!!errors.departmentId)}
-          value={departmentId}
-          onChangeText={text => {
-            setDepartmentId(text);
-            setErrors(prev => ({ ...prev, departmentId: undefined }));
-          }}
-          placeholder="Department identifier"
-          placeholderTextColor={colors.mutedForeground}
-          autoCapitalize="none"
-          style={inputStyle}
-        />
-        <Text className={helperClass}>Ejemplo: a2f0e079-c922-44f2-8712-e2710fad74e3</Text>
+        <View
+          className={pickerContainerClass(!!errors.departmentId)}
+          style={{ backgroundColor: colors.card }}
+        >
+          <Picker
+            selectedValue={departmentId}
+            onValueChange={handleDepartmentChange}
+            enabled={!locationLoading.departments}
+            dropdownIconColor={colors.foreground}
+            style={{ color: colors.foreground }}
+          >
+            <Picker.Item
+              label={TEXTS.SELECT_DEPARTMENT}
+              value=""
+              color={colors.mutedForeground}
+            />
+            {departments.map(department => (
+              <Picker.Item
+                key={department.id}
+                label={department.name}
+                value={department.id}
+                color={colors.foreground}
+              />
+            ))}
+          </Picker>
+        </View>
+        {locationLoading.departments && (
+          <Text className={helperClass}>{TEXTS.LOADING_DEPARTMENTS}</Text>
+        )}
         {errors.departmentId && <Text className={errorClass}>{errors.departmentId}</Text>}
+      </View>
+
+      <View className="mb-4">
+        <Text className={labelClass}>City ID</Text>
+        <View
+          className={pickerContainerClass(!!errors.cityId)}
+          style={{ backgroundColor: colors.card }}
+        >
+          <Picker
+            selectedValue={cityId}
+            onValueChange={handleCityChange}
+            enabled={!!departmentId && !locationLoading.cities}
+            dropdownIconColor={colors.foreground}
+            style={{ color: colors.foreground }}
+          >
+            <Picker.Item
+              label={departmentId ? TEXTS.SELECT_CITY : TEXTS.FIRST_SELECT_DEPT}
+              value=""
+              color={colors.mutedForeground}
+            />
+            {cities.map(city => (
+              <Picker.Item
+                key={city.id}
+                label={city.name}
+                value={city.id}
+                color={colors.foreground}
+              />
+            ))}
+          </Picker>
+        </View>
+        {locationLoading.cities && <Text className={helperClass}>{TEXTS.LOADING_CITIES}</Text>}
+        {errors.cityId && <Text className={errorClass}>{errors.cityId}</Text>}
       </View>
 
       <View className="mb-6">
         <Text className={labelClass}>Neighborhood ID</Text>
-        <TextInput
-          className={inputClass(!!errors.neighborhoodId)}
-          value={neighborhoodId}
-          onChangeText={text => {
-            setNeighborhoodId(text);
-            setErrors(prev => ({ ...prev, neighborhoodId: undefined }));
-          }}
-          placeholder="Neighborhood identifier"
-          placeholderTextColor={colors.mutedForeground}
-          autoCapitalize="none"
-          style={inputStyle}
-        />
-        <Text className={helperClass}>Ejemplo: 23a75a72-2deb-4fd0-b8bb-98c48b03fa14</Text>
+        <View
+          className={pickerContainerClass(!!errors.neighborhoodId)}
+          style={{ backgroundColor: colors.card }}
+        >
+          <Picker
+            selectedValue={neighborhoodId}
+            onValueChange={handleNeighborhoodChange}
+            enabled={!!cityId && !locationLoading.neighborhoods}
+            dropdownIconColor={colors.foreground}
+            style={{ color: colors.foreground }}
+          >
+            <Picker.Item
+              label={cityId ? TEXTS.SELECT_NEIGHBORHOOD : TEXTS.FIRST_SELECT_CITY}
+              value=""
+              color={colors.mutedForeground}
+            />
+            {neighborhoods.map(neighborhood => (
+              <Picker.Item
+                key={neighborhood.id}
+                label={neighborhood.name}
+                value={neighborhood.id}
+                color={colors.foreground}
+              />
+            ))}
+          </Picker>
+        </View>
+        {locationLoading.neighborhoods && (
+          <Text className={helperClass}>{TEXTS.LOADING_NEIGHBORHOODS}</Text>
+        )}
         {errors.neighborhoodId && <Text className={errorClass}>{errors.neighborhoodId}</Text>}
       </View>
 

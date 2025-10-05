@@ -197,6 +197,10 @@ export default class AuthService {
       neighborhoodId: credentials.neighborhoodId,
     };
 
+    if (credentials.cityId) {
+      registerPayload.cityId = credentials.cityId;
+    }
+
     if (credentials.role) {
       registerPayload.role = credentials.role;
     }
