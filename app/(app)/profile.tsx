@@ -1338,7 +1338,7 @@ export default function ProfileScreen() {
           >
             {verificationBadges.map(badge => (
               <View key={badge.label} className="mr-2 mb-2">
-                <VerificationPill icon={badge.icon} label={badge.label} tone={badge.tone} />
+                <VerificationPill icon={badge.icon} label={badge.label} tone={badge.tone as "success" | "pending"} />
               </View>
             ))}
           </ScrollView>

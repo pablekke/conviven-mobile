@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { Picker } from "@react-native-picker/picker";
 import { useTheme } from "@/context/ThemeContext";
 import LocationService from "@/services/locationService";
 import { Department, City, Neighborhood } from "@/types/user";
 import { TEXTS } from "@/constants";
+import Select from "./Select";
 
 interface LocationSelectorProps {
   selectedDepartmentId?: string;
@@ -121,25 +121,17 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
     container: {
       gap: 16,
     },
-    pickerContainer: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 8,
-      backgroundColor: colors.background,
-    },
-    picker: {
-      height: 50,
-      color: colors.foreground,
-    },
     loadingText: {
       color: colors.mutedForeground,
       fontStyle: "italic",
+      fontSize: 12,
+      marginTop: 4,
     },
     label: {
       color: colors.foreground,
       fontSize: 14,
       fontWeight: "500",
-      marginBottom: 4,
+      marginBottom: 8,
     },
   });
 
@@ -148,52 +140,41 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
       {/* Departamento */}
       <View>
         <Text style={styles.label}>Departamento</Text>
-        <View style={styles.pickerContainer}>
-          <Picker
-            selectedValue={selectedDepartmentId || ""}
-            onValueChange={handleDepartmentChange}
-            style={styles.picker}
-            enabled={!disabled && !loading.departments}
-          >
-            <Picker.Item label={TEXTS.SELECT_DEPARTMENT} value="" color={colors.mutedForeground} />
-            {departments.map(dept => (
-              <Picker.Item
-                key={dept.id}
-                label={dept.name}
-                value={dept.id}
-                color={colors.foreground}
-              />
-            ))}
-          </Picker>
-        </View>
+        <Select
+          options={[
+            { label: TEXTS.SELECT_DEPARTMENT, value: "" },
+            ...departments.map(dept => ({
+              label: dept.name,
+              value: dept.id,
+            })),
+          ]}
+          selectedValue={selectedDepartmentId ?? ""}
+          onValueChange={handleDepartmentChange}
+          placeholder={TEXTS.SELECT_DEPARTMENT}
+          disabled={disabled || loading.departments}
+        />
         {loading.departments && <Text style={styles.loadingText}>{TEXTS.LOADING_DEPARTMENTS}</Text>}
       </View>
 
       {/* Ciudad */}
       <View>
         <Text style={styles.label}>Ciudad</Text>
-        <View style={styles.pickerContainer}>
-          <Picker
-            selectedValue={selectedCityId || ""}
-            onValueChange={handleCityChange}
-            style={styles.picker}
-            enabled={!disabled && !loading.cities && !!selectedDepartmentId}
-          >
-            <Picker.Item
-              label={selectedDepartmentId ? TEXTS.SELECT_CITY : TEXTS.FIRST_SELECT_DEPT}
-              value=""
-              color={colors.mutedForeground}
-            />
-            {cities.map(city => (
-              <Picker.Item
-                key={city.id}
-                label={city.name}
-                value={city.id}
-                color={colors.foreground}
-              />
-            ))}
-          </Picker>
-        </View>
+        <Select
+          options={[
+            {
+              label: selectedDepartmentId ? TEXTS.SELECT_CITY : TEXTS.FIRST_SELECT_DEPT,
+              value: "",
+            },
+            ...cities.map(city => ({
+              label: city.name,
+              value: city.id,
+            })),
+          ]}
+          selectedValue={selectedCityId ?? ""}
+          onValueChange={handleCityChange}
+          placeholder={selectedDepartmentId ? TEXTS.SELECT_CITY : TEXTS.FIRST_SELECT_DEPT}
+          disabled={disabled || loading.cities || !selectedDepartmentId}
+        />
         {loading.cities && <Text style={styles.loadingText}>{TEXTS.LOADING_CITIES}</Text>}
       </View>
 
@@ -201,28 +182,22 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
       {mode === "edit" && (
         <View>
           <Text style={styles.label}>Barrio</Text>
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={selectedNeighborhoodId || ""}
-              onValueChange={onNeighborhoodChange}
-              style={styles.picker}
-              enabled={!disabled && !loading.neighborhoods && !!selectedCityId}
-            >
-              <Picker.Item
-                label={selectedCityId ? TEXTS.SELECT_NEIGHBORHOOD : TEXTS.FIRST_SELECT_CITY}
-                value=""
-                color={colors.mutedForeground}
-              />
-              {neighborhoods.map(neighborhood => (
-                <Picker.Item
-                  key={neighborhood.id}
-                  label={neighborhood.name}
-                  value={neighborhood.id}
-                  color={colors.foreground}
-                />
-              ))}
-            </Picker>
-          </View>
+          <Select
+            options={[
+              {
+                label: selectedCityId ? TEXTS.SELECT_NEIGHBORHOOD : TEXTS.FIRST_SELECT_CITY,
+                value: "",
+              },
+              ...neighborhoods.map(neighborhood => ({
+                label: neighborhood.name,
+                value: neighborhood.id,
+              })),
+            ]}
+            selectedValue={selectedNeighborhoodId ?? ""}
+            onValueChange={onNeighborhoodChange}
+            placeholder={selectedCityId ? TEXTS.SELECT_NEIGHBORHOOD : TEXTS.FIRST_SELECT_CITY}
+            disabled={disabled || loading.neighborhoods || !selectedCityId}
+          />
           {loading.neighborhoods && (
             <Text style={styles.loadingText}>{TEXTS.LOADING_NEIGHBORHOODS}</Text>
           )}

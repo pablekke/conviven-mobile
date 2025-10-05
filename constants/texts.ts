@@ -28,4 +28,9 @@ export const TEXTS = {
   SAVE: "Guardar",
   CANCEL: "Cancelar",
   EDIT_PROFILE: "Editar Perfil",
+
+  // Gender options
+  GENDER_MALE: "Masculino",
+  GENDER_FEMALE: "Femenino",
+  GENDER_OTHER: "Otro",
 } as const;

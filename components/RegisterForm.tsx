@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Text, TextInput, View } from "react-native";
-import { Picker } from "@react-native-picker/picker";
 
 import { useTheme } from "../context/ThemeContext";
 import { RegisterCredentials } from "../types/user";
 import { City, Department, Neighborhood } from "@/types/user";
 import Button from "./Button";
+import Select, { SelectOption } from "./Select";
+import DatePicker from "./DatePicker";
 import LocationService from "@/services/locationService";
 import { TEXTS } from "@/constants";
 
@@ -14,7 +15,11 @@ interface RegisterFormProps {
   isLoading?: boolean;
 }
 
-const GENDERS = ["MALE", "FEMALE", "OTHER"];
+const GENDER_OPTIONS: SelectOption[] = [
+  { label: TEXTS.GENDER_MALE, value: "MALE" },
+  { label: TEXTS.GENDER_FEMALE, value: "FEMALE" },
+  { label: TEXTS.GENDER_OTHER, value: "OTHER" },
+];
 
 export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFormProps) {
   const [firstName, setFirstName] = useState("");
@@ -57,51 +62,61 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
     const newErrors: typeof errors = {};
 
     if (!firstName) {
-      newErrors.firstName = "First name is required";
+      newErrors.firstName = "El nombre es requerido";
     }
 
     if (!lastName) {
-      newErrors.lastName = "Last name is required";
+      newErrors.lastName = "El apellido es requerido";
     }
 
     if (!email) {
-      newErrors.email = "Email is required";
+      newErrors.email = "El email es requerido";
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = "Email is invalid";
+      newErrors.email = "El formato del email es inválido";
     }
 
     if (!password) {
-      newErrors.password = "Password is required";
+      newErrors.password = "La contraseña es requerida";
     } else if (password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
+      newErrors.password = "La contraseña debe tener al menos 6 caracteres";
     }
 
     if (password !== confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
+      newErrors.confirmPassword = "Las contraseñas no coinciden";
     }
 
     if (!birthDate) {
-      newErrors.birthDate = "Birth date is required";
-    } else if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
-      newErrors.birthDate = "Use YYYY-MM-DD format";
+      newErrors.birthDate = "La fecha de nacimiento es requerida";
+    } else {
+      const selectedDate = new Date(birthDate);
+      const today = new Date();
+      const minDate = new Date(1900, 0, 1);
+
+      if (selectedDate > today) {
+        newErrors.birthDate = "La fecha no puede ser futura";
+      } else if (selectedDate < minDate) {
+        newErrors.birthDate = "La fecha debe ser posterior a 1900";
+      } else if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
+        newErrors.birthDate = "Formato de fecha inválido";
+      }
     }
 
     if (!gender) {
-      newErrors.gender = "Gender is required";
-    } else if (!GENDERS.includes(gender.toUpperCase())) {
-      newErrors.gender = `Gender must be one of: ${GENDERS.join(", ")}`;
+      newErrors.gender = "El género es requerido";
+    } else if (!GENDER_OPTIONS.map(g => g.value).includes(gender.toUpperCase())) {
+      newErrors.gender = "Selecciona un género válido";
     }
 
     if (!departmentId) {
-      newErrors.departmentId = "Department ID is required";
+      newErrors.departmentId = "El departamento es requerido";
     }
 
     if (!cityId) {
-      newErrors.cityId = "City ID is required";
+      newErrors.cityId = "La ciudad es requerida";
     }
 
     if (!neighborhoodId) {
-      newErrors.neighborhoodId = "Neighborhood ID is required";
+      newErrors.neighborhoodId = "El barrio es requerido";
     }
 
     setErrors(newErrors);
@@ -130,8 +145,6 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
 
   const inputClass = (hasError?: boolean) =>
     `p-4 border rounded-xl ${hasError ? "border-destructive" : "border-input"} bg-card text-foreground`;
-  const pickerContainerClass = (hasError?: boolean) =>
-    `border rounded-xl ${hasError ? "border-destructive" : "border-input"} bg-card`;
 
   const labelClass = "mb-2 text-sm font-conviven text-foreground";
   const helperClass = "mt-1 text-xs font-conviven text-muted-foreground";
@@ -213,7 +226,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
   return (
     <View className="w-full p-5 bg-card rounded-2xl border border-border">
       <View className="mb-4">
-        <Text className={labelClass}>First Name</Text>
+        <Text className={labelClass}>Nombre</Text>
         <TextInput
           className={inputClass(!!errors.firstName)}
           value={firstName}
@@ -221,7 +234,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
             setFirstName(text);
             setErrors(prev => ({ ...prev, firstName: undefined }));
           }}
-          placeholder="Your first name"
+          placeholder="Tu nombre"
           placeholderTextColor={colors.mutedForeground}
           autoCapitalize="words"
           style={inputStyle}
@@ -230,7 +243,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
       </View>
 
       <View className="mb-4">
-        <Text className={labelClass}>Last Name</Text>
+        <Text className={labelClass}>Apellido</Text>
         <TextInput
           className={inputClass(!!errors.lastName)}
           value={lastName}
@@ -238,7 +251,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
             setLastName(text);
             setErrors(prev => ({ ...prev, lastName: undefined }));
           }}
-          placeholder="Your last name"
+          placeholder="Tu apellido"
           placeholderTextColor={colors.mutedForeground}
           autoCapitalize="words"
           style={inputStyle}
@@ -255,7 +268,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
             setEmail(text);
             setErrors(prev => ({ ...prev, email: undefined }));
           }}
-          placeholder="your@email.com"
+          placeholder="tu@email.com"
           placeholderTextColor={colors.mutedForeground}
           autoCapitalize="none"
           keyboardType="email-address"
@@ -265,7 +278,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
       </View>
 
       <View className="mb-4">
-        <Text className={labelClass}>Password</Text>
+        <Text className={labelClass}>Contraseña</Text>
         <TextInput
           className={inputClass(!!errors.password)}
           value={password}
@@ -273,7 +286,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
             setPassword(text);
             setErrors(prev => ({ ...prev, password: undefined }));
           }}
-          placeholder="Your password"
+          placeholder="Tu contraseña"
           placeholderTextColor={colors.mutedForeground}
           secureTextEntry
           style={inputStyle}
@@ -282,7 +295,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
       </View>
 
       <View className="mb-4">
-        <Text className={labelClass}>Confirm Password</Text>
+        <Text className={labelClass}>Confirmar Contraseña</Text>
         <TextInput
           className={inputClass(!!errors.confirmPassword)}
           value={confirmPassword}
@@ -290,7 +303,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
             setConfirmPassword(text);
             setErrors(prev => ({ ...prev, confirmPassword: undefined }));
           }}
-          placeholder="Confirm your password"
+          placeholder="Confirma tu contraseña"
           placeholderTextColor={colors.mutedForeground}
           secureTextEntry
           style={inputStyle}
@@ -299,69 +312,52 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
       </View>
 
       <View className="mb-4">
-        <Text className={labelClass}>Birth Date</Text>
-        <TextInput
-          className={inputClass(!!errors.birthDate)}
+        <Text className={labelClass}>Fecha de Nacimiento</Text>
+        <DatePicker
           value={birthDate}
-          onChangeText={text => {
-            setBirthDate(text);
+          onValueChange={value => {
+            setBirthDate(value);
             setErrors(prev => ({ ...prev, birthDate: undefined }));
           }}
-          placeholder="2001-06-28"
-          placeholderTextColor={colors.mutedForeground}
-          autoCapitalize="none"
-          style={inputStyle}
+          placeholder="Selecciona tu fecha de nacimiento"
+          error={!!errors.birthDate}
+          maximumDate={new Date()}
+          minimumDate={new Date(1900, 0, 1)}
         />
-        <Text className={helperClass}>Formato requerido: AAAA-MM-DD</Text>
         {errors.birthDate && <Text className={errorClass}>{errors.birthDate}</Text>}
       </View>
 
       <View className="mb-4">
-        <Text className={labelClass}>Gender</Text>
-        <TextInput
-          className={inputClass(!!errors.gender)}
-          value={gender}
-          onChangeText={text => {
-            setGender(text);
+        <Text className={labelClass}>Género</Text>
+        <Select
+          options={GENDER_OPTIONS}
+          selectedValue={gender}
+          onValueChange={value => {
+            setGender(value);
             setErrors(prev => ({ ...prev, gender: undefined }));
           }}
-          placeholder={`One of: ${GENDERS.join(", ")}`}
-          placeholderTextColor={colors.mutedForeground}
-          autoCapitalize="characters"
-          style={inputStyle}
+          placeholder="Selecciona tu género"
+          error={!!errors.gender}
         />
-        <Text className={helperClass}>Valores permitidos: {GENDERS.join(", ")}</Text>
         {errors.gender && <Text className={errorClass}>{errors.gender}</Text>}
       </View>
 
       <View className="mb-4">
-        <Text className={labelClass}>Department ID</Text>
-        <View
-          className={pickerContainerClass(!!errors.departmentId)}
-          style={{ backgroundColor: colors.card }}
-        >
-          <Picker
-            selectedValue={departmentId}
-            onValueChange={handleDepartmentChange}
-            enabled={!locationLoading.departments}
-            dropdownIconColor={colors.foreground}
-            style={{ color: colors.foreground }}
-          >
-            <Picker.Item
-              label={TEXTS.SELECT_DEPARTMENT}
-              value=""
-              color={colors.mutedForeground}
-            />
-            {departments.map(department => (
-              <Picker.Item
-                key={department.id}
-                label={department.name}
-                value={department.id}
-                color={colors.foreground}
-              />
-            ))}
-          </Picker>
-        </View>
+        <Text className={labelClass}>Departamento</Text>
+        <Select
+          options={[
+            { label: TEXTS.SELECT_DEPARTMENT, value: "" },
+            ...departments.map(department => ({
+              label: department.name,
+              value: department.id,
+            })),
+          ]}
+          selectedValue={departmentId}
+          onValueChange={handleDepartmentChange}
+          placeholder={TEXTS.SELECT_DEPARTMENT}
+          disabled={locationLoading.departments}
+          error={!!errors.departmentId}
+        />
         {locationLoading.departments && (
           <Text className={helperClass}>{TEXTS.LOADING_DEPARTMENTS}</Text>
         )}
@@ -369,65 +365,47 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
       </View>
 
       <View className="mb-4">
-        <Text className={labelClass}>City ID</Text>
-        <View
-          className={pickerContainerClass(!!errors.cityId)}
-          style={{ backgroundColor: colors.card }}
-        >
-          <Picker
-            selectedValue={cityId}
-            onValueChange={handleCityChange}
-            enabled={!!departmentId && !locationLoading.cities}
-            dropdownIconColor={colors.foreground}
-            style={{ color: colors.foreground }}
-          >
-            <Picker.Item
-              label={departmentId ? TEXTS.SELECT_CITY : TEXTS.FIRST_SELECT_DEPT}
-              value=""
-              color={colors.mutedForeground}
-            />
-            {cities.map(city => (
-              <Picker.Item
-                key={city.id}
-                label={city.name}
-                value={city.id}
-                color={colors.foreground}
-              />
-            ))}
-          </Picker>
-        </View>
+        <Text className={labelClass}>Ciudad</Text>
+        <Select
+          options={[
+            {
+              label: departmentId ? TEXTS.SELECT_CITY : TEXTS.FIRST_SELECT_DEPT,
+              value: "",
+            },
+            ...cities.map(city => ({
+              label: city.name,
+              value: city.id,
+            })),
+          ]}
+          selectedValue={cityId}
+          onValueChange={handleCityChange}
+          placeholder={departmentId ? TEXTS.SELECT_CITY : TEXTS.FIRST_SELECT_DEPT}
+          disabled={!departmentId || locationLoading.cities}
+          error={!!errors.cityId}
+        />
         {locationLoading.cities && <Text className={helperClass}>{TEXTS.LOADING_CITIES}</Text>}
         {errors.cityId && <Text className={errorClass}>{errors.cityId}</Text>}
       </View>
 
       <View className="mb-6">
-        <Text className={labelClass}>Neighborhood ID</Text>
-        <View
-          className={pickerContainerClass(!!errors.neighborhoodId)}
-          style={{ backgroundColor: colors.card }}
-        >
-          <Picker
-            selectedValue={neighborhoodId}
-            onValueChange={handleNeighborhoodChange}
-            enabled={!!cityId && !locationLoading.neighborhoods}
-            dropdownIconColor={colors.foreground}
-            style={{ color: colors.foreground }}
-          >
-            <Picker.Item
-              label={cityId ? TEXTS.SELECT_NEIGHBORHOOD : TEXTS.FIRST_SELECT_CITY}
-              value=""
-              color={colors.mutedForeground}
-            />
-            {neighborhoods.map(neighborhood => (
-              <Picker.Item
-                key={neighborhood.id}
-                label={neighborhood.name}
-                value={neighborhood.id}
-                color={colors.foreground}
-              />
-            ))}
-          </Picker>
-        </View>
+        <Text className={labelClass}>Barrio</Text>
+        <Select
+          options={[
+            {
+              label: cityId ? TEXTS.SELECT_NEIGHBORHOOD : TEXTS.FIRST_SELECT_CITY,
+              value: "",
+            },
+            ...neighborhoods.map(neighborhood => ({
+              label: neighborhood.name,
+              value: neighborhood.id,
+            })),
+          ]}
+          selectedValue={neighborhoodId}
+          onValueChange={handleNeighborhoodChange}
+          placeholder={cityId ? TEXTS.SELECT_NEIGHBORHOOD : TEXTS.FIRST_SELECT_CITY}
+          disabled={!cityId || locationLoading.neighborhoods}
+          error={!!errors.neighborhoodId}
+        />
         {locationLoading.neighborhoods && (
           <Text className={helperClass}>{TEXTS.LOADING_NEIGHBORHOODS}</Text>
         )}
@@ -435,7 +413,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
       </View>
 
       <Button
-        label={isLoading ? "Creating account..." : "Sign Up"}
+        label={isLoading ? "Creando cuenta..." : "Registrarse"}
         onPress={handleSubmit}
         disabled={isLoading}
       />
