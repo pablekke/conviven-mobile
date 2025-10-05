@@ -1,6 +1,7 @@
 import AuthService from "./authService";
 import { buildUrl, parseResponse } from "./apiClient";
 import { City, Department, Neighborhood } from "@/types/user";
+import { API } from "@/constants";
 
 async function request(path: string, options: RequestInit = {}): Promise<any> {
   const token = await AuthService.getAccessToken();
@@ -64,43 +65,37 @@ function mapNeighborhood(data: any): Neighborhood {
 
 const LocationService = {
   async listDepartments(): Promise<Department[]> {
-    const data = await request("/departments");
-    const departmentsArray = Array.isArray(data) ? data : data?.data ?? [];
+    const data = await request(API.DEPARTMENTS);
+    const departmentsArray = Array.isArray(data) ? data : (data?.data ?? []);
     return departmentsArray.map(mapDepartment);
   },
 
   async getDepartment(id: string): Promise<Department> {
-    const data = await request(`/departments/${id}`);
+    const data = await request(API.DEPARTMENT_BY_ID(id));
     return mapDepartment(data?.department ?? data);
   },
 
   async listCities(departmentId?: string): Promise<City[]> {
-    const data = await request("/cities");
-    const citiesArray = Array.isArray(data) ? data : data?.data ?? [];
-    const cities = citiesArray.map(mapCity);
-    if (!departmentId) {
-      return cities;
-    }
-    return cities.filter(city => city.departmentId === departmentId);
+    const url = departmentId ? API.CITIES_BY_DEPT(departmentId) : API.CITIES;
+    const data = await request(url);
+    const citiesArray = Array.isArray(data) ? data : (data?.data ?? []);
+    return citiesArray.map(mapCity);
   },
 
   async getCity(id: string): Promise<City> {
-    const data = await request(`/cities/${id}`);
+    const data = await request(API.CITY_BY_ID(id));
     return mapCity(data?.city ?? data);
   },
 
   async listNeighborhoods(cityId?: string): Promise<Neighborhood[]> {
-    const data = await request("/neighborhoods");
-    const neighborhoodsArray = Array.isArray(data) ? data : data?.data ?? [];
-    const neighborhoods = neighborhoodsArray.map(mapNeighborhood);
-    if (!cityId) {
-      return neighborhoods;
-    }
-    return neighborhoods.filter(neighborhood => neighborhood.cityId === cityId);
+    const url = cityId ? API.NEIGHBORHOODS_BY_CITY(cityId) : API.NEIGHBORHOODS;
+    const data = await request(url);
+    const neighborhoodsArray = Array.isArray(data) ? data : (data?.data ?? []);
+    return neighborhoodsArray.map(mapNeighborhood);
   },
 
   async getNeighborhood(id: string): Promise<Neighborhood> {
-    const data = await request(`/neighborhoods/${id}`);
+    const data = await request(API.NEIGHBORHOOD_BY_ID(id));
     return mapNeighborhood(data?.neighborhood ?? data);
   },
 };

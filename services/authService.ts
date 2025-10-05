@@ -2,8 +2,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { User, LoginCredentials, RegisterCredentials } from "@/types/user";
 import { mapUserFromApi } from "./mappers/userMapper";
-
 import { buildUrl, parseResponse, HttpError } from "./apiClient";
+import { API } from "@/constants";
 
 const AUTH_TOKEN_KEY = "auth_token";
 const REFRESH_TOKEN_KEY = "refresh_token";
@@ -96,7 +96,7 @@ async function refreshTokens(): Promise<{ accessToken: string; refreshToken: str
     return null;
   }
 
-  const response = await fetch(buildUrl("/auth/refresh"), {
+  const response = await fetch(buildUrl(API.REFRESH), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -151,7 +151,7 @@ function extractRefreshToken(data: any): string | null {
 
 export default class AuthService {
   static async login(credentials: LoginCredentials): Promise<User> {
-    const response = await fetch(buildUrl("/auth/login"), {
+    const response = await fetch(buildUrl(API.LOGIN), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

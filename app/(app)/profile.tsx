@@ -437,7 +437,7 @@ const InputField: React.FC<InputFieldProps> = ({ label, value, onChange, placeho
         placeholder={placeholder}
         placeholderTextColor={colors.mutedForeground}
         multiline={multiline}
-        style={[styles.input, dynamicInputStyle]}
+        style={[styles.input]}
       />
     </View>
   );

@@ -1,6 +1,7 @@
 import AuthService from "./authService";
 import { buildUrl, parseResponse } from "./apiClient";
 import { mapUserFromApi } from "./mappers/userMapper";
+import { API } from "@/constants";
 import {
   AdminRegisterPayload,
   PaginatedUsersResponse,
@@ -76,9 +77,12 @@ const UserService = {
     return mapUserFromApi(userPayload);
   },
 
-  async registerWithRole(role: "user" | "provider" | "admin", payload: AdminRegisterPayload): Promise<User> {
+  async registerWithRole(
+    role: "user" | "provider" | "admin",
+    payload: AdminRegisterPayload,
+  ): Promise<User> {
     const normalizedRole = role.toLowerCase();
-    const data = await authorizedRequest(`/users/register/${normalizedRole}`, {
+    const data = await authorizedRequest(API.USER_REGISTER(normalizedRole), {
       method: "POST",
       body: JSON.stringify(payload),
       headers: {
@@ -92,7 +96,7 @@ const UserService = {
 
   async list(params: UserListQuery = {}): Promise<PaginatedUsersResponse> {
     const queryString = buildQueryString(params);
-    const data = await authorizedRequest(`/users${queryString}`);
+    const data = await authorizedRequest(`${API.USERS}${queryString}`);
 
     const usersData = Array.isArray(data.users) ? data.users : [];
     const users = usersData.map(mapUserFromApi);
@@ -111,19 +115,19 @@ const UserService = {
   },
 
   async getCurrent(): Promise<User> {
-    const data = await authorizedRequest("/users/me");
+    const data = await authorizedRequest(API.USER_PROFILE);
     const userPayload = extractUserPayload(data);
     return mapUserFromApi(userPayload);
   },
 
   async deleteCurrent(): Promise<void> {
-    await authorizedRequest("/users/me", {
+    await authorizedRequest(API.USER_DELETE, {
       method: "DELETE",
     });
   },
 
   async getById(id: string): Promise<User> {
-    const data = await authorizedRequest(`/users/${id}`);
+    const data = await authorizedRequest(API.USER_BY_ID(id));
     const userPayload = extractUserPayload(data);
     return mapUserFromApi(userPayload);
   },
@@ -131,7 +135,7 @@ const UserService = {
   async update(id: string, payload: UpdateUserPayload): Promise<User> {
     const body: Record<string, unknown> = { ...payload };
 
-    const data = await authorizedRequest(`/users/${id}`, {
+    const data = await authorizedRequest(API.USER_BY_ID(id), {
       method: "PUT",
       body: JSON.stringify(body),
       headers: {
@@ -148,16 +152,13 @@ const UserService = {
     asset: { uri: string; name?: string; type?: string },
   ): Promise<User> {
     const formData = new FormData();
-    formData.append(
-      "avatar",
-      {
-        uri: asset.uri,
-        name: asset.name ?? `avatar-${Date.now()}.jpg`,
-        type: asset.type ?? "image/jpeg",
-      } as any,
-    );
+    formData.append("avatar", {
+      uri: asset.uri,
+      name: asset.name ?? `avatar-${Date.now()}.jpg`,
+      type: asset.type ?? "image/jpeg",
+    } as any);
 
-    const data = await authorizedRequest(`/users/${id}/avatar`, {
+    const data = await authorizedRequest(`${API.USER_BY_ID(id)}/avatar`, {
       method: "PUT",
       body: formData,
       headers: {
@@ -170,13 +171,13 @@ const UserService = {
   },
 
   async remove(id: string): Promise<void> {
-    await authorizedRequest(`/users/${id}`, {
+    await authorizedRequest(API.USER_BY_ID(id), {
       method: "DELETE",
     });
   },
 
   async changeRole(id: string, role: UserRole): Promise<User> {
-    const data = await authorizedRequest(`/users/${id}/role`, {
+    const data = await authorizedRequest(`${API.USER_BY_ID(id)}/role`, {
       method: "PATCH",
       body: JSON.stringify({ role }),
       headers: {

@@ -1,6 +1,7 @@
 import { Message } from "../types/message";
 import { buildUrl, parseResponse, HttpError } from "./apiClient";
 import AuthService from "./authService";
+import { API } from "@/constants";
 
 const MIN_MESSAGE_LENGTH = 1;
 const MAX_MESSAGE_LENGTH = 1000;
@@ -46,7 +47,7 @@ export default class MessageService {
       throw new HttpError(401, "No autenticado", null);
     }
 
-    const response = await fetch(buildUrl(`/messages/${userId}`), {
+    const response = await fetch(buildUrl(`${API.MESSAGES}/${userId}`), {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -74,7 +75,7 @@ export default class MessageService {
       throw new HttpError(401, "No autenticado", null);
     }
 
-    const response = await fetch(buildUrl(`/messages/${userId}`), {
+    const response = await fetch(buildUrl(`${API.MESSAGES}/${userId}`), {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
