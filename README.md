@@ -61,9 +61,77 @@ npm start
 yarn start
 ```
 
-## 📁 Project Structure
+## 📁 Estructura del Proyecto
 
-WIP
+El proyecto sigue una **arquitectura modular** donde cada módulo (tab) es independiente y autónomo:
+
+```
+conviven-mobile/
+├── app/
+│   ├── (app)/                    # Pantallas principales (protegidas)
+│   │   ├── chat/                 # Módulo de Chat
+│   │   │   ├── components/       # Componentes específicos
+│   │   │   ├── hooks/            # Hooks personalizados
+│   │   │   ├── services/         # Lógica de negocio
+│   │   │   ├── types/            # Tipos TypeScript
+│   │   │   ├── constants/        # Constantes
+│   │   │   └── index.tsx         # Pantalla principal
+│   │   ├── profile/              # Módulo de Perfil
+│   │   ├── index/                # Módulo de Swipe/Match
+│   │   └── settings/             # Módulo de Configuración
+│   ├── auth/                     # Pantallas de autenticación
+│   │   ├── login.tsx
+│   │   └── register.tsx
+│   └── _layout.tsx               # Layout principal
+├── components/                   # Componentes globales reutilizables
+│   ├── Button.tsx
+│   ├── Spinner.tsx
+│   ├── LoadingScreen.tsx
+│   └── index.ts                  # Exportaciones centrales
+├── context/                      # Contextos de React
+│   ├── AuthContext.tsx
+│   └── ThemeContext.tsx
+├── services/                     # Servicios globales
+│   ├── apiClient.ts
+│   ├── authService.ts
+│   └── userService.ts
+├── types/                        # Tipos globales
+└── utils/                        # Utilidades
+
+```
+
+### Arquitectura Modular
+
+Cada módulo sigue esta estructura consistente:
+
+- **`components/`** - Componentes específicos del módulo
+- **`hooks/`** - Hooks personalizados para lógica de estado
+- **`services/`** - Lógica de negocio y llamadas a API
+- **`types/`** - Tipos e interfaces TypeScript
+- **`constants/`** - Constantes y datos mock
+- **`index.tsx`** - Pantalla principal del módulo
+
+**Ventajas:**
+
+- ✅ Separación clara de responsabilidades
+- ✅ Reutilización de componentes globales
+- ✅ Fácil de escalar y mantener
+- ✅ Equipos pueden trabajar en paralelo
+- ✅ Testeo aislado de cada módulo
+
+📖 **Para más detalles, consulta [ARQUITECTURA_MODULAR.md](ARQUITECTURA_MODULAR.md)**
+
+### Crear un Nuevo Módulo
+
+```bash
+# Bash (Mac/Linux)
+./scripts/create-module.sh nombre-modulo
+
+# PowerShell (Windows)
+.\scripts\create-module.ps1 nombre-modulo
+```
+
+📋 **Usa la plantilla en [TEMPLATE_MODULO.md](TEMPLATE_MODULO.md)** para implementar rápidamente
 
 ## 🛠️ Development
 

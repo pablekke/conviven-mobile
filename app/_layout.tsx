@@ -2,7 +2,8 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
 import { useCallback, useEffect } from "react";
-import { ActivityIndicator, Text, View, Text as RNText, StyleSheet } from "react-native";
+import { View, Text as RNText, StyleSheet, LogBox } from "react-native";
+import Spinner from "../components/Spinner";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useFonts } from "expo-font";
 
@@ -10,18 +11,25 @@ import { AuthProvider, useAuth } from "../context/AuthContext";
 import { ThemeProvider, useTheme } from "../context/ThemeContext";
 
 import "../global.css";
+LogBox.ignoreLogs(["SafeAreaView has been deprecated"]);
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 function AuthRoot() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const segments = useSegments();
   const router = useRouter();
   const { colors, theme } = useTheme();
 
+  const getTargetRoute = useCallback(() => {
+    if (!user?.firstName || !user?.lastName || !user?.departmentId || !user?.neighborhoodId) {
+      return "/profile";
+    }
+    return "/";
+  }, [user]);
+
   const handleNavigation = useCallback(() => {
     const inAuthGroup = segments[0] === "auth";
-
     if (isLoading) {
       return;
     }
@@ -29,9 +37,9 @@ function AuthRoot() {
     if (!isAuthenticated && !inAuthGroup) {
       router.replace("/auth/login");
     } else if (isAuthenticated && inAuthGroup) {
-      router.replace("/");
+      router.replace(getTargetRoute());
     }
-  }, [isAuthenticated, segments, isLoading, router]);
+  }, [isAuthenticated, segments, isLoading, router, getTargetRoute]);
 
   useEffect(() => {
     handleNavigation();
@@ -40,11 +48,10 @@ function AuthRoot() {
   if (isLoading) {
     return (
       <View
-        className="flex-1 items-center justify-center bg-background"
-        style={[styles.fullScreen, { backgroundColor: colors.background }]}
+        className="flex-1 items-center justify-center"
+        style={[styles.fullScreen, { backgroundColor: colors.conviven.blue }]}
       >
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text className="text-muted-foreground mt-4 font-conviven">Loading...</Text>
+        <Spinner size={52} color="#FFFFFF" trackColor="rgba(255,255,255,0.15)" thickness={5} />
       </View>
     );
   }
@@ -140,7 +147,7 @@ function ThemedTree() {
     <SafeAreaView
       key={theme}
       style={[styles.themedTree, { backgroundColor: colors.background }]}
-      edges={["top", "left", "right"]}
+      edges={["left", "right"]}
     >
       <AuthRoot />
     </SafeAreaView>

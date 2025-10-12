@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { User, LoginCredentials, RegisterCredentials } from "@/types/user";
 import { mapUserFromApi } from "./mappers/userMapper";
-import { buildUrl, parseResponse, HttpError } from "./apiClient";
+import { buildUrl, parseResponse, HttpError, fetchWithTimeout } from "./apiClient";
 import { API } from "@/constants";
 
 const AUTH_TOKEN_KEY = "auth_token";
@@ -96,7 +96,7 @@ async function refreshTokens(): Promise<{ accessToken: string; refreshToken: str
     return null;
   }
 
-  const response = await fetch(buildUrl(API.REFRESH), {
+  const response = await fetchWithTimeout(buildUrl(API.REFRESH), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -151,7 +151,7 @@ function extractRefreshToken(data: any): string | null {
 
 export default class AuthService {
   static async login(credentials: LoginCredentials): Promise<User> {
-    const response = await fetch(buildUrl(API.LOGIN), {
+    const response = await fetchWithTimeout(buildUrl(API.LOGIN), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -201,7 +201,7 @@ export default class AuthService {
       registerPayload.role = credentials.role;
     }
 
-    const response = await fetch(buildUrl("/users/register"), {
+    const response = await fetchWithTimeout(buildUrl("/users/register"), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -302,7 +302,7 @@ export default class AuthService {
   }
 
   private static async fetchCurrentUserWithToken(token: string): Promise<User> {
-    const response = await fetch(buildUrl("/users/me"), {
+    const response = await fetchWithTimeout(buildUrl("/users/me"), {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,

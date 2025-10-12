@@ -10,6 +10,7 @@ import { Alert } from "react-native";
 
 import AuthService from "../services/authService";
 import { AuthState, LoginCredentials, RegisterCredentials, User } from "../types/user";
+import { NetworkError } from "../services/apiClient";
 
 interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>;
@@ -68,12 +69,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             error: null,
           });
         }
-      } catch {
+      } catch (error) {
+        if (error instanceof NetworkError) {
+          Alert.alert(
+            "Error de Conexión",
+            "No se pudo conectar con el servidor. Por favor, verifica tu conexión a internet e intenta nuevamente.",
+            [{ text: "OK" }],
+          );
+        }
+
         setState({
           user: null,
           isAuthenticated: false,
           isLoading: false,
-          error: "Failed to restore authentication state",
+          error: error instanceof Error ? error.message : "Failed to restore authentication state",
         });
       }
     };

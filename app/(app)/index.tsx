@@ -65,7 +65,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      <View className="px-6 pt-4 pb-2 flex-1">
+      <View className="px-6 pt-2 pb-2 flex-1">
         <View className="flex-row items-center justify-between mb-6">
           <View>
             <Text className="text-xs uppercase tracking-[3px] text-muted-foreground font-conviven">

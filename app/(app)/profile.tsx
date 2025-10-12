@@ -142,11 +142,15 @@ const VerificationPill = ({
   tone: "success" | "pending";
 }) => {
   const { colors } = useTheme();
-  const background = tone === "success" ? `${colors.conviven.blue}18` : `${colors.conviven.orange}20`;
+  const background =
+    tone === "success" ? `${colors.conviven.blue}18` : `${colors.conviven.orange}20`;
   const color = tone === "success" ? colors.conviven.blue : colors.conviven.orange;
 
   return (
-    <View className="flex-row items-center gap-2 px-3 py-1.5 rounded-full" style={{ backgroundColor: background }}>
+    <View
+      className="flex-row items-center gap-2 px-3 py-1.5 rounded-full"
+      style={{ backgroundColor: background }}
+    >
       <Feather name={icon} size={16} color={color} />
       <Text className="text-xs font-conviven-semibold" style={{ color }}>
         {label}
@@ -178,13 +182,18 @@ const MatchSignal = ({
         </View>
         <Text className="text-sm font-conviven-semibold text-foreground">{width}%</Text>
       </View>
-      <View className="h-1.5 rounded-full mt-2" style={{ backgroundColor: `${colors.conviven.blue}16` }}>
+      <View
+        className="h-1.5 rounded-full mt-2"
+        style={{ backgroundColor: `${colors.conviven.blue}16` }}
+      >
         <View
           className="h-full rounded-full"
           style={{ width: `${width}%`, backgroundColor: colors.conviven.blue }}
         />
       </View>
-      <Text className="text-xs font-conviven text-muted-foreground mt-2 leading-4">{description}</Text>
+      <Text className="text-xs font-conviven text-muted-foreground mt-2 leading-4">
+        {description}
+      </Text>
     </View>
   );
 };
@@ -214,14 +223,19 @@ const PreferenceItem = ({
     >
       <View className="flex-row items-start justify-between">
         <View className="flex-row items-start gap-3 flex-1 pr-4">
-          <View className="w-9 h-9 rounded-2xl items-center justify-center" style={{ backgroundColor: `${colors.conviven.orange}15` }}>
+          <View
+            className="w-9 h-9 rounded-2xl items-center justify-center"
+            style={{ backgroundColor: `${colors.conviven.orange}15` }}
+          >
             <MaterialCommunityIcons name={icon} size={20} color={colors.conviven.orange} />
           </View>
           <View className="flex-1">
             <Text className="text-sm font-conviven-semibold text-foreground">{title}</Text>
             <Text className="text-xs font-conviven text-muted-foreground mt-1">{summary}</Text>
             {expanded && (
-              <Text className="text-sm font-conviven text-foreground mt-2 leading-5">{details}</Text>
+              <Text className="text-sm font-conviven text-foreground mt-2 leading-5">
+                {details}
+              </Text>
             )}
           </View>
         </View>
@@ -255,7 +269,10 @@ const QuickActionButton = ({
       className="border rounded-2xl px-3.5 py-3 flex-row items-center gap-3"
       style={{ borderColor: colors.border }}
     >
-      <View className="w-9 h-9 rounded-full items-center justify-center" style={{ backgroundColor: `${colors.conviven.blue}12` }}>
+      <View
+        className="w-9 h-9 rounded-full items-center justify-center"
+        style={{ backgroundColor: `${colors.conviven.blue}12` }}
+      >
         <Feather name={icon} size={18} color={colors.conviven.blue} />
       </View>
       <View className="flex-1">
@@ -337,9 +354,13 @@ const MenuModal: React.FC<MenuModalProps> = ({ visible, onClose, options }) => {
                   <Feather name={option.icon} size={18} color={colors.conviven.blue} />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-sm font-conviven-semibold text-foreground">{option.label}</Text>
+                  <Text className="text-sm font-conviven-semibold text-foreground">
+                    {option.label}
+                  </Text>
                   {option.helper ? (
-                    <Text className="text-xs font-conviven text-muted-foreground mt-0.5">{option.helper}</Text>
+                    <Text className="text-xs font-conviven text-muted-foreground mt-0.5">
+                      {option.helper}
+                    </Text>
                   ) : null}
                 </View>
               </View>
@@ -361,7 +382,14 @@ interface SelectionModalProps {
   onClose: () => void;
 }
 
-const SelectionModal: React.FC<SelectionModalProps> = ({ visible, title, items, selectedId, onSelect, onClose }) => {
+const SelectionModal: React.FC<SelectionModalProps> = ({
+  visible,
+  title,
+  items,
+  selectedId,
+  onSelect,
+  onClose,
+}) => {
   const { colors } = useTheme();
 
   return (
@@ -393,7 +421,9 @@ const SelectionModal: React.FC<SelectionModalProps> = ({ visible, title, items, 
                       {item.label}
                     </Text>
                     {item.helper ? (
-                      <Text className="text-xs font-conviven text-muted-foreground mt-0.5">{item.helper}</Text>
+                      <Text className="text-xs font-conviven text-muted-foreground mt-0.5">
+                        {item.helper}
+                      </Text>
                     ) : null}
                   </View>
                   {active ? <Feather name="check" size={18} color={colors.conviven.blue} /> : null}
@@ -415,7 +445,13 @@ interface InputFieldProps {
   multiline?: boolean;
 }
 
-const InputField: React.FC<InputFieldProps> = ({ label, value, onChange, placeholder, multiline }) => {
+const InputField: React.FC<InputFieldProps> = ({
+  label,
+  value,
+  onChange,
+  placeholder,
+  multiline,
+}) => {
   const { colors } = useTheme();
 
   const dynamicInputStyle = React.useMemo(
@@ -423,7 +459,7 @@ const InputField: React.FC<InputFieldProps> = ({ label, value, onChange, placeho
       borderColor: colors.border,
       color: colors.foreground,
       minHeight: multiline ? 88 : 44,
-      textAlignVertical: multiline ? "top" : "center",
+      textAlignVertical: (multiline ? "top" : "center") as "top" | "center",
     }),
     [colors.border, colors.foreground, multiline],
   );
@@ -437,7 +473,7 @@ const InputField: React.FC<InputFieldProps> = ({ label, value, onChange, placeho
         placeholder={placeholder}
         placeholderTextColor={colors.mutedForeground}
         multiline={multiline}
-        style={[styles.input]}
+        style={[styles.input, dynamicInputStyle]}
       />
     </View>
   );
@@ -485,7 +521,9 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
             style={[styles.modalCard, { backgroundColor: colors.card, borderColor: colors.border }]}
           >
             <View className="flex-row items-center justify-between mb-3">
-              <Text className="text-base font-conviven-semibold text-foreground">Editar perfil</Text>
+              <Text className="text-base font-conviven-semibold text-foreground">
+                Editar perfil
+              </Text>
               <TouchableOpacity onPress={onClose}>
                 <Feather name="x" size={20} color={colors.mutedForeground} />
               </TouchableOpacity>
@@ -524,11 +562,17 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
               />
 
               <Text className="text-xs font-conviven text-muted-foreground mb-1">Departamento</Text>
-              <SelectorChip label={locationLabels.department} onPress={() => onOpenSelector("department")} />
+              <SelectorChip
+                label={locationLabels.department}
+                onPress={() => onOpenSelector("department")}
+              />
               <Text className="text-xs font-conviven text-muted-foreground mt-3 mb-1">Ciudad</Text>
               <SelectorChip label={locationLabels.city} onPress={() => onOpenSelector("city")} />
               <Text className="text-xs font-conviven text-muted-foreground mt-3 mb-1">Barrio</Text>
-              <SelectorChip label={locationLabels.neighborhood} onPress={() => onOpenSelector("neighborhood")} />
+              <SelectorChip
+                label={locationLabels.neighborhood}
+                onPress={() => onOpenSelector("neighborhood")}
+              />
             </ScrollView>
 
             <View className="flex-row gap-3 mt-4">
@@ -538,7 +582,10 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 style={{ borderColor: colors.border }}
                 disabled={saving}
               >
-                <Text className="text-sm font-conviven-semibold text-center" style={{ color: colors.mutedForeground }}>
+                <Text
+                  className="text-sm font-conviven-semibold text-center"
+                  style={{ color: colors.mutedForeground }}
+                >
                   Cancelar
                 </Text>
               </TouchableOpacity>
@@ -551,7 +598,9 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 {saving || catalogLoading ? (
                   <ActivityIndicator color="#ffffff" />
                 ) : (
-                  <Text className="text-sm font-conviven-semibold text-center text-white">Guardar</Text>
+                  <Text className="text-sm font-conviven-semibold text-center text-white">
+                    Guardar
+                  </Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -712,18 +761,16 @@ export default function ProfileScreen() {
     updateUser,
   ]);
 
-  const toggleSection = useCallback(
-    (sectionId: string) => {
-      setExpandedSections(prev => ({
-        ...prev,
-        [sectionId]: !prev[sectionId],
-      }));
-    },
-    [],
-  );
+  const toggleSection = useCallback((sectionId: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId],
+    }));
+  }, []);
 
   const name = useMemo(
-    () => user?.name ?? ([user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Sin nombre"),
+    () =>
+      user?.name ?? ([user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Sin nombre"),
     [user?.firstName, user?.lastName, user?.name],
   );
 
@@ -762,7 +809,14 @@ export default function ProfileScreen() {
       accent: `${colors.conviven.orange}d8`,
       textColor: colors.foreground,
     };
-  }, [colors.conviven.blue, colors.conviven.orange, colors.foreground, colors.muted, user?.searchStatus, user?.status]);
+  }, [
+    colors.conviven.blue,
+    colors.conviven.orange,
+    colors.foreground,
+    colors.muted,
+    user?.searchStatus,
+    user?.status,
+  ]);
 
   const lifestyleBadges = useMemo(
     () => [
@@ -775,7 +829,8 @@ export default function ProfileScreen() {
 
   const verificationBadges = useMemo(() => {
     const verification = user?.verificationStatus;
-    const trustLevel = verification?.reliabilityLevel ??
+    const trustLevel =
+      verification?.reliabilityLevel ??
       (user?.reliabilityScore && user.reliabilityScore >= 80
         ? "Confianza top"
         : user?.reliabilityScore && user.reliabilityScore >= 60
@@ -786,27 +841,31 @@ export default function ProfileScreen() {
       {
         icon: "mail" as const,
         label: verification?.email ? "Email verificado" : "Verifica tu email",
-        tone: verification?.email ? "success" : "pending",
+        tone: (verification?.email ? "success" : "pending") as "success" | "pending",
       },
       {
         icon: "shield" as const,
         label: verification?.identity ? "Identidad confirmada" : "Documentos pendientes",
-        tone: verification?.identity ? "success" : "pending",
+        tone: (verification?.identity ? "success" : "pending") as "success" | "pending",
       },
       {
         icon: "phone" as const,
         label: verification?.phone ? "Teléfono verificado" : "Suma tu teléfono",
-        tone: verification?.phone ? "success" : "pending",
+        tone: (verification?.phone ? "success" : "pending") as "success" | "pending",
       },
       {
         icon: "users" as const,
         label: `Referencias (${verification?.references ?? 0})`,
-        tone: verification && verification.references > 0 ? "success" : "pending",
+        tone: (verification && verification.references > 0 ? "success" : "pending") as
+          | "success"
+          | "pending",
       },
       {
         icon: "award" as const,
         label: trustLevel ?? "Confianza en construcción",
-        tone: user?.reliabilityScore && user.reliabilityScore >= 60 ? "success" : "pending",
+        tone: (user?.reliabilityScore && user.reliabilityScore >= 60 ? "success" : "pending") as
+          | "success"
+          | "pending",
       },
     ];
   }, [user?.reliabilityScore, user?.verificationStatus]);
@@ -828,9 +887,7 @@ export default function ProfileScreen() {
         id: "schedules",
         icon: "clock-outline" as const,
         title: "Horarios",
-        summary:
-          user?.roommatePreferences?.schedules ??
-          "¿Team mañanas, nocturno o mixto?",
+        summary: user?.roommatePreferences?.schedules ?? "¿Team mañanas, nocturno o mixto?",
         details:
           user?.roommatePreferences?.schedules ??
           "Compartí tus horarios de trabajo/estudio para coordinar mejor",
@@ -850,49 +907,43 @@ export default function ProfileScreen() {
         id: "guests",
         icon: "account-heart-outline" as const,
         title: "Visitas",
-        summary:
-          user?.roommatePreferences?.guestsPolicy ??
-          "Explicá cómo te gusta recibir visitas",
+        summary: user?.roommatePreferences?.guestsPolicy ?? "Explicá cómo te gusta recibir visitas",
         details:
-          user?.roommatePreferences?.guestsPolicy ??
-          "¿Juntadas frecuentes o momentos puntuales?",
+          user?.roommatePreferences?.guestsPolicy ?? "¿Juntadas frecuentes o momentos puntuales?",
       },
     ],
     [user?.petFriendly, user?.roommatePreferences],
   );
 
-  const matchSignals = useMemo(
-    () => {
-      const reliabilityScore = Math.min(Math.max(user?.reliabilityScore ?? 68, 0), 100);
-      const referencesScore = Math.min((user?.verificationStatus?.references ?? 0) * 15 + 40, 95);
-      const vibeScore = reliabilityScore > 75 ? 88 : reliabilityScore > 60 ? 78 : 65;
+  const matchSignals = useMemo(() => {
+    const reliabilityScore = Math.min(Math.max(user?.reliabilityScore ?? 68, 0), 100);
+    const referencesScore = Math.min((user?.verificationStatus?.references ?? 0) * 15 + 40, 95);
+    const vibeScore = reliabilityScore > 75 ? 88 : reliabilityScore > 60 ? 78 : 65;
 
-      return [
-        {
-          id: "alignment",
-          icon: "sun" as const,
-          label: "Match energético",
-          value: vibeScore,
-          description: "Tu bio transmite buena vibra. Suma detalles para destacar",
-        },
-        {
-          id: "trust",
-          icon: "shield" as const,
-          label: "Confianza",
-          value: reliabilityScore,
-          description: "Completar tu perfil eleva tu posición en la comunidad",
-        },
-        {
-          id: "references",
-          icon: "message-circle" as const,
-          label: "Referencias",
-          value: referencesScore,
-          description: "Pedir reseñas acelera la elección del match",
-        },
-      ];
-    },
-    [user?.reliabilityScore, user?.verificationStatus?.references],
-  );
+    return [
+      {
+        id: "alignment",
+        icon: "sun" as const,
+        label: "Match energético",
+        value: vibeScore,
+        description: "Tu bio transmite buena vibra. Suma detalles para destacar",
+      },
+      {
+        id: "trust",
+        icon: "shield" as const,
+        label: "Confianza",
+        value: reliabilityScore,
+        description: "Completar tu perfil eleva tu posición en la comunidad",
+      },
+      {
+        id: "references",
+        icon: "message-circle" as const,
+        label: "Referencias",
+        value: referencesScore,
+        description: "Pedir reseñas acelera la elección del match",
+      },
+    ];
+  }, [user?.reliabilityScore, user?.verificationStatus?.references]);
 
   const checklistItems = useMemo(
     () => [
@@ -918,10 +969,18 @@ export default function ProfileScreen() {
         id: "location",
         label: "Confirma tu locación",
         helper: "Seleccioná departamento, ciudad y barrio",
-        completed: Boolean(user?.neighborhoodId && locationLabels.neighborhood !== "Seleccioná un barrio"),
+        completed: Boolean(
+          user?.neighborhoodId && locationLabels.neighborhood !== "Seleccioná un barrio",
+        ),
       },
     ],
-    [locationLabels.neighborhood, user?.avatar, user?.bio, user?.neighborhoodId, user?.roommatePreferences],
+    [
+      locationLabels.neighborhood,
+      user?.avatar,
+      user?.bio,
+      user?.neighborhoodId,
+      user?.roommatePreferences,
+    ],
   );
 
   const checklistProgress = useMemo(() => {
@@ -943,8 +1002,12 @@ export default function ProfileScreen() {
     try {
       const [deptList, cityList, neighborhoodList] = await Promise.all([
         LocationService.listDepartments(),
-        form.departmentId ? LocationService.listCities(form.departmentId) : Promise.resolve([] as City[]),
-        form.cityId ? LocationService.listNeighborhoods(form.cityId) : Promise.resolve([] as Neighborhood[]),
+        form.departmentId
+          ? LocationService.listCities(form.departmentId)
+          : Promise.resolve([] as City[]),
+        form.cityId
+          ? LocationService.listNeighborhoods(form.cityId)
+          : Promise.resolve([] as Neighborhood[]),
       ]);
 
       setDepartments(deptList);
@@ -955,10 +1018,11 @@ export default function ProfileScreen() {
         deptList.find(dept => dept.id === (form.departmentId || user.departmentId))?.name ??
         locationLabels.department;
       const cityName =
-        cityList.find(city => city.id === (form.cityId || user.cityId))?.name ?? locationLabels.city;
+        cityList.find(city => city.id === (form.cityId || user.cityId))?.name ??
+        locationLabels.city;
       const neighborhoodName =
-        neighborhoodList.find(neigh => neigh.id === (form.neighborhoodId || user.neighborhoodId))?.name ??
-        locationLabels.neighborhood;
+        neighborhoodList.find(neigh => neigh.id === (form.neighborhoodId || user.neighborhoodId))
+          ?.name ?? locationLabels.neighborhood;
 
       setLocationLabels({
         department: formatLabel(departmentName, locationLabels.department),
@@ -967,11 +1031,22 @@ export default function ProfileScreen() {
       });
     } catch (error) {
       console.error("Catalog load error", error);
-      Alert.alert("Ubicaciones", "No pudimos cargar las ubicaciones. Intenta nuevamente más tarde.");
+      Alert.alert(
+        "Ubicaciones",
+        "No pudimos cargar las ubicaciones. Intenta nuevamente más tarde.",
+      );
     } finally {
       setCatalogLoading(false);
     }
-  }, [form.cityId, form.departmentId, form.neighborhoodId, locationLabels.city, locationLabels.department, locationLabels.neighborhood, user]);
+  }, [
+    form.cityId,
+    form.departmentId,
+    form.neighborhoodId,
+    locationLabels.city,
+    locationLabels.department,
+    locationLabels.neighborhood,
+    user,
+  ]);
 
   const handleMenuOption = useCallback(
     (optionId: string) => {
@@ -980,7 +1055,7 @@ export default function ProfileScreen() {
           openEditModal();
           break;
         case "settings":
-          router.push("/(app)/settings");
+          router.push("/settings");
           break;
         case "refresh":
           refreshUser();
@@ -1154,7 +1229,17 @@ export default function ProfileScreen() {
     } finally {
       setSavingProfile(false);
     }
-  }, [form.bio, form.departmentId, form.firstName, form.lastName, form.location, form.neighborhoodId, form.phone, setUser, user]);
+  }, [
+    form.bio,
+    form.departmentId,
+    form.firstName,
+    form.lastName,
+    form.location,
+    form.neighborhoodId,
+    form.phone,
+    setUser,
+    user,
+  ]);
 
   const handleAvatarUpdate = useCallback(async () => {
     if (!user) {
@@ -1269,9 +1354,7 @@ export default function ProfileScreen() {
   ];
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}
-      edges={["top"]}
-    >
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={["top"]}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View
           className="border rounded-3xl p-4 mb-4"
@@ -1284,7 +1367,11 @@ export default function ProfileScreen() {
                 style={{ backgroundColor: colors.muted }}
               >
                 {user.avatar ? (
-                  <Image source={{ uri: user.avatar }} className="w-full h-full" resizeMode="cover" />
+                  <Image
+                    source={{ uri: user.avatar }}
+                    className="w-full h-full"
+                    resizeMode="cover"
+                  />
                 ) : photoUploading ? (
                   <ActivityIndicator color={colors.conviven.blue} />
                 ) : (
@@ -1307,7 +1394,10 @@ export default function ProfileScreen() {
                     className="px-2.5 py-1 rounded-full"
                     style={{ backgroundColor: `${colors.conviven.blue}12` }}
                   >
-                    <Text className="text-[11px] font-conviven-semibold" style={{ color: colors.conviven.blue }}>
+                    <Text
+                      className="text-[11px] font-conviven-semibold"
+                      style={{ color: colors.conviven.blue }}
+                    >
                       {tag}
                     </Text>
                   </View>
@@ -1411,10 +1501,17 @@ export default function ProfileScreen() {
           </Text>
           <View className="gap-3">
             {checklistItems.map(item => (
-              <ChecklistItem key={item.id} label={item.label} helper={item.helper} completed={item.completed} />
+              <ChecklistItem
+                key={item.id}
+                label={item.label}
+                helper={item.helper}
+                completed={item.completed}
+              />
             ))}
           </View>
-          <Text className="text-xs font-conviven text-muted-foreground mt-3 italic">{PROGRESS_BAR_PROMPT}</Text>
+          <Text className="text-xs font-conviven text-muted-foreground mt-3 italic">
+            {PROGRESS_BAR_PROMPT}
+          </Text>
         </Section>
 
         <Section title="Sobre ti">
@@ -1441,7 +1538,11 @@ export default function ProfileScreen() {
         </Section>
       </ScrollView>
 
-      <MenuModal visible={menuVisible} onClose={() => setMenuVisible(false)} options={menuOptions} />
+      <MenuModal
+        visible={menuVisible}
+        onClose={() => setMenuVisible(false)}
+        options={menuOptions}
+      />
       <EditProfileModal
         visible={editVisible}
         onClose={() => setEditVisible(false)}
@@ -1520,7 +1621,10 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <View className="flex-row items-start gap-3">
       <Text className="text-xs font-conviven text-muted-foreground w-28">{label}</Text>
-      <Text className="text-sm font-conviven-semibold text-foreground flex-1" style={{ color: colors.foreground }}>
+      <Text
+        className="text-sm font-conviven-semibold text-foreground flex-1"
+        style={{ color: colors.foreground }}
+      >
         {value}
       </Text>
     </View>

@@ -22,9 +22,11 @@ export default function AppLayout() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.mutedForeground,
         tabBarStyle: {
-          paddingVertical: 5,
+          paddingVertical: 0,
+          paddingTop: 2,
+          paddingBottom: 3,
           backgroundColor: colors.sidebarBackground,
-          borderTopWidth: 1,
+          borderTopWidth: 0,
           borderTopColor: colors.sidebarBorder,
         },
         tabBarLabelStyle: {
@@ -56,6 +58,18 @@ export default function AppLayout() {
           title: "Perfil",
           tabBarIcon: getTabBarIcon("person-circle-outline"),
           tabBarLabel: "Perfil",
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="[id]"
+        options={{
+          href: null,
         }}
       />
     </Tabs>
