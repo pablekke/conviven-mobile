@@ -1,14 +1,16 @@
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { View, Text as RNText, StyleSheet, LogBox } from "react-native";
 import Spinner from "../components/Spinner";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useFonts } from "expo-font";
+import Toast from "react-native-toast-message";
 
 import { AuthProvider, useAuth } from "../context/AuthContext";
 import { ThemeProvider, useTheme } from "../context/ThemeContext";
+import { DataPreloadProvider, useDataPreload } from "../context/DataPreloadContext";
 
 import "../global.css";
 LogBox.ignoreLogs(["SafeAreaView has been deprecated"]);
@@ -17,6 +19,8 @@ SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 function AuthRoot() {
   const { isAuthenticated, isLoading, user } = useAuth();
+  const { isPreloading, preloadCompleted } = useDataPreload();
+  const [showTransition, setShowTransition] = useState(true);
   const segments = useSegments();
   const router = useRouter();
   const { colors, theme } = useTheme();
@@ -25,11 +29,12 @@ function AuthRoot() {
     if (!user?.firstName || !user?.lastName || !user?.departmentId || !user?.neighborhoodId) {
       return "/profile";
     }
-    return "/";
+    return "/(app)";
   }, [user]);
 
   const handleNavigation = useCallback(() => {
     const inAuthGroup = segments[0] === "auth";
+
     if (isLoading) {
       return;
     }
@@ -39,13 +44,30 @@ function AuthRoot() {
     } else if (isAuthenticated && inAuthGroup) {
       router.replace(getTargetRoute());
     }
+    // No redirigir si ya está en app - evita loops
   }, [isAuthenticated, segments, isLoading, router, getTargetRoute]);
 
   useEffect(() => {
     handleNavigation();
   }, [handleNavigation]);
 
-  if (isLoading) {
+  useEffect(() => {
+    if (isAuthenticated && preloadCompleted && !isPreloading) {
+      const timer = setTimeout(() => {
+        setShowTransition(false);
+      }, 100); // Reducido de 300ms a 100ms
+
+      return () => clearTimeout(timer);
+    } else if (!isAuthenticated) {
+      setShowTransition(true);
+    }
+    // No mostrar transition si ya está autenticado y cargado
+  }, [isAuthenticated, preloadCompleted, isPreloading]);
+
+  const showLoading =
+    isLoading || (!isAuthenticated && (isPreloading || !preloadCompleted || showTransition));
+
+  if (showLoading) {
     return (
       <View
         className="flex-1 items-center justify-center"
@@ -130,14 +152,19 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaProvider>
-      <ThemeProvider>
-        <AuthProvider>
-          <ThemeDefaults />
-          <ThemedTree />
-        </AuthProvider>
-      </ThemeProvider>
-    </SafeAreaProvider>
+    <>
+      <SafeAreaProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <DataPreloadProvider>
+              <ThemeDefaults />
+              <ThemedTree />
+            </DataPreloadProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </SafeAreaProvider>
+      <Toast />
+    </>
   );
 }
 

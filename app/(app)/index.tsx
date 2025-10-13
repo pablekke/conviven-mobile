@@ -3,6 +3,7 @@ import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
+import TabTransition from "../../components/TabTransition";
 import { useTheme } from "../../context/ThemeContext";
 
 type Roomie = {
@@ -64,154 +65,156 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      <View className="px-6 pt-2 pb-2 flex-1">
-        <View className="flex-row items-center justify-between mb-6">
-          <View>
-            <Text className="text-xs uppercase tracking-[3px] text-muted-foreground font-conviven">
-              Explora roomies
-            </Text>
-            <Text className="text-3xl font-conviven-bold text-foreground mt-1">
-              Descubre a tu match
-            </Text>
-          </View>
-          <View
-            className="rounded-full items-center justify-center"
-            style={[styles.sparkIcon, { backgroundColor: `${colors.conviven.blue}15` }]}
-          >
-            <Ionicons name="sparkles-outline" size={22} color={colors.conviven.blue} />
-          </View>
-        </View>
-
-        <View className="flex-row justify-end mb-5">
-          <View
-            className="flex-row items-center gap-2 px-3 py-1 rounded-full"
-            style={{ backgroundColor: `${colors.conviven.blue}15` }}
-          >
-            <View
-              className="w-2 h-2 rounded-full"
-              style={{ backgroundColor: colors.conviven.blue }}
-            />
-            <Text
-              className="text-xs font-conviven-semibold"
-              style={{ color: colors.conviven.blue }}
-            >
-              {activeRoomie.matchScore}% afinidad
-            </Text>
-          </View>
-        </View>
-
-        <View className="flex-1 justify-center">
-          <View className="relative">
-            <View
-              className="absolute left-4 right-4 top-4 rounded-3xl border"
-              style={[
-                styles.nextCard,
-                {
-                  borderColor: `${colors.border}70`,
-                  backgroundColor: colors.card,
-                  transform: [{ scale: 0.96 }],
-                },
-              ]}
-            >
-              <View className="flex-1 items-center justify-center px-6">
-                <Text className="font-conviven-semibold text-muted-foreground">
-                  Próximo match: {nextRoomie.name}
-                </Text>
-              </View>
+    <TabTransition>
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+        <View className="px-6 pt-2 pb-2 flex-1">
+          <View className="flex-row items-center justify-between mb-6">
+            <View>
+              <Text className="text-xs uppercase tracking-[3px] text-muted-foreground font-conviven">
+                Explora roomies
+              </Text>
+              <Text className="text-3xl font-conviven-bold text-foreground mt-1">
+                Descubre a tu match
+              </Text>
             </View>
-
             <View
-              className="rounded-3xl overflow-hidden border"
-              style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
+              className="rounded-full items-center justify-center"
+              style={[styles.sparkIcon, { backgroundColor: `${colors.conviven.blue}15` }]}
             >
-              <Image
-                source={{ uri: activeRoomie.photo }}
-                className="w-full h-72"
-                resizeMode="cover"
+              <Ionicons name="sparkles-outline" size={22} color={colors.conviven.blue} />
+            </View>
+          </View>
+
+          <View className="flex-row justify-end mb-5">
+            <View
+              className="flex-row items-center gap-2 px-3 py-1 rounded-full"
+              style={{ backgroundColor: `${colors.conviven.blue}15` }}
+            >
+              <View
+                className="w-2 h-2 rounded-full"
+                style={{ backgroundColor: colors.conviven.blue }}
               />
+              <Text
+                className="text-xs font-conviven-semibold"
+                style={{ color: colors.conviven.blue }}
+              >
+                {activeRoomie.matchScore}% afinidad
+              </Text>
+            </View>
+          </View>
 
-              <View className="p-5 gap-3">
-                <View className="flex-row items-center justify-between">
-                  <View>
-                    <Text className="text-2xl font-conviven-bold text-foreground">
-                      {activeRoomie.name}, {activeRoomie.age}
-                    </Text>
-                    <Text className="text-sm text-muted-foreground font-conviven">
-                      {activeRoomie.profession}
-                    </Text>
-                  </View>
-                  <View className="items-center">
-                    <Text className="text-[10px] font-conviven text-muted-foreground uppercase tracking-wide">
-                      match score
-                    </Text>
-                    <Text
-                      className="text-xl font-conviven-semibold"
-                      style={{ color: colors.conviven.blue }}
-                    >
-                      {activeRoomie.matchScore}%
-                    </Text>
-                  </View>
+          <View className="flex-1 justify-center">
+            <View className="relative">
+              <View
+                className="absolute left-4 right-4 top-4 rounded-3xl border"
+                style={[
+                  styles.nextCard,
+                  {
+                    borderColor: `${colors.border}70`,
+                    backgroundColor: colors.card,
+                    transform: [{ scale: 0.96 }],
+                  },
+                ]}
+              >
+                <View className="flex-1 items-center justify-center px-6">
+                  <Text className="font-conviven-semibold text-muted-foreground">
+                    Próximo match: {nextRoomie.name}
+                  </Text>
                 </View>
+              </View>
 
-                <Text className="text-base text-foreground font-conviven leading-5">
-                  {activeRoomie.bio}
-                </Text>
+              <View
+                className="rounded-3xl overflow-hidden border"
+                style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
+              >
+                <Image
+                  source={{ uri: activeRoomie.photo }}
+                  className="w-full h-72"
+                  resizeMode="cover"
+                />
 
-                <View className="flex-row flex-wrap gap-2">
-                  {activeRoomie.interests.map(interest => (
-                    <View
-                      key={interest}
-                      className="px-3 py-1 rounded-full"
-                      style={{ backgroundColor: `${colors.conviven.blue}12` }}
-                    >
-                      <Text
-                        className="text-xs font-conviven-semibold"
-                        style={{ color: colors.conviven.blue }}
-                      >
-                        #{interest}
+                <View className="p-5 gap-3">
+                  <View className="flex-row items-center justify-between">
+                    <View>
+                      <Text className="text-2xl font-conviven-bold text-foreground">
+                        {activeRoomie.name}, {activeRoomie.age}
+                      </Text>
+                      <Text className="text-sm text-muted-foreground font-conviven">
+                        {activeRoomie.profession}
                       </Text>
                     </View>
-                  ))}
+                    <View className="items-center">
+                      <Text className="text-[10px] font-conviven text-muted-foreground uppercase tracking-wide">
+                        match score
+                      </Text>
+                      <Text
+                        className="text-xl font-conviven-semibold"
+                        style={{ color: colors.conviven.blue }}
+                      >
+                        {activeRoomie.matchScore}%
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Text className="text-base text-foreground font-conviven leading-5">
+                    {activeRoomie.bio}
+                  </Text>
+
+                  <View className="flex-row flex-wrap gap-2">
+                    {activeRoomie.interests.map(interest => (
+                      <View
+                        key={interest}
+                        className="px-3 py-1 rounded-full"
+                        style={{ backgroundColor: `${colors.conviven.blue}12` }}
+                      >
+                        <Text
+                          className="text-xs font-conviven-semibold"
+                          style={{ color: colors.conviven.blue }}
+                        >
+                          #{interest}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
                 </View>
               </View>
             </View>
           </View>
+
+          <View className="flex-row items-center justify-between mt-8 mb-6">
+            <Pressable
+              accessibilityRole="button"
+              onPress={handleChoice}
+              className="w-16 h-16 rounded-full items-center justify-center"
+              style={{ backgroundColor: colors.muted }}
+            >
+              <Ionicons name="close" size={28} color={colors.mutedForeground} />
+            </Pressable>
+
+            <Pressable
+              accessibilityRole="button"
+              onPress={handleChoice}
+              className="w-20 h-20 rounded-full items-center justify-center"
+              style={{ backgroundColor: colors.conviven.blue }}
+            >
+              <Ionicons name="heart" size={32} color={colors.primaryForeground} />
+            </Pressable>
+
+            <Pressable
+              accessibilityRole="button"
+              onPress={handleChoice}
+              className="w-16 h-16 rounded-full items-center justify-center"
+              style={[
+                styles.outlineAction,
+                { backgroundColor: colors.card, borderColor: colors.border },
+              ]}
+            >
+              <Ionicons name="star" size={26} color={colors.conviven.orange} />
+            </Pressable>
+          </View>
         </View>
-
-        <View className="flex-row items-center justify-between mt-8 mb-6">
-          <Pressable
-            accessibilityRole="button"
-            onPress={handleChoice}
-            className="w-16 h-16 rounded-full items-center justify-center"
-            style={{ backgroundColor: colors.muted }}
-          >
-            <Ionicons name="close" size={28} color={colors.mutedForeground} />
-          </Pressable>
-
-          <Pressable
-            accessibilityRole="button"
-            onPress={handleChoice}
-            className="w-20 h-20 rounded-full items-center justify-center"
-            style={{ backgroundColor: colors.conviven.blue }}
-          >
-            <Ionicons name="heart" size={32} color={colors.primaryForeground} />
-          </Pressable>
-
-          <Pressable
-            accessibilityRole="button"
-            onPress={handleChoice}
-            className="w-16 h-16 rounded-full items-center justify-center"
-            style={[
-              styles.outlineAction,
-              { backgroundColor: colors.card, borderColor: colors.border },
-            ]}
-          >
-            <Ionicons name="star" size={26} color={colors.conviven.orange} />
-          </Pressable>
-        </View>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </TabTransition>
   );
 }
 

@@ -1,6 +1,6 @@
 import { ChatMessage } from "../types";
 import { MessageStatus } from "../enums";
-import { apiGet, apiPost, apiPatch } from "./apiHelper";
+import { apiGet, apiPost, apiPatch } from "../../../services/apiHelper";
 
 interface SendMessageResponse {
   id: string;

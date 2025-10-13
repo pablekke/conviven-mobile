@@ -34,6 +34,56 @@ export interface RoommatePreferences {
   notes?: string;
 }
 
+export interface UserProfile {
+  id: string;
+  userId: string;
+  bio?: string;
+  currency?: string;
+  tidiness?: string;
+  schedule?: string;
+  guestsFreq?: string;
+  musicUsage?: string;
+  quietHoursStart?: number;
+  quietHoursEnd?: number;
+  smokesCigarettes?: string;
+  smokesWeed?: string;
+  alcohol?: string;
+  petsOwned?: string[];
+  petsOk?: string;
+  cooking?: string;
+  diet?: string;
+  sharePolicy?: string;
+  languages?: string[];
+  interests?: string[];
+  zodiacSign?: string;
+  hasPhoto?: boolean;
+  notificationsEnabled?: boolean;
+  notificationToken?: string | null;
+  lastActiveAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserSearchPreferences {
+  id: string;
+  userId: string;
+  noCigarettes?: boolean;
+  noWeed?: boolean;
+  noPets?: boolean;
+  petsRequired?: boolean;
+  requireQuietHoursOverlap?: boolean;
+  tidinessMin?: string;
+  schedulePref?: string;
+  guestsMax?: string;
+  musicMax?: string;
+  languagesPref?: string[];
+  interestsPref?: string[];
+  zodiacPref?: string[];
+  lastActiveWithinDays?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Department {
   id: string;
   name: string;
@@ -83,6 +133,8 @@ export interface User {
   profession?: string;
   jobTitle?: string;
   petFriendly?: boolean;
+  profile?: UserProfile;
+  searchPreferences?: UserSearchPreferences;
 }
 
 export interface AuthState {

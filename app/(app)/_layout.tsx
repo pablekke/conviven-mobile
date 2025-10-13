@@ -4,9 +4,6 @@ import React from "react";
 
 import { useTheme } from "../../context/ThemeContext";
 
-/**
- * This is the layout for the authenticated app with tab navigation
- */
 export default function AppLayout() {
   const { colors } = useTheme();
 
@@ -67,7 +64,13 @@ export default function AppLayout() {
         }}
       />
       <Tabs.Screen
-        name="[id]"
+        name="conversation/[id]"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="edit-profile/index"
         options={{
           href: null,
         }}

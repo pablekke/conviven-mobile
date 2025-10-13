@@ -1,2 +1,2 @@
 export { default as chatService } from "./chatService";
-export { apiGet, apiPost, apiPut, apiPatch, apiDelete } from "./apiHelper";
+export { apiGet, apiPost, apiPut, apiPatch, apiDelete } from "../../../services/apiHelper";
