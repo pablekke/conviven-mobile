@@ -1,7 +1,7 @@
 import { Message } from "../types/message";
-import { HttpError, resilientRequest } from "./apiClient";
-import AuthService from "./authService";
+import { resilientRequest } from "./apiClient";
 import { API } from "@/constants";
+import { HttpError } from "./http";
 
 const MIN_MESSAGE_LENGTH = 1;
 const MAX_MESSAGE_LENGTH = 1000;
@@ -41,18 +41,9 @@ export default class MessageService {
       throw new Error("Se requiere el identificador del usuario para obtener la conversación");
     }
 
-    const token = await AuthService.getAccessToken();
-
-    if (!token) {
-      throw new HttpError(401, "No autenticado", null);
-    }
-
     const data = await resilientRequest<any[]>({
       endpoint: `${API.MESSAGES}/${userId}`,
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
       useCache: true,
     });
 
@@ -69,17 +60,10 @@ export default class MessageService {
     }
 
     const normalizedContent = validateMessageContent(content);
-    const token = await AuthService.getAccessToken();
-
-    if (!token) {
-      throw new HttpError(401, "No autenticado", null);
-    }
-
     const data = await resilientRequest<any>({
       endpoint: `${API.MESSAGES}/${userId}`,
       method: "POST",
       headers: {
-        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
       body: { content: normalizedContent },

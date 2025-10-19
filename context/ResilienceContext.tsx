@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import NetInfo from "@react-native-community/netinfo";
 
 import { STATUS_PAGE_URL } from "@/config/env";
 import { flushQueuedRequests } from "@/services/apiClient";
@@ -26,7 +27,8 @@ interface ResilienceContextValue {
 const ResilienceContext = createContext<ResilienceContextValue | undefined>(undefined);
 
 export function ResilienceProvider({ children }: { children: React.ReactNode }) {
-  const [offline, setOffline] = useState(false);
+  const [offlineSignal, setOfflineSignal] = useState(false);
+  const [networkOffline, setNetworkOffline] = useState(false);
   const [lastErrorMessage, setLastErrorMessage] = useState<string | null>(null);
   const [queueSize, setQueueSize] = useState(0);
   const [maintenance, setMaintenance] = useState(false);
@@ -35,10 +37,7 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     const unsubscribeOffline = offlineEmitter.subscribe(({ active }) => {
-      setOffline(active);
-      if (!active) {
-        setLastErrorMessage(null);
-      }
+      setOfflineSignal(active);
     });
 
     const unsubscribeError = errorEmitter.subscribe(payload => {
@@ -127,11 +126,39 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
     };
   }, []);
 
+  useEffect(() => {
+    const subscription = NetInfo.addEventListener(state => {
+      const isConnected = Boolean(state.isConnected && state.isInternetReachable !== false);
+      setNetworkOffline(!isConnected);
+      offlineEmitter.emit({ active: !isConnected });
+    });
+
+    NetInfo.fetch()
+      .then(state => {
+        const isConnected = Boolean(state.isConnected && state.isInternetReachable !== false);
+        setNetworkOffline(!isConnected);
+        offlineEmitter.emit({ active: !isConnected });
+      })
+      .catch(() => undefined);
+
+    return () => {
+      subscription();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!offlineSignal && !networkOffline) {
+      setLastErrorMessage(null);
+    }
+  }, [offlineSignal, networkOffline]);
+
   const applyRemoteConfig = (config: RemoteConfig) => {
     setStatusPageUrl(config.statusPageUrl);
     setMaintenance(config.maintenanceMode);
     setMaintenanceMessage(config.maintenanceMessage);
   };
+
+  const offline = offlineSignal || networkOffline;
 
   const value = useMemo<ResilienceContextValue>(
     () => ({

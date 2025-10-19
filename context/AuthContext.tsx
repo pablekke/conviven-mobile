@@ -10,7 +10,9 @@ import { Alert } from "react-native";
 
 import AuthService from "../services/authService";
 import { AuthState, LoginCredentials, RegisterCredentials, User } from "../types/user";
-import { NetworkError } from "../services/apiClient";
+import { NetworkError } from "../services/http";
+import { authSession } from "../services/auth/sessionManager";
+import Toast from "react-native-toast-message";
 
 interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>;
@@ -88,6 +90,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     checkAuthStatus();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = authSession.subscribe(event => {
+      if (event.type === "sessionExpired") {
+        setState({
+          user: null,
+          isAuthenticated: false,
+          isLoading: false,
+          error: "Sesión vencida, iniciá sesión de nuevo.",
+        });
+        AuthService.saveUser(null).catch(() => undefined);
+        Toast.show({ type: "info", text1: "Sesión vencida, iniciá sesión de nuevo." });
+      }
+    });
+
+    return unsubscribe;
   }, []);
 
   const login = async (credentials: LoginCredentials) => {

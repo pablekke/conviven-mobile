@@ -1,32 +1,12 @@
 import { resilientRequest } from "./apiClient";
-import AuthService from "./authService";
-
-/**
- * Obtiene los headers comunes con autenticación
- */
-async function getAuthHeaders(): Promise<HeadersInit> {
-  const token = await AuthService.getAccessToken();
-
-  if (!token) {
-    throw new Error("No autenticado");
-  }
-
-  return {
-    Authorization: `Bearer ${token}`,
-    "Content-Type": "application/json",
-  };
-}
 
 /**
  * GET - Obtener recurso
  */
 export async function apiGet<T>(endpoint: string): Promise<T> {
-  const headers = await getAuthHeaders();
-
   return resilientRequest<T>({
     endpoint,
     method: "GET",
-    headers,
     useCache: true,
   });
 }
@@ -35,12 +15,9 @@ export async function apiGet<T>(endpoint: string): Promise<T> {
  * POST - Crear recurso
  */
 export async function apiPost<T>(endpoint: string, body?: any): Promise<T> {
-  const headers = await getAuthHeaders();
-
   return resilientRequest<T>({
     endpoint,
     method: "POST",
-    headers,
     body,
     allowQueue: true,
   });
@@ -50,12 +27,9 @@ export async function apiPost<T>(endpoint: string, body?: any): Promise<T> {
  * PUT - Actualizar recurso completo
  */
 export async function apiPut<T>(endpoint: string, body?: any): Promise<T> {
-  const headers = await getAuthHeaders();
-
   return resilientRequest<T>({
     endpoint,
     method: "PUT",
-    headers,
     body,
     allowQueue: true,
   });
@@ -65,12 +39,9 @@ export async function apiPut<T>(endpoint: string, body?: any): Promise<T> {
  * PATCH - Actualizar recurso parcial
  */
 export async function apiPatch<T>(endpoint: string, body?: any): Promise<T> {
-  const headers = await getAuthHeaders();
-
   return resilientRequest<T>({
     endpoint,
     method: "PATCH",
-    headers,
     body,
     allowQueue: true,
   });
@@ -80,12 +51,9 @@ export async function apiPatch<T>(endpoint: string, body?: any): Promise<T> {
  * DELETE - Eliminar recurso
  */
 export async function apiDelete<T>(endpoint: string): Promise<T> {
-  const headers = await getAuthHeaders();
-
   return resilientRequest<T>({
     endpoint,
     method: "DELETE",
-    headers,
     allowQueue: true,
   });
 }
@@ -103,16 +71,10 @@ export async function apiRequest<T>(
     timeout?: number;
   } = {},
 ): Promise<T> {
-  const authHeaders = await getAuthHeaders();
-  const finalHeaders = {
-    ...authHeaders,
-    ...options.headers,
-  };
-
   return resilientRequest<T>({
     endpoint,
     method,
-    headers: finalHeaders,
+    headers: options.headers,
     body: options.body,
     timeout: options.timeout,
     allowQueue: method !== "GET",
