@@ -155,6 +155,7 @@ export interface RegisterCredentials extends LoginCredentials {
   birthDate: string;
   gender: Gender | string;
   departmentId: string;
+  cityId: string;
   neighborhoodId: string;
   role?: UserRole;
 }
@@ -166,8 +167,9 @@ export interface PublicRegisterPayload {
   lastName: string;
   birthDate: string;
   gender: Gender;
-  departmentId: string;
-  neighborhoodId: string;
+  departmentId?: string;
+  cityId?: string;
+  neighborhoodId?: string;
   role?: UserRole;
   status?: UserStatus;
 }
@@ -180,6 +182,7 @@ export interface AdminRegisterPayload {
   birthDate: string;
   gender: Gender;
   departmentId: string;
+  cityId: string;
   neighborhoodId: string;
 }
 

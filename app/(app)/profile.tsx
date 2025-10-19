@@ -6,10 +6,12 @@ import { useRouter } from "expo-router";
 import TabTransition from "../../components/TabTransition";
 import { ProfileCard } from "../../features/profile/components";
 import { useProfileScreen } from "../../features/profile/hooks";
+import { useAuth } from "../../context/AuthContext";
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, userName, userAge, progressPercentage } = useProfileScreen();
+  const { logout } = useAuth();
 
   if (!user) {
     return (
@@ -35,6 +37,10 @@ export default function ProfileScreen() {
 
           <TouchableOpacity style={styles.primaryButton} onPress={() => router.push("/(app)")}>
             <Text style={styles.primaryButtonText}>Buscar compañero</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+            <Text style={styles.logoutButtonText}>Cerrar sesión</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -63,6 +69,20 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   primaryButtonText: {
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  logoutButton: {
+    width: "85%",
+    height: 52,
+    backgroundColor: "#FF3B30",
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 16,
+  },
+  logoutButtonText: {
     color: "#ffffff",
     fontSize: 16,
     fontWeight: "bold",
