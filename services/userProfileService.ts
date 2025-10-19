@@ -1,6 +1,6 @@
-import { API_BASE_URL } from "../config/env";
 import AuthService from "./authService";
 import { UserProfile, UserSearchPreferences } from "../types/user";
+import { resilientRequest } from "./apiClient";
 
 class UserProfileService {
   private async getAuthHeaders() {
@@ -17,23 +17,29 @@ class UserProfileService {
   }
 
   private async makeRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`;
     const authHeaders = await this.getAuthHeaders();
+    const method = (options.method ?? "GET") as "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+    let body: any = options.body;
 
-    const response = await fetch(url, {
-      headers: {
-        ...authHeaders,
-        ...options.headers,
-      },
-      ...options,
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    if (typeof body === "string") {
+      try {
+        body = JSON.parse(body);
+      } catch (error) {
+        body = options.body;
+      }
     }
 
-    return response.json();
+    return resilientRequest<T>({
+      endpoint,
+      method,
+      headers: {
+        ...authHeaders,
+        ...(options.headers as Record<string, string> | undefined),
+      },
+      body,
+      allowQueue: method !== "GET",
+      useCache: method === "GET",
+    });
   }
 
   /**

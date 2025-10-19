@@ -11,6 +11,10 @@ import Toast from "react-native-toast-message";
 import { AuthProvider, useAuth } from "../context/AuthContext";
 import { ThemeProvider, useTheme } from "../context/ThemeContext";
 import { DataPreloadProvider, useDataPreload } from "../context/DataPreloadContext";
+import { ResilienceProvider, useResilience } from "../context/ResilienceContext";
+
+import OfflineBanner from "../components/OfflineBanner";
+import MaintenanceScreen from "../components/MaintenanceScreen";
 
 import "../global.css";
 LogBox.ignoreLogs(["SafeAreaView has been deprecated"]);
@@ -61,11 +65,10 @@ function AuthRoot() {
     } else if (!isAuthenticated) {
       setShowTransition(true);
     }
-    // No mostrar transition si ya está autenticado y cargado
   }, [isAuthenticated, preloadCompleted, isPreloading]);
 
   const showLoading =
-    isLoading || (!isAuthenticated && (isPreloading || !preloadCompleted || showTransition));
+    isLoading || (isAuthenticated && (isPreloading || !preloadCompleted || showTransition));
 
   if (showLoading) {
     return (
@@ -155,12 +158,14 @@ export default function RootLayout() {
     <>
       <SafeAreaProvider>
         <ThemeProvider>
-          <AuthProvider>
-            <DataPreloadProvider>
-              <ThemeDefaults />
-              <ThemedTree />
-            </DataPreloadProvider>
-          </AuthProvider>
+          <ResilienceProvider>
+            <AuthProvider>
+              <DataPreloadProvider>
+                <ThemeDefaults />
+                <ThemedTree />
+              </DataPreloadProvider>
+            </AuthProvider>
+          </ResilienceProvider>
         </ThemeProvider>
       </SafeAreaProvider>
       <Toast />
@@ -170,14 +175,26 @@ export default function RootLayout() {
 
 function ThemedTree() {
   const { theme, colors } = useTheme();
+
   return (
     <SafeAreaView
       key={theme}
       style={[styles.themedTree, { backgroundColor: colors.background }]}
       edges={["left", "right"]}
     >
-      <AuthRoot />
+      <ResilienceWrapper />
     </SafeAreaView>
+  );
+}
+
+function ResilienceWrapper() {
+  const { maintenance } = useResilience();
+
+  return (
+    <>
+      <OfflineBanner />
+      <View style={styles.content}>{maintenance ? <MaintenanceScreen /> : <AuthRoot />}</View>
+    </>
   );
 }
 
@@ -186,6 +203,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   themedTree: {
+    flex: 1,
+  },
+  content: {
     flex: 1,
   },
 });

@@ -1,5 +1,5 @@
 import AuthService from "./authService";
-import { buildUrl, parseResponse } from "./apiClient";
+import { resilientRequest } from "./apiClient";
 import { mapUserFromApi } from "./mappers/userMapper";
 import { API } from "@/constants";
 import {
@@ -27,6 +27,8 @@ function buildQueryString(params: UserListQuery = {}): string {
   return queryString ? `?${queryString}` : "";
 }
 
+type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+
 async function authorizedRequest(path: string, options: RequestInit = {}): Promise<any> {
   const token = await AuthService.getAccessToken();
   const headers: Record<string, string> = {
@@ -37,16 +39,25 @@ async function authorizedRequest(path: string, options: RequestInit = {}): Promi
     headers.Authorization = `Bearer ${token}`;
   }
 
-  if (options.body && !headers["Content-Type"]) {
-    headers["Content-Type"] = "application/json";
+  const method = (options.method ?? "GET") as HttpMethod;
+  let body: any = options.body;
+
+  if (typeof body === "string") {
+    try {
+      body = JSON.parse(body);
+    } catch (error) {
+      body = options.body;
+    }
   }
 
-  const response = await fetch(buildUrl(path), {
-    ...options,
+  return resilientRequest({
+    endpoint: path,
+    method,
     headers,
+    body,
+    allowQueue: method !== "GET",
+    useCache: method === "GET",
   });
-
-  return parseResponse(response);
 }
 
 function extractUserPayload(data: any): any {
@@ -64,15 +75,15 @@ const UserService = {
       role: payload.role ?? UserRole.USER,
     };
 
-    const response = await fetch(buildUrl("/users/register"), {
+    const data = await resilientRequest<any>({
+      endpoint: "/users/register",
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(registerPayload),
+      body: registerPayload,
+      allowQueue: false,
     });
-
-    const data = await parseResponse(response);
     const userPayload = extractUserPayload(data);
     return mapUserFromApi(userPayload);
   },

@@ -95,7 +95,15 @@ export const DataPreloadProvider: React.FC<DataPreloadProviderProps> = ({ childr
     setState(prev => ({ ...prev, chatsLoading: true, chatsError: null }));
 
     try {
-      const conversations = await chatService.getConversations();
+      // Timeout para evitar bloqueos
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Chats timeout")), 5000);
+      });
+
+      const conversations = (await Promise.race([
+        chatService.getConversations(),
+        timeoutPromise,
+      ])) as ChatPreview[];
 
       setState(prev => ({
         ...prev,
@@ -123,7 +131,15 @@ export const DataPreloadProvider: React.FC<DataPreloadProviderProps> = ({ childr
     setState(prev => ({ ...prev, profileLoading: true, profileError: null }));
 
     try {
-      const fullProfile = await UserProfileService.getFullUserProfile();
+      // Timeout para evitar bloqueos
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Profile timeout")), 5000);
+      });
+
+      const fullProfile = await Promise.race([
+        UserProfileService.getFullUserProfile(),
+        timeoutPromise,
+      ]);
 
       setState(prev => ({
         ...prev,
@@ -156,8 +172,11 @@ export const DataPreloadProvider: React.FC<DataPreloadProviderProps> = ({ childr
     }));
 
     try {
-      // Load data in parallel for better performance
-      await Promise.allSettled([loadChats(), loadProfile()]);
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Preload timeout")), 10000);
+      });
+
+      await Promise.race([Promise.allSettled([loadChats(), loadProfile()]), timeoutPromise]);
 
       setState(prev => ({
         ...prev,
@@ -170,7 +189,7 @@ export const DataPreloadProvider: React.FC<DataPreloadProviderProps> = ({ childr
       setState(prev => ({
         ...prev,
         isPreloading: false,
-        preloadCompleted: false,
+        preloadCompleted: true,
         preloadError: error instanceof Error ? error : new Error("Error en precarga"),
       }));
     }
