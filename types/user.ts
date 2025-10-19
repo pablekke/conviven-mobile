@@ -167,9 +167,9 @@ export interface PublicRegisterPayload {
   lastName: string;
   birthDate: string;
   gender: Gender;
-  departmentId: string;
-  cityId: string;
-  neighborhoodId: string;
+  departmentId?: string;
+  cityId?: string;
+  neighborhoodId?: string;
   role?: UserRole;
   status?: UserStatus;
 }
