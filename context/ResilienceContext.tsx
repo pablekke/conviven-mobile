@@ -4,7 +4,12 @@ import { STATUS_PAGE_URL } from "@/config/env";
 import { flushQueuedRequests } from "@/services/apiClient";
 import { loadRemoteConfig, RemoteConfig } from "@/services/remoteConfigService";
 import { persistentRequestQueue } from "@/services/resilience/requestQueue";
-import { errorEmitter, maintenanceEmitter, offlineEmitter, queueEmitter } from "@/services/resilience/state";
+import {
+  errorEmitter,
+  maintenanceEmitter,
+  offlineEmitter,
+  queueEmitter,
+} from "@/services/resilience/state";
 import { networkMonitor } from "@/services/resilience/networkMonitor";
 
 interface ResilienceContextValue {
@@ -44,15 +49,20 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
       setQueueSize(pending);
     });
 
-    const unsubscribeMaintenance = maintenanceEmitter.subscribe(({ active, message, statusPageUrl }) => {
-      setMaintenance(active);
-      setMaintenanceMessage(message);
-      if (statusPageUrl) {
-        setStatusPageUrl(statusPageUrl);
-      }
-    });
+    const unsubscribeMaintenance = maintenanceEmitter.subscribe(
+      ({ active, message, statusPageUrl }) => {
+        setMaintenance(active);
+        setMaintenanceMessage(message);
+        if (statusPageUrl) {
+          setStatusPageUrl(statusPageUrl);
+        }
+      },
+    );
 
-    persistentRequestQueue.size().then(size => setQueueSize(size)).catch(() => setQueueSize(0));
+    persistentRequestQueue
+      .size()
+      .then(size => setQueueSize(size))
+      .catch(() => setQueueSize(0));
 
     return () => {
       unsubscribeOffline();
@@ -66,24 +76,49 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
     let mounted = true;
 
     const init = async () => {
-      const config = await loadRemoteConfig();
-      if (!mounted) {
-        return;
+      try {
+        const config = await loadRemoteConfig();
+        if (!mounted) {
+          return;
+        }
+        applyRemoteConfig(config);
+      } catch (error) {
+        console.warn("resilience:config:init:error", error);
+        // No bloquear la UI si falla la carga de config
+        if (mounted) {
+          // Valores por defecto si falla la carga
+          setMaintenance(false);
+          setMaintenanceMessage(undefined);
+        }
       }
-      applyRemoteConfig(config);
     };
 
-    init().catch(error => console.warn("resilience:config:init:error", error));
+    // Timeout para evitar bloqueos infinitos
+    const timeout = setTimeout(() => {
+      if (mounted) {
+        console.warn("resilience:config:timeout");
+        setMaintenance(false);
+        setMaintenanceMessage(undefined);
+      }
+    }, 5000);
+
+    init();
 
     return () => {
       mounted = false;
+      clearTimeout(timeout);
     };
   }, []);
 
   useEffect(() => {
     const unsubscribe = networkMonitor.subscribe(isOnline => {
       if (isOnline) {
-        flushQueuedRequests().catch(error => console.warn("resilience:flush:error", error));
+        // Timeout para evitar bloqueos en flush
+        const timeout = setTimeout(() => {
+          flushQueuedRequests().catch(error => console.warn("resilience:flush:error", error));
+        }, 1000);
+
+        return () => clearTimeout(timeout);
       }
     });
 

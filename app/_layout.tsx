@@ -65,11 +65,10 @@ function AuthRoot() {
     } else if (!isAuthenticated) {
       setShowTransition(true);
     }
-    // No mostrar transition si ya está autenticado y cargado
   }, [isAuthenticated, preloadCompleted, isPreloading]);
 
   const showLoading =
-    isLoading || (!isAuthenticated && (isPreloading || !preloadCompleted || showTransition));
+    isLoading || (isAuthenticated && (isPreloading || !preloadCompleted || showTransition));
 
   if (showLoading) {
     return (
@@ -176,7 +175,6 @@ export default function RootLayout() {
 
 function ThemedTree() {
   const { theme, colors } = useTheme();
-  const { maintenance } = useResilience();
 
   return (
     <SafeAreaView
@@ -184,9 +182,19 @@ function ThemedTree() {
       style={[styles.themedTree, { backgroundColor: colors.background }]}
       edges={["left", "right"]}
     >
+      <ResilienceWrapper />
+    </SafeAreaView>
+  );
+}
+
+function ResilienceWrapper() {
+  const { maintenance } = useResilience();
+
+  return (
+    <>
       <OfflineBanner />
       <View style={styles.content}>{maintenance ? <MaintenanceScreen /> : <AuthRoot />}</View>
-    </SafeAreaView>
+    </>
   );
 }
 
