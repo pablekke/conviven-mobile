@@ -78,7 +78,7 @@ function mapNeighborhood(data: any): Neighborhood {
 
 const LocationService = {
   async listDepartments(): Promise<Department[]> {
-    const data = await request(API.DEPARTMENTS);
+    const data = await request(`${API.DEPARTMENTS}?page=1&limit=200`);
     const departmentsArray = Array.isArray(data) ? data : (data?.data ?? []);
     return departmentsArray.map(mapDepartment);
   },

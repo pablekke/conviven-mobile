@@ -4,6 +4,7 @@ import { ActivityIndicator, Text, TextInput, View } from "react-native";
 import { useTheme } from "../context/ThemeContext";
 import { RegisterCredentials } from "../types/user";
 import Button from "./Button";
+import LocationSelector from "./LocationSelector";
 
 interface RegisterFormProps {
   onSubmit: (credentials: RegisterCredentials) => Promise<void>;
@@ -21,6 +22,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
   const [birthDate, setBirthDate] = useState("");
   const [gender, setGender] = useState("MALE");
   const [departmentId, setDepartmentId] = useState("");
+  const [cityId, setCityId] = useState("");
   const [neighborhoodId, setNeighborhoodId] = useState("");
   const [errors, setErrors] = useState<{
     firstName?: string;
@@ -31,6 +33,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
     birthDate?: string;
     gender?: string;
     departmentId?: string;
+    cityId?: string;
     neighborhoodId?: string;
   }>({});
   const { colors } = useTheme();
@@ -82,6 +85,10 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
       newErrors.departmentId = "Department ID is required";
     }
 
+    if (!cityId) {
+      newErrors.cityId = "City is required";
+    }
+
     if (!neighborhoodId) {
       newErrors.neighborhoodId = "Neighborhood ID is required";
     }
@@ -101,6 +108,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
           birthDate,
           gender: gender.toUpperCase(),
           departmentId,
+          cityId,
           neighborhoodId,
         });
       } catch (error) {
@@ -115,6 +123,21 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
   const labelClass = "mb-2 text-sm font-conviven text-foreground";
   const helperClass = "mt-1 text-xs font-conviven text-muted-foreground";
   const errorClass = "mt-1 text-sm font-conviven text-destructive";
+
+  const handleDepartmentChange = (value: string) => {
+    setDepartmentId(value);
+    setErrors(prev => ({ ...prev, departmentId: undefined }));
+  };
+
+  const handleCityChange = (value: string) => {
+    setCityId(value);
+    setErrors(prev => ({ ...prev, cityId: undefined }));
+  };
+
+  const handleNeighborhoodChange = (value: string) => {
+    setNeighborhoodId(value);
+    setErrors(prev => ({ ...prev, neighborhoodId: undefined }));
+  };
 
   return (
     <View className="w-full p-5 bg-card rounded-2xl border border-border">
@@ -240,39 +263,28 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
         {errors.gender && <Text className={errorClass}>{errors.gender}</Text>}
       </View>
 
-      <View className="mb-4">
-        <Text className={labelClass}>Department ID</Text>
-        <TextInput
-          className={inputClass(!!errors.departmentId)}
-          value={departmentId}
-          onChangeText={text => {
-            setDepartmentId(text);
-            setErrors(prev => ({ ...prev, departmentId: undefined }));
-          }}
-          placeholder="Department identifier"
-          placeholderTextColor={colors.mutedForeground}
-          autoCapitalize="none"
-          style={inputStyle}
-        />
-        <Text className={helperClass}>Ejemplo: a2f0e079-c922-44f2-8712-e2710fad74e3</Text>
-        {errors.departmentId && <Text className={errorClass}>{errors.departmentId}</Text>}
-      </View>
-
       <View className="mb-6">
-        <Text className={labelClass}>Neighborhood ID</Text>
-        <TextInput
-          className={inputClass(!!errors.neighborhoodId)}
-          value={neighborhoodId}
-          onChangeText={text => {
-            setNeighborhoodId(text);
+        <LocationSelector
+          selectedDepartmentId={departmentId}
+          selectedCityId={cityId}
+          selectedNeighborhoodId={neighborhoodId}
+          onDepartmentChange={value => {
+            handleDepartmentChange(value);
+            setCityId("");
+            setNeighborhoodId("");
+            setErrors(prev => ({ ...prev, cityId: undefined, neighborhoodId: undefined }));
+          }}
+          onCityChange={value => {
+            handleCityChange(value);
+            setNeighborhoodId("");
             setErrors(prev => ({ ...prev, neighborhoodId: undefined }));
           }}
-          placeholder="Neighborhood identifier"
-          placeholderTextColor={colors.mutedForeground}
-          autoCapitalize="none"
-          style={inputStyle}
+          onNeighborhoodChange={handleNeighborhoodChange}
+          mode="edit"
+          disabled={isLoading}
         />
-        <Text className={helperClass}>Ejemplo: 23a75a72-2deb-4fd0-b8bb-98c48b03fa14</Text>
+        {errors.departmentId && <Text className={errorClass}>{errors.departmentId}</Text>}
+        {errors.cityId && <Text className={errorClass}>{errors.cityId}</Text>}
         {errors.neighborhoodId && <Text className={errorClass}>{errors.neighborhoodId}</Text>}
       </View>
 

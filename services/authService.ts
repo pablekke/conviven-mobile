@@ -194,6 +194,7 @@ export default class AuthService {
       birthDate: credentials.birthDate,
       gender: credentials.gender,
       departmentId: credentials.departmentId,
+      cityId: credentials.cityId,
       neighborhoodId: credentials.neighborhoodId,
     };
 
