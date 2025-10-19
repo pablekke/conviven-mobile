@@ -1,5 +1,5 @@
 import { Message } from "../types/message";
-import { buildUrl, parseResponse, HttpError } from "./apiClient";
+import { HttpError, resilientRequest } from "./apiClient";
 import AuthService from "./authService";
 import { API } from "@/constants";
 
@@ -47,14 +47,14 @@ export default class MessageService {
       throw new HttpError(401, "No autenticado", null);
     }
 
-    const response = await fetch(buildUrl(`${API.MESSAGES}/${userId}`), {
+    const data = await resilientRequest<any[]>({
+      endpoint: `${API.MESSAGES}/${userId}`,
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
       },
+      useCache: true,
     });
-
-    const data = await parseResponse(response);
 
     if (!Array.isArray(data)) {
       throw new Error("Formato de mensajes inesperado");
@@ -75,16 +75,16 @@ export default class MessageService {
       throw new HttpError(401, "No autenticado", null);
     }
 
-    const response = await fetch(buildUrl(`${API.MESSAGES}/${userId}`), {
+    const data = await resilientRequest<any>({
+      endpoint: `${API.MESSAGES}/${userId}`,
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ content: normalizedContent }),
+      body: { content: normalizedContent },
+      allowQueue: true,
     });
-
-    const data = await parseResponse(response);
     return mapMessage(data);
   }
 }

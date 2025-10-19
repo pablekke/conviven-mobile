@@ -11,6 +11,10 @@ import Toast from "react-native-toast-message";
 import { AuthProvider, useAuth } from "../context/AuthContext";
 import { ThemeProvider, useTheme } from "../context/ThemeContext";
 import { DataPreloadProvider, useDataPreload } from "../context/DataPreloadContext";
+import { ResilienceProvider, useResilience } from "../context/ResilienceContext";
+
+import OfflineBanner from "../components/OfflineBanner";
+import MaintenanceScreen from "../components/MaintenanceScreen";
 
 import "../global.css";
 LogBox.ignoreLogs(["SafeAreaView has been deprecated"]);
@@ -155,12 +159,14 @@ export default function RootLayout() {
     <>
       <SafeAreaProvider>
         <ThemeProvider>
-          <AuthProvider>
-            <DataPreloadProvider>
-              <ThemeDefaults />
-              <ThemedTree />
-            </DataPreloadProvider>
-          </AuthProvider>
+          <ResilienceProvider>
+            <AuthProvider>
+              <DataPreloadProvider>
+                <ThemeDefaults />
+                <ThemedTree />
+              </DataPreloadProvider>
+            </AuthProvider>
+          </ResilienceProvider>
         </ThemeProvider>
       </SafeAreaProvider>
       <Toast />
@@ -170,13 +176,16 @@ export default function RootLayout() {
 
 function ThemedTree() {
   const { theme, colors } = useTheme();
+  const { maintenance } = useResilience();
+
   return (
     <SafeAreaView
       key={theme}
       style={[styles.themedTree, { backgroundColor: colors.background }]}
       edges={["left", "right"]}
     >
-      <AuthRoot />
+      <OfflineBanner />
+      <View style={styles.content}>{maintenance ? <MaintenanceScreen /> : <AuthRoot />}</View>
     </SafeAreaView>
   );
 }
@@ -186,6 +195,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   themedTree: {
+    flex: 1,
+  },
+  content: {
     flex: 1,
   },
 });

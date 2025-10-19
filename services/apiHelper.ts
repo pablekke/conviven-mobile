@@ -1,4 +1,4 @@
-import { buildUrl, fetchWithTimeout, parseResponse } from "./apiClient";
+import { resilientRequest } from "./apiClient";
 import AuthService from "./authService";
 
 /**
@@ -23,12 +23,12 @@ async function getAuthHeaders(): Promise<HeadersInit> {
 export async function apiGet<T>(endpoint: string): Promise<T> {
   const headers = await getAuthHeaders();
 
-  const response = await fetchWithTimeout(buildUrl(endpoint), {
+  return resilientRequest<T>({
+    endpoint,
     method: "GET",
     headers,
+    useCache: true,
   });
-
-  return parseResponse(response);
 }
 
 /**
@@ -37,13 +37,13 @@ export async function apiGet<T>(endpoint: string): Promise<T> {
 export async function apiPost<T>(endpoint: string, body?: any): Promise<T> {
   const headers = await getAuthHeaders();
 
-  const response = await fetchWithTimeout(buildUrl(endpoint), {
+  return resilientRequest<T>({
+    endpoint,
     method: "POST",
     headers,
-    body: body ? JSON.stringify(body) : undefined,
+    body,
+    allowQueue: true,
   });
-
-  return parseResponse(response);
 }
 
 /**
@@ -52,13 +52,13 @@ export async function apiPost<T>(endpoint: string, body?: any): Promise<T> {
 export async function apiPut<T>(endpoint: string, body?: any): Promise<T> {
   const headers = await getAuthHeaders();
 
-  const response = await fetchWithTimeout(buildUrl(endpoint), {
+  return resilientRequest<T>({
+    endpoint,
     method: "PUT",
     headers,
-    body: body ? JSON.stringify(body) : undefined,
+    body,
+    allowQueue: true,
   });
-
-  return parseResponse(response);
 }
 
 /**
@@ -67,13 +67,13 @@ export async function apiPut<T>(endpoint: string, body?: any): Promise<T> {
 export async function apiPatch<T>(endpoint: string, body?: any): Promise<T> {
   const headers = await getAuthHeaders();
 
-  const response = await fetchWithTimeout(buildUrl(endpoint), {
+  return resilientRequest<T>({
+    endpoint,
     method: "PATCH",
     headers,
-    body: body ? JSON.stringify(body) : undefined,
+    body,
+    allowQueue: true,
   });
-
-  return parseResponse(response);
 }
 
 /**
@@ -82,12 +82,12 @@ export async function apiPatch<T>(endpoint: string, body?: any): Promise<T> {
 export async function apiDelete<T>(endpoint: string): Promise<T> {
   const headers = await getAuthHeaders();
 
-  const response = await fetchWithTimeout(buildUrl(endpoint), {
+  return resilientRequest<T>({
+    endpoint,
     method: "DELETE",
     headers,
+    allowQueue: true,
   });
-
-  return parseResponse(response);
 }
 
 /**
@@ -109,17 +109,15 @@ export async function apiRequest<T>(
     ...options.headers,
   };
 
-  const response = await fetchWithTimeout(
-    buildUrl(endpoint),
-    {
-      method,
-      headers: finalHeaders,
-      body: options.body ? JSON.stringify(options.body) : undefined,
-    },
-    options.timeout,
-  );
-
-  return parseResponse(response);
+  return resilientRequest<T>({
+    endpoint,
+    method,
+    headers: finalHeaders,
+    body: options.body,
+    timeout: options.timeout,
+    allowQueue: method !== "GET",
+    useCache: method === "GET",
+  });
 }
 
 /**

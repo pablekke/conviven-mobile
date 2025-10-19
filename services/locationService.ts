@@ -1,5 +1,5 @@
 import AuthService from "./authService";
-import { buildUrl, parseResponse } from "./apiClient";
+import { resilientRequest } from "./apiClient";
 import { City, Department, Neighborhood } from "@/types/user";
 import { API } from "@/constants";
 
@@ -14,12 +14,25 @@ async function request(path: string, options: RequestInit = {}): Promise<any> {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(buildUrl(path), {
-    ...options,
-    headers,
-  });
+  const method = (options.method ?? "GET") as "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+  let body: any = options.body;
 
-  return parseResponse(response);
+  if (typeof body === "string") {
+    try {
+      body = JSON.parse(body);
+    } catch (error) {
+      body = options.body;
+    }
+  }
+
+  return resilientRequest({
+    endpoint: path,
+    method,
+    headers,
+    body,
+    allowQueue: method !== "GET",
+    useCache: method === "GET",
+  });
 }
 
 function mapDepartment(data: any): Department {

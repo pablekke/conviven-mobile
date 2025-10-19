@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { User, LoginCredentials, RegisterCredentials } from "@/types/user";
 import { mapUserFromApi } from "./mappers/userMapper";
-import { buildUrl, parseResponse, HttpError, fetchWithTimeout } from "./apiClient";
+import { HttpError, resilientRequest } from "./apiClient";
 import { API } from "@/constants";
 
 const AUTH_TOKEN_KEY = "auth_token";
@@ -96,15 +96,15 @@ async function refreshTokens(): Promise<{ accessToken: string; refreshToken: str
     return null;
   }
 
-  const response = await fetchWithTimeout(buildUrl(API.REFRESH), {
+  const data = await resilientRequest<any>({
+    endpoint: API.REFRESH,
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ refreshToken: storedRefreshToken }),
+    body: { refreshToken: storedRefreshToken },
+    allowQueue: false,
   });
-
-  const data = await parseResponse(response);
   const newAccessToken = extractToken(data);
   const newRefreshToken = extractRefreshToken(data) ?? storedRefreshToken;
 
@@ -151,15 +151,15 @@ function extractRefreshToken(data: any): string | null {
 
 export default class AuthService {
   static async login(credentials: LoginCredentials): Promise<User> {
-    const response = await fetchWithTimeout(buildUrl(API.LOGIN), {
+    const data = await resilientRequest<any>({
+      endpoint: API.LOGIN,
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(credentials),
+      body: credentials,
+      allowQueue: false,
     });
-
-    const data = await parseResponse(response);
 
     const token = extractToken(data);
 
@@ -201,15 +201,15 @@ export default class AuthService {
       registerPayload.role = credentials.role;
     }
 
-    const response = await fetchWithTimeout(buildUrl("/users/register"), {
+    const data = await resilientRequest<any>({
+      endpoint: "/users/register",
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(registerPayload),
+      body: registerPayload,
+      allowQueue: false,
     });
-
-    const data = await parseResponse(response);
 
     const token = extractToken(data);
     const refreshToken = extractRefreshToken(data) ?? (await getRefreshToken());
@@ -302,14 +302,14 @@ export default class AuthService {
   }
 
   private static async fetchCurrentUserWithToken(token: string): Promise<User> {
-    const response = await fetchWithTimeout(buildUrl("/users/me"), {
+    const data = await resilientRequest<any>({
+      endpoint: "/users/me",
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
       },
+      useCache: false,
     });
-
-    const data = await parseResponse(response);
 
     const userPayload = data.user || data.data || data;
     const user = mapUserFromApi(userPayload);

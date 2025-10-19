@@ -2,6 +2,16 @@ import "@testing-library/jest-native/extend-expect";
 
 global.jest = jest;
 
+jest.mock("@react-native-async-storage/async-storage", () =>
+  require("@react-native-async-storage/async-storage/jest/async-storage-mock"),
+);
+
+jest.mock("react-native-toast-message", () => ({
+  __esModule: true,
+  default: { show: jest.fn() },
+  show: jest.fn(),
+}));
+
 jest.mock("nativewind", () => ({
   withExpoSnack: () => component => component,
   styled: component => component,
@@ -31,6 +41,12 @@ jest.mock("react-native/Libraries/TurboModule/TurboModuleRegistry", () => {
               screen: { width: 375, height: 667, scale: 2, fontScale: 2 },
             },
           }),
+        };
+      }
+      if (name === "DevMenu") {
+        return {
+          show: () => {},
+          dismiss: () => {},
         };
       }
       return actual.getEnforcing ? actual.getEnforcing(name) : {};
