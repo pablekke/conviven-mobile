@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View } from "react-native";
+import { View, Text } from "react-native";
 
 import { Gender } from "../../../types/user";
 import { RegisterCredentials } from "../types";
@@ -7,6 +7,7 @@ import { useRegister, useLocation } from "../hooks";
 import { TEXTS } from "../../../constants";
 import { SelectOption } from "../../../components/Select";
 import FormField from "./FormField";
+import PasswordField from "./PasswordField";
 import FormSelect from "./FormSelect";
 import FormDatePicker from "./FormDatePicker";
 import SubmitButton from "./SubmitButton";
@@ -20,7 +21,7 @@ const GENDER_OPTIONS: SelectOption[] = [
   { label: "Masculino", value: Gender.MALE },
   { label: "Femenino", value: Gender.FEMALE },
   { label: "No binario", value: Gender.NON_BINARY },
-  { label: "No especificado", value: Gender.UNSPECIFIED },
+  { label: "Prefiero no decir", value: Gender.UNSPECIFIED },
 ];
 
 export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFormProps) {
@@ -47,6 +48,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
     clearNeighborhoods,
   } = useLocation();
 
+  // Autoselección si hay una única ciudad
   useEffect(() => {
     if (cities.length === 1 && !cityId) {
       const singleCity = cities[0];
@@ -56,6 +58,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
     }
   }, [cities, cityId, clearErrors, loadNeighborhoods]);
 
+  // Autoselección si hay un único barrio
   useEffect(() => {
     if (neighborhoods.length === 1 && !neighborhoodId) {
       setNeighborhoodId(neighborhoods[0].id);
@@ -64,10 +67,11 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
   }, [neighborhoods, neighborhoodId, clearErrors]);
 
   const handleSubmit = async () => {
-    const formData = {
-      firstName,
-      lastName,
-      email,
+    // Copia “limpia” de lo ingresado
+    const cleaned = {
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email: email.trim().toLowerCase(),
       password,
       confirmPassword,
       birthDate,
@@ -77,22 +81,18 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
       neighborhoodId,
     };
 
-    if (validateForm(formData)) {
-      try {
-        await onSubmit({
-          email,
-          password,
-          firstName,
-          lastName,
-          birthDate,
-          gender: gender as Gender,
-          departmentId,
-          cityId,
-          neighborhoodId,
-        });
-      } catch (error) {
-        throw error;
-      }
+    if (validateForm(cleaned)) {
+      await onSubmit({
+        email: cleaned.email,
+        password: cleaned.password,
+        firstName: cleaned.firstName,
+        lastName: cleaned.lastName,
+        birthDate: cleaned.birthDate,
+        gender: cleaned.gender as Gender,
+        departmentId: cleaned.departmentId,
+        cityId: cleaned.cityId,
+        neighborhoodId: cleaned.neighborhoodId,
+      });
     }
   };
 
@@ -103,10 +103,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
     setNeighborhoodId("");
     clearCities();
 
-    if (!value) {
-      return;
-    }
-
+    if (!value) return;
     await loadCities(value);
   };
 
@@ -116,10 +113,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
     setNeighborhoodId("");
     clearNeighborhoods();
 
-    if (!value) {
-      return;
-    }
-
+    if (!value) return;
     await loadNeighborhoods(value);
   };
 
@@ -130,11 +124,14 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
 
   return (
     <View className="w-full p-5 bg-card rounded-2xl border border-border">
+      {/* Sección: Datos personales */}
+      <Text className="text-foreground font-conviven-semibold mb-3">Datos personales</Text>
+
       <FormField
         label="Nombre"
         value={firstName}
         onChangeText={setFirstName}
-        placeholder="Tu nombre"
+        placeholder="Escribí tu nombre"
         error={errors.firstName}
         autoCapitalize="words"
       />
@@ -143,44 +140,16 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
         label="Apellido"
         value={lastName}
         onChangeText={setLastName}
-        placeholder="Tu apellido"
+        placeholder="Escribí tu apellido"
         error={errors.lastName}
         autoCapitalize="words"
       />
 
-      <FormField
-        label="Email"
-        value={email}
-        onChangeText={setEmail}
-        placeholder="tu@email.com"
-        error={errors.email}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-
-      <FormField
-        label="Contraseña"
-        value={password}
-        onChangeText={setPassword}
-        placeholder="Tu contraseña"
-        error={errors.password}
-        secureTextEntry
-      />
-
-      <FormField
-        label="Confirmar Contraseña"
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-        placeholder="Confirma tu contraseña"
-        error={errors.confirmPassword}
-        secureTextEntry
-      />
-
       <FormDatePicker
-        label="Fecha de Nacimiento"
+        label="Fecha de nacimiento"
         value={birthDate}
         onValueChange={setBirthDate}
-        placeholder="Selecciona tu fecha de nacimiento"
+        placeholder="Seleccioná tu fecha de nacimiento"
         error={!!errors.birthDate}
         errorMessage={errors.birthDate}
         maximumDate={(() => {
@@ -195,9 +164,43 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
         options={GENDER_OPTIONS}
         selectedValue={gender}
         onValueChange={setGender}
-        placeholder="Selecciona tu género"
+        placeholder="Seleccioná tu género (opcional)"
         error={!!errors.gender}
       />
+
+      {/* Sección: Seguridad */}
+      <Text className="text-foreground font-conviven-semibold mt-4 mb-3">Seguridad</Text>
+
+      <FormField
+        label="Correo electrónico"
+        value={email}
+        onChangeText={setEmail}
+        placeholder="tu@email.com"
+        error={errors.email}
+        keyboardType="email-address"
+        autoCapitalize="none"
+      />
+
+      <PasswordField
+        label="Contraseña"
+        value={password}
+        onChangeText={setPassword}
+        placeholder="Mínimo 8 caracteres"
+        error={errors.password}
+      />
+
+      <PasswordField
+        label="Confirmar contraseña"
+        value={confirmPassword}
+        onChangeText={setConfirmPassword}
+        placeholder="Repetí tu contraseña"
+        error={errors.confirmPassword}
+        confirmPassword={password}
+        isConfirmField
+      />
+
+      {/* Sección: Ubicación */}
+      <Text className="text-foreground font-conviven-semibold mt-4 mb-3">Ubicación</Text>
 
       <FormSelect
         label="Departamento"
@@ -219,10 +222,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
       <FormSelect
         label="Ciudad"
         options={[
-          {
-            label: departmentId ? TEXTS.SELECT_CITY : TEXTS.FIRST_SELECT_DEPT,
-            value: "",
-          },
+          { label: departmentId ? TEXTS.SELECT_CITY : TEXTS.FIRST_SELECT_DEPT, value: "" },
           ...cities.map(city => ({
             label: city.name,
             value: city.id,
@@ -239,10 +239,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
       <FormSelect
         label="Barrio"
         options={[
-          {
-            label: cityId ? TEXTS.SELECT_NEIGHBORHOOD : TEXTS.FIRST_SELECT_CITY,
-            value: "",
-          },
+          { label: cityId ? TEXTS.SELECT_NEIGHBORHOOD : TEXTS.FIRST_SELECT_CITY, value: "" },
           ...neighborhoods.map(neighborhood => ({
             label: neighborhood.name,
             value: neighborhood.id,

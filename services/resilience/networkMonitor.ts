@@ -80,7 +80,7 @@ class NetworkMonitor {
     const timeoutId = setTimeout(() => controller.abort(), PING_TIMEOUT);
 
     try {
-      const response = await fetch(API_BASE_URL, {
+      await fetch(API_BASE_URL, {
         method: "HEAD",
         signal: controller.signal,
       });

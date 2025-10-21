@@ -1,18 +1,12 @@
-import AuthService from "./authService";
 import { resilientRequest } from "./apiClient";
 import { City, Department, Neighborhood } from "@/types/user";
 import { API } from "@/constants";
 
 async function request(path: string, options: RequestInit = {}): Promise<any> {
-  const token = await AuthService.getAccessToken();
   const headers: Record<string, string> = {
     Accept: "application/json",
     ...(options.headers ? (options.headers as Record<string, string>) : {}),
   };
-
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
 
   const method = (options.method ?? "GET") as "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   let body: any = options.body;

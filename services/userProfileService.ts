@@ -1,23 +1,8 @@
-import AuthService from "./authService";
 import { UserProfile, UserSearchPreferences } from "../types/user";
 import { resilientRequest } from "./apiClient";
 
 class UserProfileService {
-  private async getAuthHeaders() {
-    const token = await AuthService.getAccessToken();
-
-    if (!token) {
-      throw new Error("No hay token de autenticación disponible");
-    }
-
-    return {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    };
-  }
-
   private async makeRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const authHeaders = await this.getAuthHeaders();
     const method = (options.method ?? "GET") as "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
     let body: any = options.body;
 
@@ -32,10 +17,7 @@ class UserProfileService {
     return resilientRequest<T>({
       endpoint,
       method,
-      headers: {
-        ...authHeaders,
-        ...(options.headers as Record<string, string> | undefined),
-      },
+      headers: options.headers as Record<string, string> | undefined,
       body,
       allowQueue: method !== "GET",
       useCache: method === "GET",
