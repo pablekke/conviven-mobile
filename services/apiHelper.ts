@@ -4,6 +4,7 @@ import { resilientRequest } from "./apiClient";
  * GET - Obtener recurso
  */
 export async function apiGet<T>(endpoint: string): Promise<T> {
+  
   return resilientRequest<T>({
     endpoint,
     method: "GET",
