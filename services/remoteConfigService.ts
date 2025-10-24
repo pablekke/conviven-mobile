@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { MAINTENANCE_CONFIG_ENDPOINT, STATUS_PAGE_URL } from "@/config/env";
 import { resilientRequest } from "./apiClient";
+import { HttpMethod } from "@/core/enums";
 
 const REMOTE_CONFIG_KEY = "@resilience/remote-config";
 
@@ -21,7 +22,7 @@ export async function loadRemoteConfig(): Promise<RemoteConfig> {
   try {
     const data = await resilientRequest<any>({
       endpoint: MAINTENANCE_CONFIG_ENDPOINT,
-      method: "GET",
+      method: HttpMethod.GET,
       headers: {
         Accept: "application/json",
       },

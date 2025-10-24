@@ -6,6 +6,7 @@ import { resilientRequest } from "./apiClient";
 import { API } from "@/constants";
 import { authSession } from "./auth/sessionManager";
 import { extractAccessToken, extractRefreshToken } from "./auth/tokenUtils";
+import { HttpMethod } from "@/core/enums/http.enums";
 
 const USER_DATA_KEY = "user_data";
 
@@ -17,7 +18,7 @@ export default class AuthService {
   static async login(credentials: LoginCredentials): Promise<User> {
     const data = await resilientRequest<any>({
       endpoint: API.LOGIN,
-      method: "POST",
+      method: HttpMethod.POST,
       headers: {
         "Content-Type": "application/json",
       },
@@ -68,7 +69,7 @@ export default class AuthService {
 
     const data = await resilientRequest<any>({
       endpoint: "/users/register",
-      method: "POST",
+      method: HttpMethod.POST,
       headers: {
         "Content-Type": "application/json",
       },
@@ -121,7 +122,7 @@ export default class AuthService {
       if (refreshToken) {
         await resilientRequest({
           endpoint: API.LOGOUT,
-          method: "POST",
+          method: HttpMethod.POST,
           headers: {
             "Content-Type": "application/json",
           },
@@ -174,7 +175,7 @@ export default class AuthService {
   private static async fetchCurrentUser(): Promise<User> {
     const data = await resilientRequest<any>({
       endpoint: "/users/me",
-      method: "GET",
+      method: HttpMethod.GET,
       useCache: false,
     });
 

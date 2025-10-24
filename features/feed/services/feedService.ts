@@ -1,4 +1,4 @@
-import { apiPost, apiRequest } from "../../../services/apiHelper";
+import { apiGet, apiPost } from "../../../services/apiHelper";
 import { FEED_CONSTANTS } from "../constants";
 import type { MatchingFeedResponse } from "../types";
 import { FeedAdapter } from "../adapters";
@@ -20,7 +20,7 @@ class FeedService {
       console.log("🚀 Making request to /matching endpoint...");
       console.log("📊 Params:", { page, limit });
 
-      const response = await apiRequest(`/matching?${params}`, "GET", {
+      const response = await apiGet(`/matching?${params}`, {
         timeout: 30000, // 30 segundos de timeout
       });
 

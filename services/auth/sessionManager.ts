@@ -3,6 +3,7 @@ import * as SecureStore from "expo-secure-store";
 import { API } from "@/constants";
 
 import { HttpError, NetworkError, buildUrl, fetchWithTimeout, parseResponse } from "../http";
+import { HttpMethod } from "@/core/enums/http.enums";
 import { offlineEmitter } from "../resilience/state";
 import { extractAccessToken, extractRefreshToken } from "./tokenUtils";
 
@@ -117,7 +118,7 @@ export class AuthSessionManager {
       const response = await fetchWithTimeout(
         url,
         {
-          method: "POST",
+          method: HttpMethod.POST,
           headers: {
             "Content-Type": "application/json",
           },
@@ -199,4 +200,3 @@ export class AuthSessionManager {
 }
 
 export const authSession = new AuthSessionManager();
-

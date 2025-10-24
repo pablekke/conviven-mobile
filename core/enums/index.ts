@@ -8,3 +8,6 @@ export * from "./system.enums";
 
 // Enums de Feed
 export * from "./feed.enums";
+
+// Enums HTTP
+export * from "./http.enums";

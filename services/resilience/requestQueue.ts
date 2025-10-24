@@ -1,13 +1,14 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { queueEmitter } from "./state";
+import { NonGetHttpMethod } from "@/core/enums/http.enums";
 
 const QUEUE_KEY = "@resilience/queue";
 
 export interface QueuedRequest {
   requestId: string;
   endpoint: string;
-  method: "POST" | "PUT" | "PATCH" | "DELETE";
+  method: NonGetHttpMethod;
   body?: any;
   headers?: Record<string, string>;
 }
