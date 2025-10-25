@@ -78,7 +78,7 @@ interface BackendFeedItem {
   score: number; // 0..1
 }
 
-interface BackendFeedResponse {
+export interface BackendFeedResponse {
   items: BackendFeedItem[];
   total: number;
   page: number;
