@@ -116,7 +116,7 @@ export class FeedAdapter {
       neighborhood: FeedAdapter.getNeighborhood(user) ?? undefined,
       budget: FeedAdapter.getUserBudget(user),
       moveInDate: undefined, // no viene
-      distanceMeters: FeedAdapter.getLastActiveDays(user),
+      lastActiveDays: FeedAdapter.getLastActiveDays(user),
       lifestyle,
       preferences,
     };

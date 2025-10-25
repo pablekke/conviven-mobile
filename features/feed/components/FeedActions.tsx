@@ -14,7 +14,7 @@ export function FeedActions({ onLike, onPass, onSuperLike, disabled = false }: F
   const { colors } = useTheme();
 
   return (
-    <View className="flex-row items-center justify-between mt-5 mb-6 px-10">
+    <View className="flex-row items-center justify-between gap-4">
       <Pressable
         accessibilityRole="button"
         onPress={onPass}

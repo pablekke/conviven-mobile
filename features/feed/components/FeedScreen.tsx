@@ -1,20 +1,29 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../../context/ThemeContext";
 import TabTransition from "../../../components/TabTransition";
-import { FeedHeader } from "./FeedHeader";
-import { MatchScoreBadge } from "./MatchScoreBadge";
 import { RoomieCard } from "./RoomieCard";
 import { FeedActions } from "./FeedActions";
 import { EmptyFeedState } from "./EmptyFeedState";
 import { FeedLoadingState } from "./FeedLoadingState";
 import { useFeed } from "../hooks";
 import { MatchActionType } from "../../../core/enums";
+import { FeedTopBar } from "./FeedTopBar";
+import { RoomieInfoSection } from "./RoomieInfoSection";
 
 export function FeedScreen() {
   const { colors } = useTheme();
-  const { roomies, isLoading, error, activeRoomie, nextRoomie, handleChoice, refresh } = useFeed();
+  const {
+    roomies,
+    currentIndex,
+    isLoading,
+    error,
+    activeRoomie,
+    nextRoomie,
+    handleChoice,
+    refresh,
+  } = useFeed();
 
   if (isLoading && roomies.length === 0) {
     return (
@@ -49,25 +58,45 @@ export function FeedScreen() {
   return (
     <TabTransition>
       <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-        <View className="px-6 pt-2 pb-2 flex-1">
-          <FeedHeader roomie={activeRoomie ?? null} onClose={() => {}} onInfo={() => {}} />
+        <View className="flex-1">
+          <FeedTopBar
+            totalRoomies={roomies.length}
+            currentIndex={currentIndex}
+            isLoading={isLoading}
+            onRefresh={refresh}
+          />
 
-          {activeRoomie && <MatchScoreBadge score={activeRoomie.matchScore} />}
+          <View className="flex-1 px-6">
+            <ScrollView
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.cardStack}>
+                {nextRoomie && (
+                  <View style={[styles.cardLayer, styles.nextCardLayer]}>
+                    <RoomieCard roomie={nextRoomie} isNext />
+                  </View>
+                )}
 
-          <View className="flex-1 justify-center">
-            <View className="relative">
-              {nextRoomie && <RoomieCard roomie={nextRoomie} isNext />}
+                {activeRoomie && (
+                  <View style={styles.cardLayer}>
+                    <RoomieCard roomie={activeRoomie} />
+                  </View>
+                )}
+              </View>
 
-              {activeRoomie && <RoomieCard roomie={activeRoomie} />}
-            </View>
+              {activeRoomie && <RoomieInfoSection roomie={activeRoomie} />}
+            </ScrollView>
           </View>
 
-          <FeedActions
-            onLike={() => handleChoice(MatchActionType.LIKE)}
-            onPass={() => handleChoice(MatchActionType.PASS)}
-            onSuperLike={() => handleChoice(MatchActionType.SUPERLIKE)}
-            disabled={isLoading}
-          />
+          <View className="px-6 pb-6 pt-4">
+            <FeedActions
+              onLike={() => handleChoice(MatchActionType.LIKE)}
+              onPass={() => handleChoice(MatchActionType.PASS)}
+              onSuperLike={() => handleChoice(MatchActionType.SUPERLIKE)}
+              disabled={isLoading}
+            />
+          </View>
         </View>
       </SafeAreaView>
     </TabTransition>
@@ -77,5 +106,23 @@ export function FeedScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+  },
+  cardStack: {
+    height: 520,
+    position: "relative",
+    marginTop: 12,
+    width: "100%",
+  },
+  cardLayer: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 0,
+  },
+  nextCardLayer: {
+    top: 14,
+  },
+  scrollContent: {
+    paddingBottom: 24,
   },
 });

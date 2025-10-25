@@ -18,7 +18,7 @@ export interface Roomie {
     max: number | null;
   };
   moveInDate?: string;
-  distanceMeters?: number;
+  lastActiveDays?: number;
   lifestyle: {
     smoking: boolean;
     pets: boolean;
