@@ -4,7 +4,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "../../../context/ThemeContext";
 import type { Roomie } from "../types";
-import { MatchScoreBadge } from "./MatchScoreBadge";
 
 export interface RoomieCardProps {
   roomie: Roomie;
@@ -83,8 +82,6 @@ export function RoomieCard({ roomie, isNext = false }: RoomieCardProps) {
           end={{ x: 0, y: 1 }}
           style={[StyleSheet.absoluteFillObject]}
         />
-
-        {/* Sin contenido adicional en el header (coincidir con la captura) */}
 
         <View className="absolute bottom-0 left-0 right-0 p-5 gap-4">
           <View className="flex-row items-end justify-between">

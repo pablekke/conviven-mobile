@@ -1,4 +1,3 @@
-import React from "react";
 import { View, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../../context/ThemeContext";
@@ -9,19 +8,10 @@ import { EmptyFeedState } from "./EmptyFeedState";
 import { FeedLoadingState } from "./FeedLoadingState";
 import { useFeed } from "../hooks";
 import { MatchActionType } from "../../../core/enums";
-// Simplificamos para que coincida con la captura: solo la card centrada
 
 export function FeedScreen() {
   const { colors } = useTheme();
-  const {
-    roomies,
-    isLoading,
-    error,
-    activeRoomie,
-    nextRoomie,
-    handleChoice,
-    refresh,
-  } = useFeed();
+  const { roomies, isLoading, error, activeRoomie, nextRoomie, handleChoice, refresh } = useFeed();
 
   if (isLoading && roomies.length === 0) {
     return (
