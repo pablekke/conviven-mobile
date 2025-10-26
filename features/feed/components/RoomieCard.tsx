@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, Image, StyleSheet } from "react-native";
+import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "../../../context/ThemeContext";
@@ -33,7 +33,7 @@ export function RoomieCard({ roomie, isNext = false }: RoomieCardProps) {
 
   const interests = React.useMemo(() => roomie.interests.slice(0, 4), [roomie.interests]);
   const displayName = React.useMemo(
-    () => (roomie.age && roomie.age > 0 ? `${roomie.name}, ${roomie.age}` : roomie.name),
+    () => (roomie.age && roomie.age > 0 ? `${roomie.name} ${roomie.age}` : roomie.name),
     [roomie.age, roomie.name],
   );
 
@@ -68,6 +68,14 @@ export function RoomieCard({ roomie, isNext = false }: RoomieCardProps) {
           style={StyleSheet.absoluteFillObject}
         />
 
+        {/* Indicadores (barras) en el tope, centrados */}
+        <View className="absolute top-2 left-0 right-0 items-center">
+          <View className="flex-row gap-2 px-10 w-full justify-center">
+            <View style={styles.progressBarActive} />
+            <View style={styles.progressBar} />
+          </View>
+        </View>
+
         {/* Bottom overlay content */}
         <LinearGradient
           colors={["transparent", "rgba(0,0,0,0.35)", "rgba(0,0,0,0.85)"]}
@@ -76,26 +84,13 @@ export function RoomieCard({ roomie, isNext = false }: RoomieCardProps) {
           style={[StyleSheet.absoluteFillObject]}
         />
 
-        <View className="absolute top-0 left-0 right-0 px-5 pt-5">
-          <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center px-3 py-1.5 rounded-full" style={styles.locationPill}>
-              <Ionicons name="location-outline" size={14} color="#fff" />
-              <Text className="text-white text-xs font-conviven-semibold ml-1">
-                {roomie.neighborhood ?? "Barrio a definir"}
-              </Text>
-            </View>
-
-            <MatchScoreBadge score={roomie.matchScore} />
-          </View>
-        </View>
+        {/* Sin contenido adicional en el header (coincidir con la captura) */}
 
         <View className="absolute bottom-0 left-0 right-0 p-5 gap-4">
           <View className="flex-row items-end justify-between">
-            <View className="shrink">
-              <Text className="text-white text-[30px] font-conviven-bold">{displayName}</Text>
-              <Text className="text-white/80 text-sm font-conviven mt-0.5">
-                {roomie.profession || "Profesión no indicada"}
-              </Text>
+            <View className="shrink flex-row items-center">
+              <Text className="text-white text-[30px] font-conviven-bold mr-2">{displayName}</Text>
+              <Ionicons name="checkmark-circle" size={18} color="#3B82F6" />
             </View>
           </View>
 
@@ -106,25 +101,35 @@ export function RoomieCard({ roomie, isNext = false }: RoomieCardProps) {
 
           {interests.length > 0 && (
             <View className="flex-row flex-wrap gap-2 mt-1">
-              {interests.map(tag => (
+              {interests.map((tag, idx) => (
                 <View
                   key={tag}
-                  className="px-3 py-1 rounded-full border border-white/30 bg-black/20"
+                  className="px-3 py-1 rounded-full"
+                  style={idx === 0 ? styles.primaryPill : styles.secondaryPill}
                 >
-                  <Text className="text-[12px] text-white font-conviven-semibold">#{tag}</Text>
+                  <Text
+                    className="text-[12px] font-conviven-semibold"
+                    style={{ color: idx === 0 ? "#fff" : "#e5e7eb" }}
+                  >
+                    {tag}
+                  </Text>
                 </View>
               ))}
             </View>
           )}
 
           {roomie.bio ? (
-            <Text
-              numberOfLines={3}
-              className="text-white text-sm font-conviven leading-5 mt-1"
-            >
-              {roomie.bio}
+            <Text numberOfLines={2} className="text-white/95 text-[12px] font-conviven mt-1">
+              {`"${roomie.bio}"`}
             </Text>
           ) : null}
+
+          {/* Botón flotante de flecha hacia abajo */}
+          <View className="items-center mt-1">
+            <TouchableOpacity activeOpacity={0.8} style={styles.downButton}>
+              <Ionicons name="chevron-down" size={18} color="#fff" />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </View>
@@ -132,9 +137,38 @@ export function RoomieCard({ roomie, isNext = false }: RoomieCardProps) {
 }
 
 const styles = StyleSheet.create({
-  card: { height: 520 },
+  card: { height: 560 },
   nextCard: { height: 480 },
   locationPill: {
     backgroundColor: "rgba(0,0,0,0.35)",
+  },
+  progressBar: {
+    flex: 1,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: "rgba(255,255,255,0.3)",
+  },
+  progressBarActive: {
+    flex: 1,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: "#ffffff",
+  },
+  primaryPill: {
+    backgroundColor: "#2563EB", // azul
+    borderColor: "transparent",
+  },
+  secondaryPill: {
+    backgroundColor: "rgba(0,0,0,0.35)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.25)",
+  },
+  downButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.55)",
   },
 });
