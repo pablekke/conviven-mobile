@@ -43,15 +43,15 @@ function isMinimalFeedResponse(x: any): x is MinimalFeedResponse {
 function isBackendFeedResponse(x: any): x is BackendFeedResponse {
   return (
     isMinimalFeedResponse(x) &&
-    // Best-effort check: ensure items are objects with expected keys
-    (x.items.length === 0 || x.items.every((it: any) => it && typeof it === "object" && "userId" in it))
+    (x.items.length === 0 ||
+      x.items.every((it: any) => it && typeof it === "object" && "userId" in it))
   );
 }
 
 class FeedService {
   async getMatchingFeed(
     page = 1,
-    limit = FEED_CONSTANTS.ROOMIES_PER_PAGE
+    limit = FEED_CONSTANTS.ROOMIES_PER_PAGE,
   ): Promise<{
     items: Roomie[];
     total: number;
@@ -75,7 +75,7 @@ class FeedService {
       // Casteo seguro si cumple con el shape de backend
       const backendData: BackendFeedResponse = isBackendFeedResponse(data)
         ? (data as BackendFeedResponse)
-        : ({ ...data, items: (data.items as unknown[]) as any[] } as unknown as BackendFeedResponse);
+        : ({ ...data, items: data.items as unknown[] as any[] } as unknown as BackendFeedResponse);
       return FeedAdapter.mapBackendResponseToFeedResponse(backendData);
     } catch (error) {
       console.error("Error fetching matching feed:", error);

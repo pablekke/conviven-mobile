@@ -1,10 +1,7 @@
-import React from "react";
 import { View, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../../context/ThemeContext";
 import TabTransition from "../../../components/TabTransition";
-import { FeedHeader } from "./FeedHeader";
-import { MatchScoreBadge } from "./MatchScoreBadge";
 import { RoomieCard } from "./RoomieCard";
 import { FeedActions } from "./FeedActions";
 import { EmptyFeedState } from "./EmptyFeedState";
@@ -30,7 +27,7 @@ export function FeedScreen() {
     return (
       <TabTransition>
         <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-          <EmptyFeedState title="Ups, algo salió mal" subtitle={error} onRefresh={refresh} />
+          <EmptyFeedState onRefresh={refresh} />
         </SafeAreaView>
       </TabTransition>
     );
@@ -49,19 +46,23 @@ export function FeedScreen() {
   return (
     <TabTransition>
       <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-        <View className="px-6 pt-2 pb-2 flex-1">
-          <FeedHeader roomie={activeRoomie ?? null} onClose={() => {}} onInfo={() => {}} />
+        <View className="flex-1 px-4 justify-center">
+          <View style={styles.cardStack}>
+            {nextRoomie && (
+              <View style={[styles.cardLayer, styles.nextCardLayer]}>
+                <RoomieCard roomie={nextRoomie} isNext />
+              </View>
+            )}
 
-          {activeRoomie && <MatchScoreBadge score={activeRoomie.matchScore} />}
-
-          <View className="flex-1 justify-center">
-            <View className="relative">
-              {nextRoomie && <RoomieCard roomie={nextRoomie} isNext />}
-
-              {activeRoomie && <RoomieCard roomie={activeRoomie} />}
-            </View>
+            {activeRoomie && (
+              <View style={styles.cardLayer}>
+                <RoomieCard roomie={activeRoomie} />
+              </View>
+            )}
           </View>
+        </View>
 
+        <View className="px-6 pb-6 pt-4">
           <FeedActions
             onLike={() => handleChoice(MatchActionType.LIKE)}
             onPass={() => handleChoice(MatchActionType.PASS)}
@@ -78,4 +79,20 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
+  cardStack: {
+    height: 560,
+    position: "relative",
+    marginTop: 0,
+    width: "100%",
+  },
+  cardLayer: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 0,
+  },
+  nextCardLayer: {
+    top: 14,
+  },
+  scrollContent: {},
 });

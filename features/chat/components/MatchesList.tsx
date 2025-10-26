@@ -57,12 +57,6 @@ export const MatchesList: React.FC<MatchesListProps> = ({ matches, onMatchPress 
 
   return (
     <View className="pb-5 pt-2 border-b border-border" style={styles.container}>
-      <View className="flex-row items-center px-6 mb-3">
-        <Ionicons name="sparkles" size={16} color="#F59E0B" />
-        <Text className="text-xs font-conviven-bold text-muted-foreground ml-2 tracking-wide">
-          TUS MATCHES
-        </Text>
-      </View>
       <View style={styles.scrollContainer}>
         <ScrollView
           horizontal
