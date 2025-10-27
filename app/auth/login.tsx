@@ -1,27 +1,22 @@
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React from "react";
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-import LoginForm from "../../components/LoginForm";
-import { useAuth } from "../../context/AuthContext";
-import { useTheme } from "../../context/ThemeContext";
-import { LoginCredentials } from "../../types/user";
+import { useTheme } from "@/context/ThemeContext";
+import { LoginCredentials } from "@/types/user";
+import { LoginForm, useLogin, LOGIN_ERROR_MESSAGES } from "@/features/login";
 
 const styles = StyleSheet.create({
   contentContainer: { flexGrow: 1 },
 });
 
 export default function LoginScreen() {
-  const [error, setError] = useState<string | null>(null);
-  const { login, isLoading } = useAuth();
+  const { submit, isLoading, error, handleFieldFocus } = useLogin();
   const { colors } = useTheme();
   const handleLogin = async (credentials: LoginCredentials) => {
-    try {
-      setError(null);
-      await login(credentials);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to login");
-      Alert.alert("Login Failed", err instanceof Error ? err.message : "Something went wrong");
+    const result = await submit(credentials);
+    if (!result.success) {
+      Alert.alert("Login Failed", result.error ?? LOGIN_ERROR_MESSAGES.generic);
     }
   };
 
@@ -55,7 +50,7 @@ export default function LoginScreen() {
             </View>
           )}
 
-          <LoginForm onSubmit={handleLogin} isLoading={isLoading} />
+          <LoginForm onSubmit={handleLogin} isLoading={isLoading} onFocusField={handleFieldFocus} />
 
           <View className="mt-6 flex-row justify-center">
             <Text className="font-conviven text-muted-foreground">

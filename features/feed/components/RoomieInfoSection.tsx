@@ -25,16 +25,28 @@ const GENDER_PREFERENCE_LABELS: Record<GenderPreference, string> = {
   [GenderPreference.ANY]: "Cualquier género",
 };
 
-function formatBudget(budget: Roomie["budget"]): string {
-  if (!budget) return "Sin presupuesto definido";
-  const formatter = new Intl.NumberFormat("es-AR", {
-    style: "currency",
-    currency: "ARS",
-    maximumFractionDigits: 0,
-  });
+function formatBudget(budget: Roomie["budget"], currency?: string): string {
+  if (!budget || (budget.min == null && budget.max == null)) return "Sin presupuesto definido";
 
-  const hasMin = typeof budget.min === "number" && budget.min > 0;
-  const hasMax = typeof budget.max === "number" && budget.max > 0;
+  const sanitizedCurrency = currency && /^[A-Z]{3}$/i.test(currency) ? currency.toUpperCase() : "UYU";
+
+  let formatter: Intl.NumberFormat;
+  try {
+    formatter = new Intl.NumberFormat("es-UY", {
+      style: "currency",
+      currency: sanitizedCurrency,
+      maximumFractionDigits: 0,
+    });
+  } catch (error) {
+    formatter = new Intl.NumberFormat("es-UY", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    });
+  }
+
+  const hasMin = typeof budget.min === "number" && Number.isFinite(budget.min) && budget.min > 0;
+  const hasMax = typeof budget.max === "number" && Number.isFinite(budget.max) && budget.max > 0;
 
   if (hasMin && hasMax) {
     return `${formatter.format(budget.min!)} - ${formatter.format(budget.max!)}`;
@@ -60,6 +72,41 @@ function formatLastActive(days?: number): string {
   if (days === 0) return "Activo hoy";
   if (days === 1) return "Activo hace 1 día";
   return `Activo hace ${days} días`;
+}
+
+function formatQuietHours(quietHours?: Roomie["quietHours"]): string | null {
+  if (!quietHours) return null;
+  const { start, end } = quietHours;
+  if (start == null && end == null) return null;
+
+  const pad = (value: number | undefined) => {
+    if (value == null || Number.isNaN(value)) return undefined;
+    const safe = Math.max(0, Math.min(23, Math.round(value)));
+    return `${safe.toString().padStart(2, "0")}:00 hs`;
+  };
+
+  const startLabel = pad(start ?? undefined);
+  const endLabel = pad(end ?? undefined);
+
+  if (startLabel && endLabel) {
+    return `${startLabel} - ${endLabel}`;
+  }
+
+  if (startLabel) {
+    return `Desde ${startLabel}`;
+  }
+
+  if (endLabel) {
+    return `Hasta ${endLabel}`;
+  }
+
+  return null;
+}
+
+function formatZodiacSign(sign?: string): string | null {
+  if (!sign) return null;
+  const normalized = sign.replace(/_/g, " ").toLowerCase();
+  return normalized.replace(/\b\w/g, letter => letter.toUpperCase());
 }
 
 export function RoomieInfoSection({ roomie }: RoomieInfoSectionProps) {
@@ -91,6 +138,10 @@ export function RoomieInfoSection({ roomie }: RoomieInfoSectionProps) {
   ];
 
   const lifestylePreferences = roomie.preferences.lifestyle.slice(0, 6);
+  const quietHoursLabel = React.useMemo(
+    () => formatQuietHours(roomie.quietHours),
+    [roomie.quietHours],
+  );
 
   return (
     <View className="mt-6">
@@ -115,15 +166,39 @@ export function RoomieInfoSection({ roomie }: RoomieInfoSectionProps) {
           <InfoRow
             icon="location-outline"
             label="Prefiere vivir en"
-            value={roomie.neighborhood ?? "Sin barrio preferido"}
+            value={
+              roomie.location ??
+              roomie.neighborhood ??
+              roomie.city ??
+              roomie.department ??
+              "Sin ubicación preferida"
+            }
           />
-          <InfoRow icon="cash-outline" label="Presupuesto" value={formatBudget(roomie.budget)} />
+          <InfoRow
+            icon="cash-outline"
+            label="Presupuesto"
+            value={formatBudget(roomie.budget, roomie.budgetCurrency)}
+          />
           <InfoRow
             icon="people-circle-outline"
             label="Busca roomies"
             value={`${formatGenderPreference(roomie.preferences.gender)} · ${roomie.preferences.ageRange.min} a ${roomie.preferences.ageRange.max} años`}
           />
           <InfoRow icon="time-outline" label="Actividad" value={formatLastActive(roomie.lastActiveDays)} />
+          {quietHoursLabel ? (
+            <InfoRow
+              icon="moon-outline"
+              label="Horario tranquilo"
+              value={quietHoursLabel}
+            />
+          ) : null}
+          {formatZodiacSign(roomie.zodiacSign) ? (
+            <InfoRow
+              icon="planet"
+              label="Signo zodiacal"
+              value={formatZodiacSign(roomie.zodiacSign) ?? "Sin especificar"}
+            />
+          ) : null}
         </View>
 
         <View className="gap-3">
@@ -147,6 +222,23 @@ export function RoomieInfoSection({ roomie }: RoomieInfoSectionProps) {
                 <View key={item} className="px-3 py-1.5 rounded-full" style={[styles.preferenceTag, preferenceTagStyle]}>
                   <Text className="text-xs font-conviven-semibold" style={{ color: colors.foreground }}>
                     #{item}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {roomie.languages && roomie.languages.length > 0 && (
+          <View className="gap-3">
+            <Text className="text-base font-conviven-semibold" style={{ color: colors.foreground }}>
+              Idiomas
+            </Text>
+            <View className="flex-row flex-wrap gap-2">
+              {roomie.languages.map(language => (
+                <View key={language} className="px-3 py-1.5 rounded-full" style={[styles.preferenceTag, preferenceTagStyle]}>
+                  <Text className="text-xs font-conviven-semibold" style={{ color: colors.foreground }}>
+                    {language.toUpperCase()}
                   </Text>
                 </View>
               ))}

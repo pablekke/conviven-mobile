@@ -13,10 +13,13 @@ export interface Roomie {
   university?: string;
   department?: string;
   neighborhood?: string;
+  city?: string;
   budget?: {
     min: number | null;
     max: number | null;
   };
+  budgetCurrency?: string;
+  photoGallery?: string[];
   moveInDate?: string;
   lastActiveDays?: number;
   lifestyle: {
@@ -33,6 +36,14 @@ export interface Roomie {
     };
     lifestyle: string[];
   };
+  languages?: string[];
+  quietHours?: {
+    start?: number;
+    end?: number;
+  };
+  zodiacSign?: string;
+  profileCompletionRate?: number;
+  photosCount?: number;
 }
 
 export interface MatchAction {

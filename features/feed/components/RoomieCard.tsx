@@ -91,6 +91,16 @@ export function RoomieCard({ roomie, isNext = false }: RoomieCardProps) {
             </View>
           </View>
 
+          {roomie.location && (
+            <View className="mt-1">
+              <View className="px-3 py-1 rounded-full" style={styles.locationPill}>
+                <Text className="text-xs font-conviven-semibold text-white/90" numberOfLines={1}>
+                  {roomie.location}
+                </Text>
+              </View>
+            </View>
+          )}
+
           <View className="flex-row items-center gap-2">
             <Ionicons name="time-outline" size={16} color="#fff" />
             <Text className="text-white/85 text-sm font-conviven">{lastActiveLabel}</Text>

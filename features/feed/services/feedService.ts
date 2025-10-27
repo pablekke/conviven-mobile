@@ -4,14 +4,16 @@ import type { Roomie } from "../types";
 import { FeedAdapter } from "../adapters";
 import type { BackendFeedResponse } from "../adapters";
 
+const MATCHING_ENDPOINT = "/matching/matching";
+
 type MinimalFeedResponse = {
   items: unknown[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-  hasNext: boolean;
-  hasPrev: boolean;
+  total: number | string;
+  page: number | string;
+  limit: number | string;
+  totalPages: number | string;
+  hasNext?: boolean;
+  hasPrev?: boolean;
 };
 
 function normalizeApiResponse<T = unknown>(response: unknown): T {
@@ -27,24 +29,29 @@ function normalizeApiResponse<T = unknown>(response: unknown): T {
 }
 
 function isMinimalFeedResponse(x: any): x is MinimalFeedResponse {
+  const isNumberLike = (value: unknown) =>
+    typeof value === "number" || (typeof value === "string" && value.trim() !== "");
+
   return (
     x &&
     typeof x === "object" &&
-    Array.isArray(x.items) &&
-    typeof x.total === "number" &&
-    typeof x.page === "number" &&
-    typeof x.limit === "number" &&
-    typeof x.totalPages === "number" &&
-    typeof x.hasNext === "boolean" &&
-    typeof x.hasPrev === "boolean"
+    Array.isArray((x as any).items) &&
+    isNumberLike((x as any).total) &&
+    isNumberLike((x as any).page) &&
+    isNumberLike((x as any).limit) &&
+    isNumberLike((x as any).totalPages) &&
+    (typeof (x as any).hasNext === "boolean" || typeof (x as any).hasNext === "undefined") &&
+    (typeof (x as any).hasPrev === "boolean" || typeof (x as any).hasPrev === "undefined")
   );
 }
 
 function isBackendFeedResponse(x: any): x is BackendFeedResponse {
   return (
     isMinimalFeedResponse(x) &&
-    (x.items.length === 0 ||
-      x.items.every((it: any) => it && typeof it === "object" && "userId" in it))
+    ((x as MinimalFeedResponse).items.length === 0 ||
+      (x as MinimalFeedResponse).items.every(
+        (it: any) => it && typeof it === "object" && "userId" in it,
+      ))
   );
 }
 
@@ -66,7 +73,7 @@ class FeedService {
         page: String(page),
         limit: String(limit),
       });
-      const raw = await apiGet(`/matching?${params}`, { timeout: 30_000 });
+      const raw = await apiGet(`${MATCHING_ENDPOINT}?${params}`, { timeout: 30_000 });
       const data = normalizeApiResponse<unknown>(raw);
       if (!isMinimalFeedResponse(data)) {
         console.error("❌ /matching respondió con shape inesperado:", data);
