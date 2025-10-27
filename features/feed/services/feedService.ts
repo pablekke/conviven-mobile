@@ -4,7 +4,7 @@ import type { Roomie } from "../types";
 import { FeedAdapter } from "../adapters";
 import type { BackendFeedResponse } from "../adapters";
 
-const MATCHING_ENDPOINT = "/matching/matching";
+const MATCHING_ENDPOINT = "/matching";
 
 type MinimalFeedResponse = {
   items: unknown[];
