@@ -115,7 +115,7 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 const getSystemTheme = (): ThemeMode => (Appearance.getColorScheme() === "dark" ? "dark" : "light");
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeMode>(getSystemTheme);
+  const [theme, setThemeState] = useState<ThemeMode>("light"); //(getSystemTheme);
   const [hasStoredPreference, setHasStoredPreference] = useState(false);
 
   useEffect(() => {
@@ -133,7 +133,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
           setThemeState(stored);
           setHasStoredPreference(true);
         } else {
-          setThemeState(getSystemTheme());
+          setThemeState("light"); // (getSystemTheme());
           setHasStoredPreference(false);
         }
       } catch (error) {

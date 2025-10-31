@@ -1,4 +1,5 @@
 import { resilientRequest } from "./apiClient";
+import { HttpMethod } from "@/core/enums";
 import { mapUserFromApi } from "./mappers/userMapper";
 import { API } from "@/constants";
 import {
@@ -26,14 +27,12 @@ function buildQueryString(params: UserListQuery = {}): string {
   return queryString ? `?${queryString}` : "";
 }
 
-type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-
 async function request(path: string, options: RequestInit = {}): Promise<any> {
   const headers: Record<string, string> = {
     ...(options.headers ? (options.headers as Record<string, string>) : {}),
   };
 
-  const method = (options.method ?? "GET") as HttpMethod;
+  const method = (options.method ?? HttpMethod.GET) as HttpMethod;
   let body: any = options.body;
 
   if (typeof body === "string") {
@@ -49,8 +48,8 @@ async function request(path: string, options: RequestInit = {}): Promise<any> {
     method,
     headers,
     body,
-    allowQueue: method !== "GET",
-    useCache: method === "GET",
+    allowQueue: method !== HttpMethod.GET,
+    useCache: method === HttpMethod.GET,
   });
 }
 
@@ -71,7 +70,7 @@ const UserService = {
 
     const data = await resilientRequest<any>({
       endpoint: "/users/register",
-      method: "POST",
+      method: HttpMethod.POST,
       headers: {
         "Content-Type": "application/json",
       },
@@ -88,8 +87,8 @@ const UserService = {
   ): Promise<User> {
     const normalizedRole = role.toLowerCase();
     const data = await request(API.USER_REGISTER(normalizedRole), {
-      method: "POST",
-      body: payload,
+      method: HttpMethod.POST,
+      body: JSON.stringify(payload),
       headers: {
         "Content-Type": "application/json",
       },
@@ -127,7 +126,7 @@ const UserService = {
 
   async deleteCurrent(): Promise<void> {
     await request(API.USER_DELETE, {
-      method: "DELETE",
+      method: HttpMethod.DELETE,
     });
   },
 
@@ -141,8 +140,8 @@ const UserService = {
     const body: Record<string, unknown> = { ...payload };
 
     const data = await request(API.USER_BY_ID(id), {
-      method: "PUT",
-      body,
+      method: HttpMethod.PUT,
+      body: JSON.stringify(body),
       headers: {
         "Content-Type": "application/json",
       },
@@ -164,7 +163,7 @@ const UserService = {
     } as any);
 
     const data = await request(`${API.USER_BY_ID(id)}/avatar`, {
-      method: "PUT",
+      method: HttpMethod.PUT,
       body: formData,
       headers: {
         Accept: "application/json",
@@ -177,14 +176,14 @@ const UserService = {
 
   async remove(id: string): Promise<void> {
     await request(API.USER_BY_ID(id), {
-      method: "DELETE",
+      method: HttpMethod.DELETE,
     });
   },
 
   async changeRole(id: string, role: UserRole): Promise<User> {
     const data = await request(`${API.USER_BY_ID(id)}/role`, {
-      method: "PATCH",
-      body: { role },
+      method: HttpMethod.PATCH,
+      body: JSON.stringify({ role }),
       headers: {
         "Content-Type": "application/json",
       },

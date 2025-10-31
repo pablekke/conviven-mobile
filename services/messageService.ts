@@ -2,6 +2,7 @@ import { Message } from "../types/message";
 import { resilientRequest } from "./apiClient";
 import { API } from "@/constants";
 import { HttpError } from "./http";
+import { HttpMethod } from "@/core/enums/http.enums";
 
 const MIN_MESSAGE_LENGTH = 1;
 const MAX_MESSAGE_LENGTH = 1000;
@@ -43,7 +44,7 @@ export default class MessageService {
 
     const data = await resilientRequest<any[]>({
       endpoint: `${API.MESSAGES}/${userId}`,
-      method: "GET",
+      method: HttpMethod.GET,
       useCache: true,
     });
 
@@ -62,7 +63,7 @@ export default class MessageService {
     const normalizedContent = validateMessageContent(content);
     const data = await resilientRequest<any>({
       endpoint: `${API.MESSAGES}/${userId}`,
-      method: "POST",
+      method: HttpMethod.POST,
       headers: {
         "Content-Type": "application/json",
       },
