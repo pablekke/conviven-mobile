@@ -1,5 +1,4 @@
 export { MatchScoreBadge } from "./MatchScoreBadge";
-export type { MatchScoreBadgeProps } from "./MatchScoreBadge";
 
 export { RoomieCard } from "./RoomieCard";
 export type { RoomieCardProps } from "./RoomieCard";
@@ -14,9 +13,11 @@ export { RoomieInfoSection } from "./RoomieInfoSection";
 export type { RoomieInfoSectionProps } from "./RoomieInfoSection";
 
 export { EmptyFeedState } from "./EmptyFeedState";
-export type { EmptyFeedStateProps } from "./EmptyFeedState";
 
 export { FeedLoadingState } from "./FeedLoadingState";
-export type { FeedLoadingStateProps } from "./FeedLoadingState";
 
 export { FeedScreen } from "./FeedScreen";
+
+export { AvatarFallback } from "./AvatarFallback";
+
+export { LikeDislikeButtons } from "./LikeDislikeButtons";

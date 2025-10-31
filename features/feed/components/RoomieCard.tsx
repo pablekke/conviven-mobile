@@ -1,8 +1,9 @@
 import React from "react";
-import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, Image, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "../../../context/ThemeContext";
+import { AvatarFallback } from "./AvatarFallback";
 import type { Roomie } from "../types";
 
 export interface RoomieCardProps {
@@ -13,6 +14,14 @@ export interface RoomieCardProps {
 export function RoomieCard({ roomie, isNext = false }: RoomieCardProps) {
   const { colors } = useTheme();
   const cardStyle = isNext ? styles.nextCard : styles.card;
+
+  const photos = React.useMemo(() => {
+    const gallery = Array.isArray(roomie.photoGallery) ? roomie.photoGallery.filter(Boolean) : [];
+    const unique = [roomie.photo, ...gallery].filter(
+      (u, idx, arr) => !!u && arr.indexOf(u) === idx,
+    ) as string[];
+    return unique.length > 0 ? unique : ["__FALLBACK__"];
+  }, [roomie.photo, roomie.photoGallery]);
 
   const lastActiveLabel = React.useMemo(() => {
     if (roomie.lastActiveDays === undefined || roomie.lastActiveDays === null) {
@@ -36,136 +45,253 @@ export function RoomieCard({ roomie, isNext = false }: RoomieCardProps) {
     [roomie.age, roomie.name],
   );
 
+  const locationLabel = React.useMemo(() => {
+    const neighborhood = roomie.neighborhood?.trim();
+    const department = roomie.department?.trim();
+    const parts = [neighborhood, department].filter(Boolean) as string[];
+    return parts.length > 0 ? parts.join(", ") : undefined;
+  }, [roomie.neighborhood, roomie.department]);
+
   return (
     <View
-      className="rounded-3xl overflow-hidden border"
       style={[
         cardStyle,
         {
           backgroundColor: colors.card,
-          borderColor: isNext ? `${colors.border}70` : colors.border,
-          transform: isNext ? [{ scale: 0.96 }] : undefined,
+          transform: isNext ? [{ scale: 0.95 }] : undefined,
         },
+        styles.cardShadow,
       ]}
     >
-      <View className="flex-1">
-        {roomie.photo ? (
-          <Image
-            source={{ uri: roomie.photo }}
-            className="w-full h-full absolute"
-            resizeMode="cover"
+      {/* Foto de fondo */}
+      {photos[0] !== "__FALLBACK__" ? (
+        <Image source={{ uri: photos[0] }} style={styles.backgroundImage} resizeMode="cover" />
+      ) : (
+        <View style={styles.backgroundImage}>
+          <AvatarFallback name={roomie.name} size={720} />
+        </View>
+      )}
+
+      {/* Degradado superior */}
+      <LinearGradient
+        colors={["rgba(0,0,0,0.4)", "rgba(0,0,0,0)", "transparent"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 0.3 }}
+        style={StyleSheet.absoluteFillObject}
+      />
+
+      {/* Barras de progreso (número de fotos) */}
+      <View style={styles.topBarsContainer}>
+        {photos.map((_, index) => (
+          <View
+            key={`${index}`}
+            style={[styles.topBar, index === 0 ? styles.topBarActive : undefined]}
           />
-        ) : (
-          <View className="w-full h-full absolute bg-gray-200" />
+        ))}
+      </View>
+
+      {/* Degradado inferior */}
+      <LinearGradient
+        colors={["transparent", "rgba(0,0,0,0.5)", "rgba(0,0,0,0.95)"]}
+        locations={[0.4, 0.7, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={StyleSheet.absoluteFillObject}
+      />
+
+      {/* Contenido */}
+      <View style={styles.content}>
+        <View style={styles.headerRow}>
+          <View style={styles.nameContainer}>
+            <Text style={styles.nameText}>{displayName}</Text>
+            {locationLabel && (
+              <View style={styles.locationRow}>
+                <Ionicons name="location" size={16} color="rgba(255,255,255,0.8)" />
+                <Text style={styles.locationText}>{locationLabel}</Text>
+              </View>
+            )}
+          </View>
+        </View>
+
+        <View style={styles.activityRow}>
+          <View style={styles.activeDot} />
+          <Text style={styles.activityText}>{lastActiveLabel}</Text>
+        </View>
+
+        {interests.length > 0 && (
+          <View>
+            <View style={styles.horizontalScrollShadow} />
+            <View style={styles.horizontalScrollContainer}>
+              <View style={styles.horizontalScrollInner}>
+                {interests.map(tag => (
+                  <View key={tag} style={styles.interestTag}>
+                    <Text style={styles.interestText}>{tag}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </View>
         )}
 
-        {/* Top gradient (oscurecer como en la imagen) */}
-        <LinearGradient
-          colors={["rgba(0,0,0,0.55)", "rgba(0,0,0,0.15)", "transparent"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={StyleSheet.absoluteFillObject}
-        />
-
-        {/* Indicadores (barras) en el tope, centrados */}
-        <View className="absolute top-2 left-0 right-0 items-center">
-          <View className="flex-row gap-2 px-10 w-full justify-center">
-            <View style={styles.progressBarActive} />
-            <View style={styles.progressBar} />
-          </View>
-        </View>
-
-        {/* Bottom overlay content */}
-        <LinearGradient
-          colors={["transparent", "rgba(0,0,0,0.35)", "rgba(0,0,0,0.85)"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={[StyleSheet.absoluteFillObject]}
-        />
-
-        <View className="absolute bottom-0 left-0 right-0 p-5 gap-4">
-          <View className="flex-row items-end justify-between">
-            <View className="shrink flex-row items-center">
-              <Text className="text-white text-[30px] font-conviven-bold mr-2">{displayName}</Text>
-              <Ionicons name="checkmark-circle" size={18} color="#3B82F6" />
-            </View>
-          </View>
-
-          <View className="flex-row items-center gap-2">
-            <Ionicons name="time-outline" size={16} color="#fff" />
-            <Text className="text-white/85 text-sm font-conviven">{lastActiveLabel}</Text>
-          </View>
-
-          {interests.length > 0 && (
-            <View className="flex-row flex-wrap gap-2 mt-1">
-              {interests.map((tag, idx) => (
-                <View
-                  key={tag}
-                  className="px-3 py-1 rounded-full"
-                  style={idx === 0 ? styles.primaryPill : styles.secondaryPill}
-                >
-                  <Text
-                    className="text-[12px] font-conviven-semibold"
-                    style={{ color: idx === 0 ? "#fff" : "#e5e7eb" }}
-                  >
-                    {tag}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          )}
-
-          {roomie.bio ? (
-            <Text numberOfLines={2} className="text-white/95 text-[12px] font-conviven mt-1">
-              {`"${roomie.bio}"`}
+        {roomie.bio && (
+          <View style={styles.bioContainer}>
+            <Text numberOfLines={2} style={styles.bioText}>
+              "{roomie.bio}"
             </Text>
-          ) : null}
-
-          {/* Botón flotante de flecha hacia abajo */}
-          <View className="items-center mt-1">
-            <TouchableOpacity activeOpacity={0.8} style={styles.downButton}>
-              <Ionicons name="chevron-down" size={18} color="#fff" />
-            </TouchableOpacity>
           </View>
-        </View>
+        )}
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { height: 560 },
-  nextCard: { height: 480 },
-  locationPill: {
-    backgroundColor: "rgba(0,0,0,0.35)",
+  card: { flex: 1 },
+  nextCard: { flex: 1 },
+  cardShadow: {
+    borderRadius: 0,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 8,
   },
-  progressBar: {
+  topBarsContainer: {
+    position: "absolute",
+    top: 10,
+    left: 16,
+    right: 16,
+    flexDirection: "row",
+    gap: 6,
+  },
+  topBar: {
     flex: 1,
     height: 3,
     borderRadius: 2,
-    backgroundColor: "rgba(255,255,255,0.3)",
+    backgroundColor: "rgba(255,255,255,0.35)",
   },
-  progressBarActive: {
-    flex: 1,
-    height: 3,
-    borderRadius: 2,
+  topBarActive: {
     backgroundColor: "#ffffff",
   },
-  primaryPill: {
-    backgroundColor: "#2563EB", // azul
-    borderColor: "transparent",
+  backgroundImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: "100%",
+    height: "100%",
   },
-  secondaryPill: {
-    backgroundColor: "rgba(0,0,0,0.35)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.25)",
+  content: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 24,
   },
-  downButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+  headerRow: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(0,0,0,0.55)",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  nameContainer: {
+    flex: 1,
+  },
+  nameText: {
+    color: "#FFFFFF",
+    fontSize: 30,
+    fontFamily: "Conviven-Bold",
+    marginBottom: 4,
+  },
+  locationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  locationText: {
+    color: "rgba(255,255,255,0.8)",
+    fontSize: 14,
+    fontFamily: "Conviven-Regular",
+    marginLeft: 4,
+  },
+  matchBadge: {
+    alignItems: "center",
+    backgroundColor: "rgba(59, 130, 246, 0.2)",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "rgba(59, 130, 246, 0.3)",
+  },
+  matchLabel: {
+    color: "#93C5FD",
+    fontSize: 10,
+    fontFamily: "Conviven-SemiBold",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  matchValue: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontFamily: "Conviven-Bold",
+  },
+  activityRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  activeDot: {
+    width: 8,
+    height: 8,
+    backgroundColor: "#10B981",
+    borderRadius: 4,
+    marginRight: 8,
+  },
+  activityText: {
+    color: "rgba(255,255,255,0.7)",
+    fontSize: 14,
+    fontFamily: "Conviven-Regular",
+  },
+  interestsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 12,
+  },
+  horizontalScrollContainer: {
+    marginBottom: 12,
+  },
+  horizontalScrollInner: {
+    flexDirection: "row",
+    flexWrap: "nowrap",
+    gap: 8,
+  },
+  horizontalScrollShadow: {
+    position: "absolute",
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: 24,
+    backgroundColor: "transparent",
+  },
+  interestTag: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.2)",
+  },
+  interestText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontFamily: "Conviven-SemiBold",
+  },
+  bioContainer: {
+    marginTop: 8,
+  },
+  bioText: {
+    color: "rgba(255,255,255,0.9)",
+    fontSize: 14,
+    fontFamily: "Conviven-Regular",
+    fontStyle: "italic",
+    lineHeight: 20,
   },
 });
