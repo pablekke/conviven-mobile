@@ -46,9 +46,10 @@ export default function AppLayout() {
         options={{
           title: "Chats",
           tabBarIcon: getTabBarIcon("chatbubbles-outline"),
-          tabBarLabel: "Chats",
+          tabBarLabel: "Roomies",
         }}
       />
+      
       <Tabs.Screen
         name="profile"
         options={{
