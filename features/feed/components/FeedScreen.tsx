@@ -2,16 +2,25 @@ import {
   View,
   Text,
   ScrollView,
-  Pressable,
   useWindowDimensions,
   StatusBar,
   StyleSheet,
   Animated,
 } from "react-native";
-import { Pill, LocationChip, PhotoCarousel, UserInfoCard, ActionDock } from "./index";
+import {
+  BasicInfoPills,
+  BudgetHighlight,
+  LocationChip,
+  PhotoCarousel,
+  ProfileHeadline,
+  UserInfoCard,
+  ActionDock,
+} from "./index";
+import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
+import MaskedView from "@react-native-masked-view/masked-view";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Feather } from "@expo/vector-icons";
+import HeroScrollCue from "./HeroScrollCue";
 
 // -------------------- helpers --------------------
 function calcAge(dobISO: string, asOf = new Date()) {
@@ -33,7 +42,7 @@ const incoming = {
   firstName: "Lucía",
   lastName: "Rodríguez",
   displayName: "Lucía Rodríguez",
-  birthDate: "1982-11-26T00:00:00.000Z",
+  birthDate: "2001-11-26T00:00:00.000Z",
   gender: "NON_BINARY",
   location: {
     neighborhood: { id: "8bc0ea28-e86f-451e-8349-b455fae9c0fb", name: "Aires Puros" },
@@ -104,6 +113,18 @@ function FeedScreen() {
   const HERO_HEIGHT = Math.max(0, winH + TAB_BAR_HEIGHT);
   const HERO_BOTTOM_SPACING = TAB_BAR_HEIGHT + ACTION_DOCK_HEIGHT + 85;
   const HERO_IMAGE_HEIGHT = Math.max(0, HERO_HEIGHT - HERO_BOTTOM_SPACING + 30);
+  const BLUR_OVERHANG = 80;
+  const BLUR_MAX_HEIGHT = 220;
+
+  const blurOverlayStyle = useMemo(() => {
+    const blurHeight = Math.min(HERO_IMAGE_HEIGHT * 0.65, BLUR_MAX_HEIGHT);
+    const top = Math.max(0, HERO_IMAGE_HEIGHT - (blurHeight + BLUR_OVERHANG));
+
+    return {
+      top,
+      height: blurHeight + BLUR_OVERHANG,
+    };
+  }, [HERO_IMAGE_HEIGHT]);
 
   const age = useMemo(() => calcAge(incoming.birthDate), []);
   const [locOpen, setLocOpen] = useState(false);
@@ -140,6 +161,7 @@ function FeedScreen() {
       incoming.profile.tidiness === "NEAT" ? "Ordenada" : "Normal",
       incoming.profile.schedule === "MIXED" ? "Horarios mixtos" : "Diurna",
       incoming.profile.diet === "VEGAN" ? "Vegana" : "Omnívora",
+      incoming.profile.occupation,
     ],
     [],
   );
@@ -176,6 +198,11 @@ function FeedScreen() {
   const budgetMinStr = toInt(incoming.filters?.budgetMin);
   const budgetMaxStr = toInt(incoming.filters?.budgetMax);
   const budgetFull = `$${budgetMinStr}–$${budgetMaxStr}`;
+
+  const headlineText = useMemo(() => {
+    const baseName = incoming.displayName ?? `${incoming.firstName} ${incoming.lastName}`;
+    return `${baseName}, ${age}`;
+  }, [age]);
 
   function scrollToNext() {
     if (!mainRef.current) return;
@@ -221,49 +248,44 @@ function FeedScreen() {
               onToggle={() => setLocOpen(v => !v)}
             />
 
-            {/* Gradiente inferior + texto */}
-            <LinearGradient
-              colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.45)"]}
-              start={{ x: 0.5, y: 0 }}
-              end={{ x: 0.5, y: 1 }}
-              style={styles.gradientOverlay}
-              pointerEvents="none"
-            />
+            <View pointerEvents="none" style={[styles.heroBlurOverlay, blurOverlayStyle]}>
+              <MaskedView
+                style={StyleSheet.absoluteFillObject}
+                maskElement={
+                  <LinearGradient
+                    colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.1)", "rgba(0,0,0,1)"]}
+                    locations={[0, 0.3, 1]}
+                    start={{ x: 0.5, y: 0 }}
+                    end={{ x: 0.5, y: 1 }}
+                    style={StyleSheet.absoluteFillObject}
+                  />
+                }
+              >
+                <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFillObject} />
+              </MaskedView>
+              <LinearGradient
+                colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.12)", "rgba(0,0,0,0.24)"]}
+                locations={[0, 0.45, 1]}
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0.5, y: 1 }}
+                style={StyleSheet.absoluteFillObject}
+              />
+            </View>
 
             <View style={[styles.heroCallout, styles.heroCalloutAnchor]}>
-              <Pressable
-                accessibilityLabel="Deslizar hacia abajo"
-                onPress={scrollToNext}
-                style={styles.heroScrollCue}
-              >
-                <Animated.View
-                  style={[
-                    styles.heroScrollCueContent,
-                    { transform: [{ translateY: arrowBounce.current }] },
-                  ]}
-                >
-                  <Feather name="chevron-down" size={28} color="#ffffff" />
-                </Animated.View>
-                <Text style={styles.heroScrollCueLabel}>Deslizar</Text>
-              </Pressable>
-
               <View style={styles.heroInfoWrapper}>
-                <View className="flex-row items-center justify-between px-1">
-                  <Text numberOfLines={1} className="text-white text-[18px] font-light">
-                    {incoming.displayName ?? `${incoming.firstName} ${incoming.lastName}`}, {age}
-                  </Text>
-                  <Text numberOfLines={1} className="text-white text-[16px] font-light">
-                    {budgetFull}
-                  </Text>
-                </View>
-
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-2 mb-8">
-                  <View className="flex-row">
-                    {basicInfo.map(info => (
-                      <Pill key={info}>{info}</Pill>
-                    ))}
+                <View style={styles.heroSummaryRow}>
+                  <View style={styles.heroSummaryText}>
+                    <ProfileHeadline text={headlineText} />
+                    <BudgetHighlight value={budgetFull} className="mt-1" />
                   </View>
-                </ScrollView>
+                  <HeroScrollCue
+                    translateY={arrowBounce.current}
+                    onPress={scrollToNext}
+                    style={styles.heroScrollCueInline}
+                  />
+                </View>
+                <BasicInfoPills items={basicInfo} />
               </View>
             </View>
           </View>
@@ -289,12 +311,13 @@ const styles = StyleSheet.create({
   screenShell: {
     backgroundColor: "transparent",
   },
-  gradientOverlay: {
+  heroBlurOverlay: {
     position: "absolute",
     left: 0,
     right: 0,
     bottom: 0,
     height: 180,
+    overflow: "hidden",
   },
   iconSpacer: {
     width: 14,
@@ -316,26 +339,22 @@ const styles = StyleSheet.create({
   heroCalloutAnchor: {
     bottom: 0,
   },
-  heroScrollCue: {
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 16,
-  },
-  heroScrollCueContent: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  heroScrollCueLabel: {
-    color: "#ffffff",
-    fontSize: 10,
-    fontWeight: "400",
-    textTransform: "uppercase",
-    opacity: 0.9,
-    marginTop: 4,
-  },
   heroInfoWrapper: {
     width: "100%",
     paddingHorizontal: 16,
+  },
+  heroSummaryRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+  },
+  heroSummaryText: {
+    flex: 1,
+  },
+  heroScrollCueInline: {
+    marginBottom: 0,
+    marginLeft: 16,
+    alignSelf: "flex-start",
   },
   heroPhotoContainer: {
     width: "100%",

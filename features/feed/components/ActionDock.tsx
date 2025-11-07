@@ -1,4 +1,4 @@
-import { View, Pressable, Text, Platform } from "react-native";
+import { View, Pressable, Text, Platform, StyleSheet } from "react-native";
 import { Feather } from "@expo/vector-icons";
 
 interface ActionDockProps {
@@ -43,16 +43,18 @@ export function ActionDock({
       >
         <Pressable
           accessibilityLabel="Descartar"
-          className="basis-1/4 h-full flex-row items-center justify-center bg-red-400"
+          className="h-full flex-row items-center justify-center"
           onPress={onReject}
+          style={[styles.rejectButton, styles.rejectButtonSurface]}
         >
-          <Feather name="x" size={16} color="#ffffff" />
-          <Text className="ml-2 text-[18px] font-light text-white">NO</Text>
+          <Feather name="x" size={16} color="#2563eb" />
+          <Text className="ml-2 text-[18px] font-light text-conviven-blue">PASO</Text>
         </Pressable>
         <Pressable
           accessibilityLabel="Contactar"
-          className="flex-1 h-full flex-row items-center justify-center bg-blue-600"
+          className="h-full flex-row items-center justify-center"
           onPress={onContact}
+          style={[styles.contactButton, styles.contactButtonSurface]}
         >
           <Feather name="send" size={16} color="#ffffff" />
           <Text className="ml-2 text-white text-[18px] font-light">CONECTAR</Text>
@@ -61,3 +63,32 @@ export function ActionDock({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  rejectButton: {
+    flex: 1.5,
+  },
+  contactButton: {
+    flex: 3,
+  },
+  rejectButtonSurface: {
+    backgroundColor: "rgba(37, 99, 235, 0.08)",
+    borderColor: "rgba(37, 99, 235, 0.2)",
+    borderWidth: 1,
+    shadowColor: "#1d4ed8",
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    shadowOffset: { width: -2, height: 2 },
+    elevation: 2,
+  },
+  contactButtonSurface: {
+    backgroundColor: "#1d4ed8",
+    borderColor: "#1e40af",
+    borderWidth: 1,
+    shadowColor: "rgba(30, 64, 175, 0.8)",
+    shadowOpacity: 0.32,
+    shadowRadius: 16,
+    shadowOffset: { width: 2, height: 8 },
+    elevation: 5,
+  },
+});
