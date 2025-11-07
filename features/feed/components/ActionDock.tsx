@@ -1,4 +1,3 @@
-import React from "react";
 import { View, Pressable, Text, Platform } from "react-native";
 import { Feather } from "@expo/vector-icons";
 
@@ -7,6 +6,7 @@ interface ActionDockProps {
   onContact?: () => void;
   tabBarHeight?: number;
   dockHeight?: number;
+  stackWithTabBar?: boolean;
 }
 
 export function ActionDock({
@@ -14,11 +14,23 @@ export function ActionDock({
   onContact,
   tabBarHeight = 64,
   dockHeight = 60,
+  stackWithTabBar = false,
 }: ActionDockProps) {
+  const restingBottom =
+    stackWithTabBar && tabBarHeight > 0
+      ? tabBarHeight - dockHeight / 2
+      : tabBarHeight > 0
+        ? -tabBarHeight * 0.0
+        : 8;
+
   return (
-    <View className="absolute left-4 right-4" style={{ bottom: 8, height: dockHeight }}>
+    <View
+      pointerEvents="box-none"
+      className="absolute left-0 right-0"
+      style={{ bottom: restingBottom, height: dockHeight }}
+    >
       <View
-        className="h-full bg-white rounded-2xl border border-slate-200 flex-row overflow-hidden"
+        className="h-full flex-row overflow-hidden"
         style={Platform.select({
           ios: {
             shadowColor: "#0f172a",
@@ -31,19 +43,19 @@ export function ActionDock({
       >
         <Pressable
           accessibilityLabel="Descartar"
-          className="basis-1/4 h-full flex-row items-center justify-center bg-slate-50 border-r border-slate-200"
+          className="basis-1/4 h-full flex-row items-center justify-center bg-red-400"
           onPress={onReject}
         >
-          <Feather name="x" size={16} color="#334155" />
-          <Text className="ml-2 text-[12px] font-bold text-slate-700">No</Text>
+          <Feather name="x" size={16} color="#ffffff" />
+          <Text className="ml-2 text-[18px] font-light text-white">NO</Text>
         </Pressable>
         <Pressable
           accessibilityLabel="Contactar"
-          className="basis-3/4 h-full flex-row items-center justify-center bg-blue-600"
+          className="flex-1 h-full flex-row items-center justify-center bg-blue-600"
           onPress={onContact}
         >
           <Feather name="send" size={16} color="#ffffff" />
-          <Text className="ml-2 text-white text-[12px] font-extrabold">Contactar</Text>
+          <Text className="ml-2 text-white text-[18px] font-light">CONECTAR</Text>
         </Pressable>
       </View>
     </View>

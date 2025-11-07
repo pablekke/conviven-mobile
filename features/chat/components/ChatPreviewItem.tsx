@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import React from "react";
+
 import { Image, Text, TouchableOpacity, View } from "react-native";
 
 import { useTheme } from "../../../context/ThemeContext";
@@ -20,7 +20,7 @@ export const ChatPreviewItem: React.FC<ChatPreviewItemProps> = ({ chat, onPress 
       onPress(chat.id);
     } else {
       router.push({
-        pathname: "/[id]",
+        pathname: "/(app)/conversation/[id]",
         params: {
           id: chat.id,
           name: chat.name,

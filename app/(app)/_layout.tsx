@@ -1,34 +1,82 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import React from "react";
+import { BottomTabBar, BottomTabBarProps } from "@react-navigation/bottom-tabs";
+import { StyleSheet, View } from "react-native";
 
 import { useTheme } from "../../context/ThemeContext";
+
+function CustomTabBar(props: BottomTabBarProps) {
+  return (
+    <View style={tabBarStyles.wrapper}>
+      <BottomTabBar {...props} />
+    </View>
+  );
+}
+
+const tabBarStyles = StyleSheet.create({
+  wrapper: {
+    paddingTop: 8,
+    backgroundColor: "#ffffff",
+    borderTopWidth: 0,
+    borderTopColor: "transparent",
+    // 👇 importante: no recortes el contenido
+    // overflow: "hidden",
+  },
+  bar: {
+    height: 70,
+    backgroundColor: "#ffffff",
+    borderTopWidth: 0,
+    borderTopColor: "transparent",
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  background: {
+    flex: 1,
+    backgroundColor: "#ffffff",
+  },
+  iconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});
 
 export default function AppLayout() {
   const { colors } = useTheme();
 
   const getTabBarIcon = (name: keyof typeof Ionicons.glyphMap) => {
-    return ({ color, size }: { color: string; size: number }) => (
-      <Ionicons name={name} size={size} color={color} />
-    );
+    return ({ color, size, focused }: { color: string; size: number; focused: boolean }) => {
+      const primaryColor = colors.primary ?? "#2563EB";
+      const iconColor = focused ? primaryColor : color;
+      const backgroundColor = focused ? `${primaryColor}22` : "transparent";
+
+      return (
+        <View style={[tabBarStyles.iconContainer, { backgroundColor }]}>
+          <Ionicons name={name} size={focused ? size + 2 : size} color={iconColor} />
+        </View>
+      );
+    };
   };
 
   return (
     <Tabs
+      tabBar={props => <CustomTabBar {...props} />}
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.mutedForeground,
-        tabBarStyle: {
-          paddingVertical: 0,
-          paddingTop: 2,
-          paddingBottom: 3,
-          backgroundColor: colors.sidebarBackground,
-          borderTopWidth: 0,
-          borderTopColor: colors.sidebarBorder,
-        },
         tabBarLabelStyle: {
           fontSize: 12,
           fontFamily: "Inter-Medium",
+        },
+        tabBarItemStyle: {
+          paddingTop: 2,
+        },
+        tabBarStyle: tabBarStyles.bar,
+        tabBarBackground: () => <View style={tabBarStyles.background} />,
+        sceneStyle: {
+          backgroundColor: "transparent",
         },
         headerShown: false,
       }}
@@ -49,7 +97,6 @@ export default function AppLayout() {
           tabBarLabel: "Roomies",
         }}
       />
-      
       <Tabs.Screen
         name="profile"
         options={{
@@ -58,24 +105,9 @@ export default function AppLayout() {
           tabBarLabel: "Perfil",
         }}
       />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="conversation/[id]"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="edit-profile/index"
-        options={{
-          href: null,
-        }}
-      />
+      <Tabs.Screen name="settings" options={{ href: null }} />
+      <Tabs.Screen name="conversation/[id]" options={{ href: null }} />
+      <Tabs.Screen name="edit-profile/index" options={{ href: null }} />
     </Tabs>
   );
 }

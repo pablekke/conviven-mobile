@@ -6,10 +6,11 @@ import {
   useWindowDimensions,
   StatusBar,
   StyleSheet,
+  Animated,
 } from "react-native";
 import { Pill, LocationChip, PhotoCarousel, UserInfoCard, ActionDock } from "./index";
 import { LinearGradient } from "expo-linear-gradient";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Feather } from "@expo/vector-icons";
 
 // -------------------- helpers --------------------
@@ -96,16 +97,43 @@ const incoming = {
 
 // -------------------- Pantalla --------------------
 function FeedScreen() {
-  const TAB_BAR_HEIGHT = 32; // altura reservada para una tab bar del host app
+  const TAB_BAR_HEIGHT = 50;
+  const ACTION_DOCK_HEIGHT = 50;
 
   const { height: winH } = useWindowDimensions();
-  const HERO_HEIGHT = Math.max(0, winH - TAB_BAR_HEIGHT);
+  const HERO_HEIGHT = Math.max(0, winH + TAB_BAR_HEIGHT);
+  const HERO_BOTTOM_SPACING = TAB_BAR_HEIGHT + ACTION_DOCK_HEIGHT + 85;
+  const HERO_IMAGE_HEIGHT = Math.max(0, HERO_HEIGHT - HERO_BOTTOM_SPACING + 30);
 
   const age = useMemo(() => calcAge(incoming.birthDate), []);
   const [locOpen, setLocOpen] = useState(false);
   const [locW, setLocW] = useState<number | undefined>(undefined);
   const mainRef = useRef<ScrollView>(null);
   const { width: screenWidth } = useWindowDimensions();
+  const arrowBounce = useRef(new Animated.Value(0));
+
+  useEffect(() => {
+    const bounce = Animated.loop(
+      Animated.sequence([
+        Animated.timing(arrowBounce.current, {
+          toValue: 10,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(arrowBounce.current, {
+          toValue: 0,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+
+    bounce.start();
+    return () => {
+      bounce.stop();
+      arrowBounce.current.setValue(0);
+    };
+  }, []);
 
   const basicInfo = useMemo(
     () => [
@@ -151,16 +179,16 @@ function FeedScreen() {
 
   function scrollToNext() {
     if (!mainRef.current) return;
-    mainRef.current.scrollTo({ y: HERO_HEIGHT, animated: true });
+    mainRef.current.scrollTo({ y: HERO_IMAGE_HEIGHT, animated: true });
   }
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1" style={styles.screenShell}>
       <StatusBar barStyle="light-content" />
 
       {/* Medidor oculto del ancho del chip de ubicación */}
       <View
-        className="absolute -left-[9999px] top-0 flex-row items-center gap-2 px-3 py-1"
+        className="absolute -left-[9999px] top-0 flex-row items-center px-3"
         onLayout={e => {
           const measuredWidth = e.nativeEvent.layout.width;
           const maxWidth = screenWidth * 0.7;
@@ -171,11 +199,20 @@ function FeedScreen() {
         <View style={styles.iconSpacer} />
       </View>
 
-      <ScrollView ref={mainRef} className="flex-1" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        ref={mainRef}
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: TAB_BAR_HEIGHT + ACTION_DOCK_HEIGHT },
+        ]}
+        style={styles.mainScroll}
+      >
         {/* HERO */}
-        <View className="relative w-full" style={{ height: HERO_HEIGHT }}>
-          <View className="w-full h-full relative overflow-hidden">
-            <PhotoCarousel photos={photos} height={HERO_HEIGHT} />
+        <View className="relative w-full" style={{ height: HERO_IMAGE_HEIGHT }}>
+          <View style={[styles.heroPhotoContainer, { height: HERO_IMAGE_HEIGHT }]}>
+            <PhotoCarousel photos={photos} height={HERO_IMAGE_HEIGHT} />
 
             <LocationChip
               locations={locStrings}
@@ -193,42 +230,44 @@ function FeedScreen() {
               pointerEvents="none"
             />
 
-            {/* Nombre / presupuesto / chips */}
-            <View className="absolute left-4 right-4 bottom-3 z-20">
-              <View className="flex-row items-center justify-between px-1">
-                <Text numberOfLines={1} className="text-white text-[18px] font-extrabold">
-                  {incoming.displayName ?? `${incoming.firstName} ${incoming.lastName}`}, {age}
-                </Text>
-                <Text numberOfLines={1} className="text-white text-[13px] font-semibold">
-                  {budgetFull}
-                </Text>
-              </View>
+            <View style={[styles.heroCallout, styles.heroCalloutAnchor]}>
+              <Pressable
+                accessibilityLabel="Deslizar hacia abajo"
+                onPress={scrollToNext}
+                style={styles.heroScrollCue}
+              >
+                <Animated.View
+                  style={[
+                    styles.heroScrollCueContent,
+                    { transform: [{ translateY: arrowBounce.current }] },
+                  ]}
+                >
+                  <Feather name="chevron-down" size={28} color="#ffffff" />
+                </Animated.View>
+                <Text style={styles.heroScrollCueLabel}>Deslizar</Text>
+              </Pressable>
 
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-2">
-                <View className="flex-row">
-                  {basicInfo.map(info => (
-                    <Pill key={info}>{info}</Pill>
-                  ))}
+              <View style={styles.heroInfoWrapper}>
+                <View className="flex-row items-center justify-between px-1">
+                  <Text numberOfLines={1} className="text-white text-[18px] font-light">
+                    {incoming.displayName ?? `${incoming.firstName} ${incoming.lastName}`}, {age}
+                  </Text>
+                  <Text numberOfLines={1} className="text-white text-[16px] font-light">
+                    {budgetFull}
+                  </Text>
                 </View>
-              </ScrollView>
+
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-2 mb-8">
+                  <View className="flex-row">
+                    {basicInfo.map(info => (
+                      <Pill key={info}>{info}</Pill>
+                    ))}
+                  </View>
+                </ScrollView>
+              </View>
             </View>
-
-            {/* Indicador “Deslizar” */}
-            <Pressable
-              accessibilityLabel="Deslizar hacia abajo"
-              onPress={scrollToNext}
-              className="absolute left-0 right-0 bottom-24 z-30 items-center"
-            >
-              <Feather name="chevron-down" size={28} color="#ffffff" />
-              <Text className="text-white text-[10px] font-semibold uppercase opacity-90 mt-1">
-                Deslizar
-              </Text>
-            </Pressable>
-
-            <ActionDock />
           </View>
         </View>
-
         <UserInfoCard
           profile={incoming.profile}
           location={incoming.location}
@@ -239,6 +278,7 @@ function FeedScreen() {
 
       {/* Reservamos espacio visual para una tab bar del host app, pero NO renderizamos menú */}
       <View style={{ height: TAB_BAR_HEIGHT }} />
+      <ActionDock tabBarHeight={TAB_BAR_HEIGHT} dockHeight={ACTION_DOCK_HEIGHT} />
     </View>
   );
 }
@@ -246,6 +286,9 @@ function FeedScreen() {
 export default FeedScreen;
 
 const styles = StyleSheet.create({
+  screenShell: {
+    backgroundColor: "transparent",
+  },
   gradientOverlay: {
     position: "absolute",
     left: 0,
@@ -256,5 +299,48 @@ const styles = StyleSheet.create({
   iconSpacer: {
     width: 14,
     height: 14,
+  },
+  mainScroll: {
+    backgroundColor: "transparent",
+  },
+  scrollContent: {
+    backgroundColor: "transparent",
+  },
+  heroCallout: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    zIndex: 30,
+  },
+  heroCalloutAnchor: {
+    bottom: 0,
+  },
+  heroScrollCue: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+  heroScrollCueContent: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  heroScrollCueLabel: {
+    color: "#ffffff",
+    fontSize: 10,
+    fontWeight: "400",
+    textTransform: "uppercase",
+    opacity: 0.9,
+    marginTop: 4,
+  },
+  heroInfoWrapper: {
+    width: "100%",
+    paddingHorizontal: 16,
+  },
+  heroPhotoContainer: {
+    width: "100%",
+    overflow: "hidden",
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
 });

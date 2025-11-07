@@ -16,7 +16,8 @@ interface ResilienceContextValue {
   offline: boolean;
   lastErrorMessage: string | null;
   maintenance: boolean;
-  maintenanceMessage?: string;  
+  maintenanceMessage?: string;
+  statusPageUrl?: string;
   queueSize: number;
   refreshRemoteConfig: () => Promise<void>;
   flushQueue: () => Promise<void>;
@@ -31,6 +32,7 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
   const [queueSize, setQueueSize] = useState(0);
   const [maintenance, setMaintenance] = useState(false);
   const [maintenanceMessage, setMaintenanceMessage] = useState<string | undefined>(undefined);
+  const [statusPageUrl, setStatusPageUrl] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const unsubscribeOffline = offlineEmitter.subscribe(({ active }) => {
@@ -45,12 +47,10 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
       setQueueSize(pending);
     });
 
-    const unsubscribeMaintenance = maintenanceEmitter.subscribe(
-      ({ active, message }) => {
-        setMaintenance(active);
-        setMaintenanceMessage(message);
-      },
-    );
+    const unsubscribeMaintenance = maintenanceEmitter.subscribe(({ active, message }) => {
+      setMaintenance(active);
+      setMaintenanceMessage(message);
+    });
 
     persistentRequestQueue
       .size()
@@ -82,6 +82,7 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
           // Valores por defecto si falla la carga
           setMaintenance(false);
           setMaintenanceMessage(undefined);
+          setStatusPageUrl(undefined);
         }
       }
     };
@@ -89,9 +90,9 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
     // Timeout para evitar bloqueos infinitos
     const timeout = setTimeout(() => {
       if (mounted) {
-        //console.warn("resilience:config:timeout");
         setMaintenance(false);
         setMaintenanceMessage(undefined);
+        setStatusPageUrl(undefined);
       }
     }, 5000);
 
@@ -149,6 +150,7 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
   const applyRemoteConfig = (config: RemoteConfig) => {
     setMaintenance(config.maintenanceMode);
     setMaintenanceMessage(config.maintenanceMessage);
+    setStatusPageUrl(config.statusPageUrl || undefined);
   };
 
   const offline = offlineSignal || networkOffline;
@@ -159,6 +161,7 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
       lastErrorMessage,
       maintenance,
       maintenanceMessage,
+      statusPageUrl,
       queueSize,
       refreshRemoteConfig: async () => {
         const config = await loadRemoteConfig();
@@ -168,7 +171,7 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
         await flushQueuedRequests();
       },
     }),
-    [offline, lastErrorMessage, maintenance, maintenanceMessage, queueSize],
+    [offline, lastErrorMessage, maintenance, maintenanceMessage, statusPageUrl, queueSize],
   );
 
   return <ResilienceContext.Provider value={value}>{children}</ResilienceContext.Provider>;

@@ -16,8 +16,8 @@ interface LoginFormProps {
 
 export default function LoginForm({ onSubmit, isLoading = false, onFocusField }: LoginFormProps) {
   const defaults = useMemo(() => LOGIN_FORM_DEFAULTS, []);
-  const [email, setEmail] = useState(defaults.email ?? "");
-  const [password, setPassword] = useState(defaults.password ?? "");
+  const [email, setEmail] = useState<string>(defaults.email ?? "");
+  const [password, setPassword] = useState<string>(defaults.password ?? "");
   const [errors, setErrors] = useState<LoginFormErrors>({});
   const { colors } = useTheme();
   const inputStyle = {
@@ -97,12 +97,7 @@ export default function LoginForm({ onSubmit, isLoading = false, onFocusField }:
 
       <TouchableOpacity
         className="mb-4 self-end"
-        onPress={() =>
-          Alert.alert(
-            "Reset Password",
-            LOGIN_COPY.forgotPassword,
-          )
-        }
+        onPress={() => Alert.alert("Reset Password", LOGIN_COPY.forgotPassword)}
         activeOpacity={0.7}
       >
         <Text className="font-conviven-semibold text-primary">Forgot password?</Text>

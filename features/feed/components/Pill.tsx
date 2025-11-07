@@ -1,4 +1,3 @@
-import React from "react";
 import { View, Text, Platform } from "react-native";
 
 interface PillProps {
@@ -8,7 +7,7 @@ interface PillProps {
 export function Pill({ children }: PillProps) {
   return (
     <View
-      className="px-3 py-1.5 bg-white/95 rounded-full mr-2"
+      className="px-3.5 py-2 bg-white rounded-full mr-2"
       style={Platform.select({
         ios: {
           shadowColor: "#1e3a8a",
@@ -19,7 +18,7 @@ export function Pill({ children }: PillProps) {
         android: { elevation: 1 },
       })}
     >
-      <Text className="text-blue-900 text-[12px] font-semibold">{children}</Text>
+      <Text className="text-dark-900 text-[13px] font-light">{children}</Text>
     </View>
   );
 }

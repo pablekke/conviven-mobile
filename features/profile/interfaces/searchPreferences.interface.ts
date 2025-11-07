@@ -1,7 +1,7 @@
 import {
-  TidinessMin,
-  SchedulePreference,
-  GuestsFrequency,
+  Tidiness,
+  Schedule,
+  GuestsFreq,
   MusicUsage,
   ZodiacSign,
   Language,
@@ -39,9 +39,9 @@ export interface SearchPreferences {
   requireQuietHoursOverlap: boolean | null;
 
   // Preferencias de Vibe (Rangos)
-  tidinessMin: TidinessMin | null;
-  schedulePref: SchedulePreference | null;
-  guestsMax: GuestsFrequency | null;
+  tidinessMin: Tidiness | null;
+  schedulePref: Schedule | null;
+  guestsMax: GuestsFreq | null;
   musicMax: MusicUsage | null;
 
   // Nice-to-have (Preferencias Suaves)
@@ -81,9 +81,9 @@ export interface CreateSearchPreferencesRequest {
   requireQuietHoursOverlap?: boolean;
 
   // Preferencias de Vibe (Rangos)
-  tidinessMin?: TidinessMin;
-  schedulePref?: SchedulePreference;
-  guestsMax?: GuestsFrequency;
+  tidinessMin?: Tidiness;
+  schedulePref?: Schedule;
+  guestsMax?: GuestsFreq;
   musicMax?: MusicUsage;
 
   // Nice-to-have (Preferencias Suaves)
@@ -128,9 +128,9 @@ export interface SearchPreferencesFormData {
   requireQuietHoursOverlap: boolean;
 
   // Preferencias de Vibe
-  tidinessMin: TidinessMin | "";
-  schedulePref: SchedulePreference | "";
-  guestsMax: GuestsFrequency | "";
+  tidinessMin: Tidiness | "";
+  schedulePref: Schedule | "";
+  guestsMax: GuestsFreq | "";
   musicMax: MusicUsage | "";
 
   // Nice-to-have

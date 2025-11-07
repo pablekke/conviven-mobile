@@ -3,6 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { User, LoginCredentials, RegisterCredentials } from "@/types/user";
 import { mapUserFromApi } from "./mappers/userMapper";
 import { resilientRequest } from "./apiClient";
+import { HttpError } from "./http";
 import { API } from "@/constants";
 import { authSession } from "./auth/sessionManager";
 import { extractAccessToken, extractRefreshToken } from "./auth/tokenUtils";
@@ -139,12 +140,26 @@ export default class AuthService {
   }
 
   static async getCurrentUser(): Promise<User | null> {
+    const hasSession = await authSession.hasSession();
+
+    if (!hasSession) {
+      await AsyncStorage.removeItem(USER_DATA_KEY);
+      return null;
+    }
+
     try {
       const user = await this.fetchCurrentUser();
       await persistUser(user);
       return user;
     } catch (error) {
       console.error("Get current user error:", error);
+
+      if (error instanceof HttpError && (error.status === 401 || error.status === 404)) {
+        await authSession.clearTokens();
+        await AsyncStorage.removeItem(USER_DATA_KEY);
+        return null;
+      }
+
       const cachedUser = await AsyncStorage.getItem(USER_DATA_KEY);
       return cachedUser ? (JSON.parse(cachedUser) as User) : null;
     }
