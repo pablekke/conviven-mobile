@@ -89,6 +89,10 @@ function PrimaryCardComponent({
   const [locationOpen, setLocationOpen] = useState(false);
 
   useEffect(() => {
+    setLocationOpen(false);
+  }, [headline, photos]);
+
+  useEffect(() => {
     if (!showScrollCue) return;
     const bounce = Animated.loop(
       Animated.sequence([

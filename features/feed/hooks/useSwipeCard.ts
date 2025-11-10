@@ -58,14 +58,28 @@ export function useSwipeCard({
   const completeSwipe = useCallback(
     (direction: SwipeDirection) => {
       if (disabled) return;
+      const exitTarget = direction === "like" ? screenWidth + 160 : -screenWidth - 160;
       Animated.timing(swipeX, {
-        toValue: direction === "like" ? screenWidth + 160 : -screenWidth - 160,
+        toValue: exitTarget,
         duration: 220,
         useNativeDriver: true,
       }).start(() => {
         onComplete?.(direction);
-        swipeX.setValue(0);
-        setSwipeActive(false);
+
+        setTimeout(() => {
+          // Reinsert the card from outside the screen so the next profile
+          // aparece con una transición suave y sin parpadeos.
+          swipeX.setValue(exitTarget);
+          Animated.spring(swipeX, {
+            toValue: 0,
+            useNativeDriver: true,
+            damping: 16,
+            mass: 0.9,
+            stiffness: 160,
+          }).start(() => {
+            setSwipeActive(false);
+          });
+        }, 16);
       });
     },
     [disabled, onComplete, screenWidth, swipeX]

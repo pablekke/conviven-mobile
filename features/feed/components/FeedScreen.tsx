@@ -12,17 +12,16 @@ import { incomingProfilesMock } from "../mocks/incomingProfile";
 import { FEED_CONSTANTS } from "../constants/feed.constants";
 import { FeedScrollContext } from "../context/ScrollContext";
 import { useProfileCardData } from "../hooks";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 // -------------------- mock data --------------------
 const profiles = incomingProfilesMock;
-const primaryProfile = profiles[0];
-const secondaryProfile = profiles[1] ?? profiles[0];
-
 // -------------------- Pantalla --------------------
 function FeedScreen() {
   const TAB_BAR_HEIGHT = FEED_CONSTANTS.TAB_BAR_HEIGHT;
 
+  const totalProfiles = profiles.length;
+  const [activeIndex, setActiveIndex] = useState(0);
   const { height: winH, width: screenWidth } = useWindowDimensions();
   const HERO_HEIGHT = Math.max(0, winH + TAB_BAR_HEIGHT);
   const HERO_BOTTOM_SPACING = TAB_BAR_HEIGHT + FEED_CONSTANTS.HERO_BOTTOM_EXTRA;
@@ -39,24 +38,58 @@ function FeedScreen() {
     setPrimarySwipeX(prev => (prev === value ? prev : value));
   }, []);
 
-  const primaryData = useProfileCardData(primaryProfile);
-  const {
-    galleryPhotos: primaryPhotos,
-    locationStrings: primaryLocations,
-    longestLocation: primaryLongestLocation,
-    budgetLabel: primaryBudget,
-    headline: primaryHeadline,
-    basicInfo: primaryBasicInfo,
-  } = primaryData;
+  const safeIndex = useMemo(() => {
+    if (totalProfiles === 0) return 0;
+    return ((activeIndex % totalProfiles) + totalProfiles) % totalProfiles;
+  }, [activeIndex, totalProfiles]);
 
-  const secondaryData = useProfileCardData(secondaryProfile);
+  const primaryProfile = totalProfiles > 0 ? profiles[safeIndex] : null;
+  const secondaryProfile = totalProfiles > 0 ? profiles[(safeIndex + 1) % totalProfiles] : null;
+
+  const handleSwipeComplete = useCallback(
+    (_direction: "like" | "dislike") => {
+      if (totalProfiles <= 1) return;
+      setActiveIndex(prev => (prev + 1) % totalProfiles);
+    },
+    [totalProfiles],
+  );
+
+  const primaryData = primaryProfile ? useProfileCardData(primaryProfile) : null;
   const {
-    galleryPhotos: secondaryPhotos,
-    locationStrings: secondaryLocations,
-    budgetLabel: secondaryBudget,
-    headline: secondaryHeadline,
-    basicInfo: secondaryBasicInfo,
-  } = secondaryData;
+    galleryPhotos: primaryPhotos = [],
+    locationStrings: primaryLocations = [],
+    longestLocation: primaryLongestLocation = "",
+    budgetLabel: primaryBudget = "",
+    headline: primaryHeadline = "",
+    basicInfo: primaryBasicInfo = [],
+  } = primaryData ?? {};
+
+  const secondaryData = secondaryProfile ? useProfileCardData(secondaryProfile) : null;
+  const {
+    galleryPhotos: secondaryPhotos = [],
+    locationStrings: secondaryLocations = [],
+    budgetLabel: secondaryBudget = "",
+    headline: secondaryHeadline = "",
+    basicInfo: secondaryBasicInfo = [],
+  } = secondaryData ?? {};
+
+  const primaryCardKey = useMemo(() => {
+    if (!primaryProfile) return "primary-empty";
+    return `${primaryProfile.firstName}-${primaryProfile.lastName}-${primaryProfile.birthDate}`;
+  }, [primaryProfile]);
+
+  const secondaryCardKey = useMemo(() => {
+    if (!secondaryProfile) return "secondary-empty";
+    return `${secondaryProfile.firstName}-${secondaryProfile.lastName}-${secondaryProfile.birthDate}`;
+  }, [secondaryProfile]);
+
+  if (totalProfiles === 0 || !primaryProfile || !primaryData) {
+    return (
+      <View className="flex-1 items-center justify-center" style={styles.screenShell}>
+        <Text className="text-white text-base font-medium">No hay perfiles disponibles por ahora.</Text>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1" style={styles.screenShell}>
@@ -89,6 +122,7 @@ function FeedScreen() {
         <View className="relative w-full" style={{ height: HERO_IMAGE_HEIGHT }}>
           <FeedScrollContext.Provider value={mainRef}>
             <BackgroundCard
+              key={`bg-${secondaryCardKey}`}
               photos={secondaryPhotos}
               locationStrings={secondaryLocations}
               locationWidth={locW}
@@ -99,15 +133,14 @@ function FeedScreen() {
               screenWidth={screenWidth}
             />
             <PrimaryCard
+              key={`primary-${primaryCardKey}`}
               photos={primaryPhotos}
               locationStrings={primaryLocations}
               locationWidth={locW}
               headline={primaryHeadline}
               budget={primaryBudget}
               basicInfo={primaryBasicInfo}
-              onSwipeComplete={direction => {
-                console.log(`Swipe ${direction}`);
-              }}
+              onSwipeComplete={handleSwipeComplete}
               onSwipeXChange={handleSwipeXChange}
             />
           </FeedScrollContext.Provider>
