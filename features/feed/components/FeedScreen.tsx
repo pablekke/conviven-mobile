@@ -1,213 +1,49 @@
-import {
-  View,
-  Text,
-  ScrollView,
-  useWindowDimensions,
-  StatusBar,
-  StyleSheet,
-  Animated,
-} from "react-native";
-import {
-  BasicInfoPills,
-  BudgetHighlight,
-  LocationChip,
-  PhotoCarousel,
-  ProfileHeadline,
-  UserInfoCard,
-  ActionDock,
-} from "./index";
-import { BlurView } from "expo-blur";
-import { LinearGradient } from "expo-linear-gradient";
-import MaskedView from "@react-native-masked-view/masked-view";
-import { useEffect, useMemo, useRef, useState } from "react";
-import HeroScrollCue from "./HeroScrollCue";
-
-// -------------------- helpers --------------------
-function calcAge(dobISO: string, asOf = new Date()) {
-  const dob = new Date(dobISO);
-  let a = asOf.getFullYear() - dob.getFullYear();
-  const m = asOf.getMonth() - dob.getMonth();
-  if (m < 0 || (m === 0 && asOf.getDate() < dob.getDate())) a--;
-  return a;
-}
-function toInt(u: unknown) {
-  if (u == null) return "—";
-  const n = typeof u === "string" ? parseFloat(u) : (u as number);
-  if (Number.isNaN(n)) return "—";
-  return String(Math.round(n));
-}
+import { View, Text, ScrollView, useWindowDimensions, StatusBar, StyleSheet } from "react-native";
+import { UserInfoCard, BackgroundCard, PrimaryCard } from "./index";
+import { useRef, useState } from "react";
+import { incomingProfilesMock } from "../mocks/incomingProfile";
+import { useProfileCardData } from "../hooks";
+import { FEED_CONSTANTS } from "../constants/feed.constants";
+import { FeedScrollContext } from "../context/ScrollContext";
 
 // -------------------- mock data --------------------
-const incoming = {
-  firstName: "Lucía",
-  lastName: "Rodríguez",
-  displayName: "Lucía Rodríguez",
-  birthDate: "2001-11-26T00:00:00.000Z",
-  gender: "NON_BINARY",
-  location: {
-    neighborhood: { id: "8bc0ea28-e86f-451e-8349-b455fae9c0fb", name: "Aires Puros" },
-    city: { id: "59edd5cf-8151-4a37-8b84-cc03929e26ba", name: "Montevideo" },
-    department: { id: "a2f0e079-c922-44f2-8712-e2710fad74e3", name: "Montevideo" },
-  },
-  profile: {
-    bio: "Hola, soy Lucía me gusta pescar y la merca",
-    occupation: "Abogada",
-    education: "Licenciada en abogacía",
-    tidiness: "NEAT",
-    schedule: "MIXED",
-    guestsFreq: "RARELY",
-    musicUsage: "SPEAKER_DAY",
-    quietHoursStart: 19,
-    quietHoursEnd: 4,
-    smokesCigarettes: "SOCIALLY",
-    smokesWeed: "REGULAR",
-    alcohol: "REGULAR",
-    petsOwned: ["Dog"],
-    petsOk: "DOGS_OK",
-    cooking: "OFTEN",
-    diet: "VEGAN",
-    sharePolicy: "STRICT",
-    languages: ["es"],
-    interests: ["música", "deportes"],
-    zodiacSign: "SAGITTARIUS",
-    hasPhoto: true,
-    lastActiveAt: "2025-09-13T22:53:19.982Z",
-  },
-  filters: {
-    budgetMin: "10000.00",
-    budgetMax: "50000.00",
-    mainPreferredLocation: {
-      neighborhood: { id: "23a75a72-2deb-4fd0-b8bb-98c48b03fa14", name: "Centro" },
-      city: { id: "59edd5cf-8151-4a37-8b84-cc03929e26ba", name: "Montevideo" },
-      department: { id: "a2f0e079-c922-44f2-8712-e2710fad74e3", name: "Montevideo" },
-    },
-    preferredLocations: [
-      {
-        neighborhood: { id: "a38bcd6e-8fc1-4d56-964a-9691936b7406", name: "Barrio Sur" },
-        city: { id: "59edd5cf-8151-4a37-8b84-cc03929e26ba", name: "Montevideo" },
-        department: { id: "a2f0e079-c922-44f2-8712-e2710fad74e3", name: "Montevideo" },
-      },
-      {
-        neighborhood: { id: "66fbbe15-5449-4234-be76-4e1664b54cec", name: "Aguada" },
-        city: { id: "59edd5cf-8151-4a37-8b84-cc03929e26ba", name: "Montevideo" },
-        department: { id: "a2f0e079-c922-44f2-8712-e2710fad74e3", name: "Montevideo" },
-      },
-    ],
-    photoUrl: "PONELE UNA URL DE EJEMPLO",
-    secondaryPhotoUrls: ["PONELE UNA URL DE EJEMPLO", "PONELE UNA URL DE EJEMPLO"],
-  },
-  photoUrl:
-    "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=1480&auto=format&fit=crop",
-  secondaryPhotoUrls: [
-    "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=1480&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?q=80&w=1480&auto=format&fit=crop",
-  ],
-} as const;
+const profiles = incomingProfilesMock;
+const primaryProfile = profiles[0];
+const secondaryProfile = profiles[1] ?? profiles[0];
 
 // -------------------- Pantalla --------------------
 function FeedScreen() {
   const TAB_BAR_HEIGHT = 50;
-  const ACTION_DOCK_HEIGHT = 50;
 
-  const { height: winH } = useWindowDimensions();
+  const { height: winH, width: screenWidth } = useWindowDimensions();
   const HERO_HEIGHT = Math.max(0, winH + TAB_BAR_HEIGHT);
-  const HERO_BOTTOM_SPACING = TAB_BAR_HEIGHT + ACTION_DOCK_HEIGHT + 85;
-  const HERO_IMAGE_HEIGHT = Math.max(0, HERO_HEIGHT - HERO_BOTTOM_SPACING + 30);
-  const BLUR_OVERHANG = 80;
-  const BLUR_MAX_HEIGHT = 220;
+  const HERO_BOTTOM_SPACING = TAB_BAR_HEIGHT + FEED_CONSTANTS.HERO_BOTTOM_EXTRA;
+  const HERO_IMAGE_HEIGHT = Math.max(
+    0,
+    HERO_HEIGHT - HERO_BOTTOM_SPACING + FEED_CONSTANTS.HERO_IMAGE_EXTRA,
+  );
 
-  const blurOverlayStyle = useMemo(() => {
-    const blurHeight = Math.min(HERO_IMAGE_HEIGHT * 0.65, BLUR_MAX_HEIGHT);
-    const top = Math.max(0, HERO_IMAGE_HEIGHT - (blurHeight + BLUR_OVERHANG));
-
-    return {
-      top,
-      height: blurHeight + BLUR_OVERHANG,
-    };
-  }, [HERO_IMAGE_HEIGHT]);
-
-  const age = useMemo(() => calcAge(incoming.birthDate), []);
-  const [locOpen, setLocOpen] = useState(false);
   const [locW, setLocW] = useState<number | undefined>(undefined);
-  const mainRef = useRef<ScrollView>(null);
-  const { width: screenWidth } = useWindowDimensions();
-  const arrowBounce = useRef(new Animated.Value(0));
+  const mainRef = useRef<ScrollView | null>(null);
 
-  useEffect(() => {
-    const bounce = Animated.loop(
-      Animated.sequence([
-        Animated.timing(arrowBounce.current, {
-          toValue: 10,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(arrowBounce.current, {
-          toValue: 0,
-          duration: 600,
-          useNativeDriver: true,
-        }),
-      ]),
-    );
+  const primaryData = useProfileCardData(primaryProfile);
+  const {
+    galleryPhotos: primaryPhotos,
+    locationStrings: primaryLocations,
+    longestLocation: primaryLongestLocation,
+    budgetLabel: primaryBudget,
+    headline: primaryHeadline,
+    basicInfo: primaryBasicInfo,
+  } = primaryData;
 
-    bounce.start();
-    return () => {
-      bounce.stop();
-      arrowBounce.current.setValue(0);
-    };
-  }, []);
-
-  const basicInfo = useMemo(
-    () => [
-      incoming.profile.tidiness === "NEAT" ? "Ordenada" : "Normal",
-      incoming.profile.schedule === "MIXED" ? "Horarios mixtos" : "Diurna",
-      incoming.profile.diet === "VEGAN" ? "Vegana" : "Omnívora",
-      incoming.profile.occupation,
-    ],
-    [],
-  );
-
-  const photos = useMemo(() => {
-    const primary =
-      incoming.photoUrl && String(incoming.photoUrl).includes("PONELE")
-        ? "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=1480&auto=format&fit=crop"
-        : incoming.photoUrl;
-    const secondaryArr = Array.isArray(incoming.secondaryPhotoUrls)
-      ? incoming.secondaryPhotoUrls
-      : [];
-    const secondary = secondaryArr.map(p =>
-      String(p).includes("PONELE")
-        ? "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=1480&auto=format&fit=crop"
-        : p,
-    );
-    return [primary, ...secondary];
-  }, []);
-
-  const locStrings = useMemo(() => {
-    const main = `${incoming.filters.mainPreferredLocation.department.name} · ${incoming.filters.mainPreferredLocation.city.name} · ${incoming.filters.mainPreferredLocation.neighborhood.name}`;
-    const others = incoming.filters.preferredLocations.map(
-      loc => `${loc.city.name} · ${loc.neighborhood.name}`,
-    );
-    return [main, ...others];
-  }, []);
-
-  const longestLoc = useMemo(
-    () => locStrings.reduce((a, b) => (b.length > a.length ? b : a), locStrings[0] || ""),
-    [locStrings],
-  );
-
-  const budgetMinStr = toInt(incoming.filters?.budgetMin);
-  const budgetMaxStr = toInt(incoming.filters?.budgetMax);
-  const budgetFull = `$${budgetMinStr}–$${budgetMaxStr}`;
-
-  const headlineText = useMemo(() => {
-    const baseName = incoming.displayName ?? `${incoming.firstName} ${incoming.lastName}`;
-    return `${baseName}, ${age}`;
-  }, [age]);
-
-  function scrollToNext() {
-    if (!mainRef.current) return;
-    mainRef.current.scrollTo({ y: HERO_IMAGE_HEIGHT, animated: true });
-  }
+  const secondaryData = useProfileCardData(secondaryProfile);
+  const {
+    galleryPhotos: secondaryPhotos,
+    locationStrings: secondaryLocations,
+    budgetLabel: secondaryBudget,
+    headline: secondaryHeadline,
+    basicInfo: secondaryBasicInfo,
+  } = secondaryData;
 
   return (
     <View className="flex-1" style={styles.screenShell}>
@@ -222,7 +58,7 @@ function FeedScreen() {
           setLocW(Math.min(measuredWidth, maxWidth));
         }}
       >
-        <Text className="text-[13px] font-semibold flex-1">{longestLoc}</Text>
+        <Text className="text-[13px] font-semibold flex-1">{primaryLongestLocation}</Text>
         <View style={styles.iconSpacer} />
       </View>
 
@@ -230,77 +66,44 @@ function FeedScreen() {
         ref={mainRef}
         className="flex-1"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: TAB_BAR_HEIGHT + ACTION_DOCK_HEIGHT },
-        ]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: TAB_BAR_HEIGHT + 60 }]}
+        bounces={false}
+        alwaysBounceVertical={false}
+        overScrollMode="never"
         style={styles.mainScroll}
       >
         {/* HERO */}
         <View className="relative w-full" style={{ height: HERO_IMAGE_HEIGHT }}>
-          <View style={[styles.heroPhotoContainer, { height: HERO_IMAGE_HEIGHT }]}>
-            <PhotoCarousel photos={photos} height={HERO_IMAGE_HEIGHT} />
-
-            <LocationChip
-              locations={locStrings}
-              width={locW}
-              isOpen={locOpen}
-              onToggle={() => setLocOpen(v => !v)}
+          <FeedScrollContext.Provider value={mainRef}>
+            <BackgroundCard
+              photos={secondaryPhotos}
+              locationStrings={secondaryLocations}
+              locationWidth={locW}
+              headline={secondaryHeadline}
+              budget={secondaryBudget}
+              basicInfo={secondaryBasicInfo}
             />
 
-            <View pointerEvents="none" style={[styles.heroBlurOverlay, blurOverlayStyle]}>
-              <MaskedView
-                style={StyleSheet.absoluteFillObject}
-                maskElement={
-                  <LinearGradient
-                    colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.1)", "rgba(0,0,0,1)"]}
-                    locations={[0, 0.3, 1]}
-                    start={{ x: 0.5, y: 0 }}
-                    end={{ x: 0.5, y: 1 }}
-                    style={StyleSheet.absoluteFillObject}
-                  />
-                }
-              >
-                <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFillObject} />
-              </MaskedView>
-              <LinearGradient
-                colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.12)", "rgba(0,0,0,0.24)"]}
-                locations={[0, 0.45, 1]}
-                start={{ x: 0.5, y: 0 }}
-                end={{ x: 0.5, y: 1 }}
-                style={StyleSheet.absoluteFillObject}
-              />
-            </View>
-
-            <View style={[styles.heroCallout, styles.heroCalloutAnchor]}>
-              <View style={styles.heroInfoWrapper}>
-                <View style={styles.heroSummaryRow}>
-                  <View style={styles.heroSummaryText}>
-                    <ProfileHeadline text={headlineText} />
-                    <BudgetHighlight value={budgetFull} className="mt-1" />
-                  </View>
-                  <HeroScrollCue
-                    translateY={arrowBounce.current}
-                    onPress={scrollToNext}
-                    style={styles.heroScrollCueInline}
-                  />
-                </View>
-                <BasicInfoPills items={basicInfo} />
-              </View>
-            </View>
-          </View>
+            <PrimaryCard
+              photos={primaryPhotos}
+              locationStrings={primaryLocations}
+              locationWidth={locW}
+              headline={primaryHeadline}
+              budget={primaryBudget}
+              basicInfo={primaryBasicInfo}
+              onSwipeComplete={direction => {
+                console.log(`Swipe ${direction}`);
+              }}
+            />
+          </FeedScrollContext.Provider>
         </View>
         <UserInfoCard
-          profile={incoming.profile}
-          location={incoming.location}
-          filters={incoming.filters}
-          budgetFull={budgetFull}
+          profile={primaryProfile.profile}
+          location={primaryProfile.location}
+          filters={primaryProfile.filters}
+          budgetFull={primaryBudget}
         />
       </ScrollView>
-
-      {/* Reservamos espacio visual para una tab bar del host app, pero NO renderizamos menú */}
-      <View style={{ height: TAB_BAR_HEIGHT }} />
-      <ActionDock tabBarHeight={TAB_BAR_HEIGHT} dockHeight={ACTION_DOCK_HEIGHT} />
     </View>
   );
 }
@@ -311,14 +114,6 @@ const styles = StyleSheet.create({
   screenShell: {
     backgroundColor: "transparent",
   },
-  heroBlurOverlay: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: 180,
-    overflow: "hidden",
-  },
   iconSpacer: {
     width: 14,
     height: 14,
@@ -328,38 +123,5 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     backgroundColor: "transparent",
-  },
-  heroCallout: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    alignItems: "center",
-    zIndex: 30,
-  },
-  heroCalloutAnchor: {
-    bottom: 0,
-  },
-  heroInfoWrapper: {
-    width: "100%",
-    paddingHorizontal: 16,
-  },
-  heroSummaryRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-  },
-  heroSummaryText: {
-    flex: 1,
-  },
-  heroScrollCueInline: {
-    marginBottom: 0,
-    marginLeft: 16,
-    alignSelf: "flex-start",
-  },
-  heroPhotoContainer: {
-    width: "100%",
-    overflow: "hidden",
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
   },
 });

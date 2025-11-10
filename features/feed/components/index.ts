@@ -8,4 +8,5 @@ export { ProfileHeadline } from "./ProfileHeadline";
 export { LocationChip } from "./LocationChip";
 export { PhotoCarousel } from "./PhotoCarousel";
 export { UserInfoCard } from "./UserInfoCard";
-export { ActionDock } from "./ActionDock";
+export { BackgroundCard } from "./BackgroundCard";
+export { PrimaryCard } from "./PrimaryCard";
