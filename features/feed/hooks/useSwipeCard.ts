@@ -8,6 +8,10 @@ interface UseSwipeCardOptions {
   onComplete?: (direction: SwipeDirection) => void;
   thresholdRatio?: number;
   disabled?: boolean;
+  /** 0..1: menor = más duro (se mueve menos que el dedo) */
+  dragResistance?: number;
+  /** grados máx de inclinación a cada lado */
+  tiltMaxDeg?: number;
 }
 
 export function useSwipeCard({
@@ -15,23 +19,28 @@ export function useSwipeCard({
   onComplete,
   thresholdRatio = 0.25,
   disabled = false,
+  dragResistance = 0.9,   // más chico = más duro
+  tiltMaxDeg = 13,
 }: UseSwipeCardOptions) {
   const swipeX = useRef(new Animated.Value(0)).current;
   const [swipeActiveState, setSwipeActive] = useState(false);
 
-  const likeThreshold = useMemo(() => screenWidth * thresholdRatio, [screenWidth, thresholdRatio]);
+  const likeThreshold = useMemo(
+    () => screenWidth * thresholdRatio,
+    [screenWidth, thresholdRatio]
+  );
 
   const rotation = useMemo(() => {
     if (disabled) return "0deg";
     return swipeX.interpolate({
       inputRange: [-screenWidth, 0, screenWidth],
-      outputRange: ["-12deg", "0deg", "12deg"],
+      outputRange: [`-${tiltMaxDeg}deg`, "0deg", `${tiltMaxDeg}deg`],
     });
-  }, [disabled, screenWidth, swipeX]);
+  }, [disabled, screenWidth, swipeX, tiltMaxDeg]);
 
   const cardStyle = useMemo(
     () => (disabled ? {} : { transform: [{ translateX: swipeX }, { rotate: rotation }] }),
-    [disabled, rotation, swipeX],
+    [disabled, rotation, swipeX]
   );
 
   const resetSwipe = useCallback(() => {
@@ -39,8 +48,8 @@ export function useSwipeCard({
     Animated.spring(swipeX, {
       toValue: 0,
       useNativeDriver: true,
-      bounciness: 12,
-      speed: 14,
+      bounciness: 10,
+      speed: 16,
     }).start(() => {
       setSwipeActive(false);
     });
@@ -59,13 +68,12 @@ export function useSwipeCard({
         setSwipeActive(false);
       });
     },
-    [disabled, onComplete, screenWidth, swipeX],
+    [disabled, onComplete, screenWidth, swipeX]
   );
 
   const panResponder = useMemo(() => {
-    if (disabled) {
-      return null;
-    }
+    if (disabled) return null;
+
     return PanResponder.create({
       onMoveShouldSetPanResponder: (_evt, gesture) => {
         const { dx, dy } = gesture;
@@ -74,9 +82,11 @@ export function useSwipeCard({
       onPanResponderGrant: () => {
         setSwipeActive(true);
       },
-      onPanResponderMove: Animated.event([null, { dx: swipeX }], {
-        useNativeDriver: false,
-      }),
+      // En lugar de mapear dx->swipeX directo, aplicamos resistencia
+      onPanResponderMove: (_evt, { dx }) => {
+        const scaled = dx * dragResistance;
+        swipeX.setValue(scaled);
+      },
       onPanResponderRelease: (_evt, gesture) => {
         const { dx, vx } = gesture;
         if (dx > likeThreshold || (vx > 0.8 && dx > 40)) {
@@ -91,7 +101,7 @@ export function useSwipeCard({
         resetSwipe();
       },
     });
-  }, [completeSwipe, disabled, likeThreshold, resetSwipe, swipeX]);
+  }, [completeSwipe, disabled, dragResistance, likeThreshold, resetSwipe, swipeX]);
 
   return {
     swipeX,

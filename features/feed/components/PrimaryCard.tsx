@@ -32,6 +32,7 @@ export type PrimaryCardProps = {
   basicInfo: readonly string[];
   blurOverlayStyle?: StyleProp<ViewStyle>;
   onSwipeComplete?: (direction: "like" | "dislike") => void;
+  onSwipeXChange?: (value: Animated.Value) => void;
   enableSwipe?: boolean;
   enableLocationToggle?: boolean;
   showScrollCue?: boolean;
@@ -51,6 +52,7 @@ function PrimaryCardComponent({
   basicInfo,
   blurOverlayStyle,
   onSwipeComplete,
+  onSwipeXChange,
   enableSwipe = true,
   enableLocationToggle = true,
   showScrollCue = true,
@@ -75,7 +77,12 @@ function PrimaryCardComponent({
     disabled: !enableSwipe,
   });
 
-  const { swipeActive, cardStyle: animatedCardStyle, panHandlers } = swipeHandlers;
+  const { swipeX, swipeActive, cardStyle: animatedCardStyle, panHandlers } = swipeHandlers;
+
+  useEffect(() => {
+    if (!onSwipeXChange) return;
+    onSwipeXChange(swipeX);
+  }, [onSwipeXChange, swipeX]);
 
   const scrollRef = useContext(FeedScrollContext);
   const arrowTranslate = useRef(new Animated.Value(0)).current;

@@ -1,10 +1,18 @@
-import { View, Text, ScrollView, useWindowDimensions, StatusBar, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  useWindowDimensions,
+  StatusBar,
+  StyleSheet,
+  Animated,
+} from "react-native";
 import { UserInfoCard, BackgroundCard, PrimaryCard } from "./index";
-import { useRef, useState } from "react";
 import { incomingProfilesMock } from "../mocks/incomingProfile";
-import { useProfileCardData } from "../hooks";
 import { FEED_CONSTANTS } from "../constants/feed.constants";
 import { FeedScrollContext } from "../context/ScrollContext";
+import { useProfileCardData } from "../hooks";
+import { useCallback, useRef, useState } from "react";
 
 // -------------------- mock data --------------------
 const profiles = incomingProfilesMock;
@@ -13,7 +21,7 @@ const secondaryProfile = profiles[1] ?? profiles[0];
 
 // -------------------- Pantalla --------------------
 function FeedScreen() {
-  const TAB_BAR_HEIGHT = 50;
+  const TAB_BAR_HEIGHT = FEED_CONSTANTS.TAB_BAR_HEIGHT;
 
   const { height: winH, width: screenWidth } = useWindowDimensions();
   const HERO_HEIGHT = Math.max(0, winH + TAB_BAR_HEIGHT);
@@ -24,7 +32,12 @@ function FeedScreen() {
   );
 
   const [locW, setLocW] = useState<number | undefined>(undefined);
+  const [primarySwipeX, setPrimarySwipeX] = useState<Animated.Value | null>(null);
   const mainRef = useRef<ScrollView | null>(null);
+
+  const handleSwipeXChange = useCallback((value: Animated.Value) => {
+    setPrimarySwipeX(prev => (prev === value ? prev : value));
+  }, []);
 
   const primaryData = useProfileCardData(primaryProfile);
   const {
@@ -82,8 +95,9 @@ function FeedScreen() {
               headline={secondaryHeadline}
               budget={secondaryBudget}
               basicInfo={secondaryBasicInfo}
+              swipeX={primarySwipeX ?? undefined}
+              screenWidth={screenWidth}
             />
-
             <PrimaryCard
               photos={primaryPhotos}
               locationStrings={primaryLocations}
@@ -94,6 +108,7 @@ function FeedScreen() {
               onSwipeComplete={direction => {
                 console.log(`Swipe ${direction}`);
               }}
+              onSwipeXChange={handleSwipeXChange}
             />
           </FeedScrollContext.Provider>
         </View>
