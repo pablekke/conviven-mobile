@@ -1,5 +1,5 @@
-import React, { memo } from "react";
-import { ImageBackground, StyleSheet, View, useWindowDimensions, Animated } from "react-native";
+import React, { memo, useMemo, useRef } from "react";
+import { ImageBackground, StyleSheet, useWindowDimensions, Animated } from "react-native";
 import { BlurView } from "expo-blur";
 
 import { PrimaryCard, PrimaryCardProps } from "./PrimaryCard";
@@ -13,6 +13,8 @@ type BackgroundCardProps = Pick<
   swipeX?: Animated.Value;
   screenWidth?: number;
   thresholdRatio?: number;
+  /** 0..1 cuando la carta de atrás toma protagonismo */
+  revealProgress?: Animated.Value;
 };
 
 function BackgroundCardComponent({
@@ -20,6 +22,7 @@ function BackgroundCardComponent({
   swipeX,
   screenWidth,
   thresholdRatio = 0.25,
+  revealProgress,
   ...cardProps
 }: BackgroundCardProps) {
   const backgroundPhoto = photos[0];
@@ -35,7 +38,7 @@ function BackgroundCardComponent({
   );
 
   // 🌀 Hook del tinte dinámico
-  const { likeStyle, dislikeStyle } = useSwipeTint({
+  const { likeStyle, dislikeStyle, likeOpacity, dislikeOpacity } = useSwipeTint({
     swipeX: swipeX ?? new Animated.Value(0),
     screenWidth: width,
     thresholdRatio,
@@ -45,13 +48,62 @@ function BackgroundCardComponent({
     maxDislikeOpacity: 0.35,
   });
 
+  const zeroFallback = useRef(new Animated.Value(0)).current;
+  const revealDriver = revealProgress ?? zeroFallback;
+
+  const dragPeek = useMemo(() => {
+    if (!swipeX) return zeroFallback;
+    return swipeX.interpolate({
+      inputRange: [-width, -width * 0.45, 0, width * 0.45, width],
+      outputRange: [0.5, 0.1, 0, 0.1, 0.5],
+      extrapolate: "clamp",
+    });
+  }, [swipeX, width, zeroFallback]);
+
+  const stackedProgress = useMemo(
+    () => Animated.diffClamp(Animated.add(revealDriver, dragPeek), 0, 1),
+    [dragPeek, revealDriver],
+  );
+
+  const overlayOpacity = useMemo(
+    () => Animated.diffClamp(Animated.subtract(1, Animated.add(revealDriver, dragPeek)), 0, 1),
+    [dragPeek, revealDriver],
+  );
+
+  const translateY = useMemo(
+    () =>
+      stackedProgress.interpolate({
+        inputRange: [0, 1],
+        outputRange: [18, 0],
+      }),
+    [stackedProgress],
+  );
+
+  const scale = useMemo(
+    () =>
+      stackedProgress.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0.94, 1],
+      }),
+    [stackedProgress],
+  );
+
   return (
-    <ImageBackground
-      source={{ uri: backgroundPhoto }}
-      resizeMode="cover"
-      style={[StyleSheet.absoluteFillObject, styles.wrapper, { height: cardHeight }]}
+    <Animated.View
+      style={[
+        StyleSheet.absoluteFillObject,
+        styles.animatedContainer,
+        {
+          height: cardHeight,
+          transform: [{ translateY }, { scale }],
+        },
+      ]}
     >
-      <View style={StyleSheet.absoluteFillObject}>
+      <ImageBackground
+        source={{ uri: backgroundPhoto }}
+        resizeMode="cover"
+        style={[StyleSheet.absoluteFillObject, styles.wrapper]}
+      >
         <PrimaryCard
           {...cardProps}
           photos={photos}
@@ -61,25 +113,43 @@ function BackgroundCardComponent({
         />
 
         {/* Blur del fondo */}
-        <BlurView
-          pointerEvents="none"
-          tint="systemUltraThinMaterialDark"
-          intensity={40}
-          style={StyleSheet.absoluteFillObject}
-        />
+        <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFillObject, { opacity: overlayOpacity }]}>
+          <BlurView
+            pointerEvents="none"
+            tint="systemUltraThinMaterialDark"
+            intensity={40}
+            style={StyleSheet.absoluteFillObject}
+          />
+        </Animated.View>
 
         {/* Tinte según swipe */}
-        <Animated.View pointerEvents="none" style={likeStyle} />
-        <Animated.View pointerEvents="none" style={dislikeStyle} />
+        <Animated.View
+          pointerEvents="none"
+          style={[likeStyle, { opacity: Animated.multiply(likeOpacity, overlayOpacity) }]}
+        />
+        <Animated.View
+          pointerEvents="none"
+          style={[dislikeStyle, { opacity: Animated.multiply(dislikeOpacity, overlayOpacity) }]}
+        />
 
         {/* Capa oscura final */}
-        <View pointerEvents="none" style={[StyleSheet.absoluteFillObject, styles.tintOverlay]} />
-      </View>
-    </ImageBackground>
+        <Animated.View
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFillObject, styles.tintOverlay, { opacity: overlayOpacity }]}
+        />
+      </ImageBackground>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
+  animatedContainer: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowRadius: 24,
+    shadowOpacity: 0.14,
+    elevation: 12,
+  },
   wrapper: {
     overflow: "hidden",
     borderBottomLeftRadius: 24,

@@ -6,19 +6,17 @@ import {
   StatusBar,
   StyleSheet,
   Animated,
+  Easing,
 } from "react-native";
 import { UserInfoCard, BackgroundCard, PrimaryCard } from "./index";
 import { incomingProfilesMock } from "../mocks/incomingProfile";
 import { FEED_CONSTANTS } from "../constants/feed.constants";
 import { FeedScrollContext } from "../context/ScrollContext";
 import { useProfileCardData } from "../hooks";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 // -------------------- mock data --------------------
 const profiles = incomingProfilesMock;
-const primaryProfile = profiles[0];
-const secondaryProfile = profiles[1] ?? profiles[0];
-
 // -------------------- Pantalla --------------------
 function FeedScreen() {
   const TAB_BAR_HEIGHT = FEED_CONSTANTS.TAB_BAR_HEIGHT;
@@ -33,11 +31,62 @@ function FeedScreen() {
 
   const [locW, setLocW] = useState<number | undefined>(undefined);
   const [primarySwipeX, setPrimarySwipeX] = useState<Animated.Value | null>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [transitioning, setTransitioning] = useState(false);
+  const transitionProgress = useRef(new Animated.Value(0)).current;
+  const primaryEntrance = useRef(new Animated.Value(1)).current;
   const mainRef = useRef<ScrollView | null>(null);
 
   const handleSwipeXChange = useCallback((value: Animated.Value) => {
     setPrimarySwipeX(prev => (prev === value ? prev : value));
   }, []);
+
+  const profileCount = profiles.length;
+
+  const safeIndex = profileCount > 0 ? currentIndex % profileCount : 0;
+
+  const primaryProfile = profiles[safeIndex];
+  const secondaryProfile = profiles[profileCount > 1 ? (safeIndex + 1) % profileCount : safeIndex];
+
+  const handleTransitionEnd = useCallback(() => {
+    transitionProgress.setValue(0);
+    primaryEntrance.setValue(0);
+    if (profileCount > 0) {
+      setCurrentIndex(prev => (prev + 1) % profileCount);
+    }
+    setTransitioning(false);
+    Animated.timing(primaryEntrance, {
+      toValue: 1,
+      duration: 220,
+      delay: 40,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [primaryEntrance, profileCount, transitionProgress]);
+
+  const handleSwipeComplete = useCallback(
+    (direction: "like" | "dislike") => {
+      console.log(`Swipe ${direction}`);
+      if (transitioning || profileCount === 0) return;
+
+      setTransitioning(true);
+      Animated.timing(transitionProgress, {
+        toValue: 1,
+        duration: 280,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }).start(handleTransitionEnd);
+    },
+    [handleTransitionEnd, profileCount, transitionProgress, transitioning],
+  );
+
+  if (!primaryProfile) {
+    return (
+      <View className="flex-1" style={styles.screenShell}>
+        <StatusBar barStyle="light-content" />
+      </View>
+    );
+  }
 
   const primaryData = useProfileCardData(primaryProfile);
   const {
@@ -57,6 +106,28 @@ function FeedScreen() {
     headline: secondaryHeadline,
     basicInfo: secondaryBasicInfo,
   } = secondaryData;
+
+  const primaryRevealStyle = useMemo(
+    () => ({
+      ...StyleSheet.absoluteFillObject,
+      opacity: primaryEntrance,
+      transform: [
+        {
+          translateY: primaryEntrance.interpolate({
+            inputRange: [0, 1],
+            outputRange: [24, 0],
+          }),
+        },
+        {
+          scale: primaryEntrance.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0.95, 1],
+          }),
+        },
+      ],
+    }),
+    [primaryEntrance],
+  );
 
   return (
     <View className="flex-1" style={styles.screenShell}>
@@ -97,27 +168,32 @@ function FeedScreen() {
               basicInfo={secondaryBasicInfo}
               swipeX={primarySwipeX ?? undefined}
               screenWidth={screenWidth}
+              revealProgress={transitionProgress}
             />
-            <PrimaryCard
-              photos={primaryPhotos}
-              locationStrings={primaryLocations}
-              locationWidth={locW}
-              headline={primaryHeadline}
-              budget={primaryBudget}
-              basicInfo={primaryBasicInfo}
-              onSwipeComplete={direction => {
-                console.log(`Swipe ${direction}`);
-              }}
-              onSwipeXChange={handleSwipeXChange}
-            />
+            {!transitioning && primaryProfile ? (
+              <Animated.View style={primaryRevealStyle} pointerEvents={transitioning ? "none" : "auto"}>
+                <PrimaryCard
+                  photos={primaryPhotos}
+                  locationStrings={primaryLocations}
+                  locationWidth={locW}
+                  headline={primaryHeadline}
+                  budget={primaryBudget}
+                  basicInfo={primaryBasicInfo}
+                  onSwipeComplete={handleSwipeComplete}
+                  onSwipeXChange={handleSwipeXChange}
+                />
+              </Animated.View>
+            ) : null}
           </FeedScrollContext.Provider>
         </View>
-        <UserInfoCard
-          profile={primaryProfile.profile}
-          location={primaryProfile.location}
-          filters={primaryProfile.filters}
-          budgetFull={primaryBudget}
-        />
+        {primaryProfile ? (
+          <UserInfoCard
+            profile={primaryProfile.profile}
+            location={primaryProfile.location}
+            filters={primaryProfile.filters}
+            budgetFull={primaryBudget}
+          />
+        ) : null}
       </ScrollView>
     </View>
   );
