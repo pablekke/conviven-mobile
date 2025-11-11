@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useLayoutEffect, useState } from "react";
-import { StyleProp, StyleSheet, View, ViewStyle, useWindowDimensions } from "react-native";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Image, StyleProp, StyleSheet, View, ViewStyle, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   Easing,
@@ -8,6 +8,7 @@ import Animated, {
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
+  withDelay,
   withSpring,
   withTiming,
 } from "react-native-reanimated";
@@ -51,6 +52,8 @@ export function SwipeDeck<TProfile>({
   const deckLength = items.length;
   const [index, setIndex] = useState(0);
   const [canSwipe, setCanSwipe] = useState(true);
+  const [fallbackVisible, setFallbackVisible] = useState(false);
+  const prefetchedUrisRef = useRef<Set<string>>(new Set());
 
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
@@ -76,6 +79,7 @@ export function SwipeDeck<TProfile>({
       if (deckLength === 0) return;
       const currentItem = items[index % deckLength];
       setIndex(prev => prev + 1);
+      setFallbackVisible(false);
       onSwipe?.(direction, currentItem);
     },
     [deckLength, index, items, onSwipe],
@@ -83,6 +87,8 @@ export function SwipeDeck<TProfile>({
 
   const panGesture = Gesture.Pan()
     .enabled(deckLength > 0 && canSwipe)
+    .activeOffsetX([-34, 34])
+    .failOffsetY([-34, 34])
     .onUpdate(event => {
       translateX.value = event.translationX;
       translateY.value = event.translationY * 0.25;
@@ -90,14 +96,16 @@ export function SwipeDeck<TProfile>({
     .onEnd(event => {
       if (deckLength === 0) return;
       const threshold = width * 0.24;
-      const shouldSwipe = Math.abs(event.translationX) > threshold || Math.abs(event.velocityX) > 900;
+      const shouldSwipe =
+        Math.abs(event.translationX) > threshold || Math.abs(event.velocityX) > 900;
       if (!shouldSwipe) {
         translateX.value = withSpring(0, { damping: 18, stiffness: 160 });
         translateY.value = withSpring(0, { damping: 18, stiffness: 160 });
         return;
       }
       runOnJS(setCanSwipe)(false);
-      blurOpacity.value = 0;
+      runOnJS(setFallbackVisible)(true);
+      blurOpacity.value = withTiming(0, { duration: 140 });
       const direction: SwipeDirection = event.translationX >= 0 ? "like" : "dislike";
       const destination = (width + 120) * (direction === "like" ? 1 : -1);
       translateX.value = withTiming(destination, {
@@ -108,35 +116,35 @@ export function SwipeDeck<TProfile>({
         duration: 260,
         easing: Easing.out(Easing.cubic),
       });
-      nextProgress.value = withTiming(1, {
-        duration: 280,
-        easing: Easing.out(Easing.cubic),
-      }, finished => {
-        if (finished) {
-          runOnJS(finishSwipe)(direction);
-        }
-      });
+      nextProgress.value = withDelay(
+        80,
+        withTiming(
+          1,
+          {
+            duration: 280,
+            easing: Easing.out(Easing.cubic),
+          },
+          finished => {
+            if (finished) {
+              runOnJS(finishSwipe)(direction);
+            }
+          },
+        ),
+      );
     });
 
   const activeCardStyle = useAnimatedStyle(() => {
     const rotate = `${interpolate(translateX.value, [-width, 0, width], [-12, 0, 12])}deg`;
     return {
-      transform: [
-        { translateX: translateX.value },
-        { translateY: translateY.value },
-        { rotate },
-      ],
+      transform: [{ translateX: translateX.value }, { translateY: translateY.value }, { rotate }],
     };
   });
 
   const nextCardStyle = useAnimatedStyle(() => {
-    const scale = interpolate(nextProgress.value, [0, 1], [0.94, 1]);
+    const scale = interpolate(nextProgress.value, [0, 1], [1, 1]);
     const offsetY = interpolate(nextProgress.value, [0, 1], [18, 0]);
     return {
-      transform: [
-        { scale },
-        { translateY: offsetY },
-      ],
+      transform: [{ scale }, { translateY: offsetY }],
     };
   });
 
@@ -148,7 +156,7 @@ export function SwipeDeck<TProfile>({
     const color = interpolateColor(
       translateX.value,
       [-width, 0, width],
-      ["rgba(220, 38, 38, 0.32)", "rgba(8, 11, 20, 0.36)", "rgba(34, 197, 94, 0.28)"],
+      ["rgba(220, 38, 38, 0.32)", "transparent", "rgba(34, 197, 94, 0.28)"],
     );
     const overlayOpacity = 1 - Math.min(Math.max(nextProgress.value, 0), 1);
     return { backgroundColor: color, opacity: overlayOpacity };
@@ -158,9 +166,26 @@ export function SwipeDeck<TProfile>({
     translateX.value = 0;
     translateY.value = 0;
     nextProgress.value = 0;
-    blurOpacity.value = 1;
+    blurOpacity.value = withDelay(120, withTiming(1, { duration: 280 }));
     setCanSwipe(true);
+    setFallbackVisible(false);
   }, [deckLength, index, blurOpacity, nextProgress, setCanSwipe, translateX, translateY]);
+
+  useEffect(() => {
+    if (deckLength === 0) return;
+    const prefetchDepth = Math.min(deckLength, 3);
+    for (let offset = 0; offset < prefetchDepth; offset += 1) {
+      const item = items[(activeIndex + offset) % deckLength];
+      if (!item) continue;
+      item.card.galleryPhotos.forEach(uri => {
+        if (!uri || prefetchedUrisRef.current.has(uri)) return;
+        prefetchedUrisRef.current.add(uri);
+        Image.prefetch(uri).catch(() => {
+          prefetchedUrisRef.current.delete(uri);
+        });
+      });
+    }
+  }, [activeIndex, deckLength, items]);
 
   if (!activeItem) {
     return null;
@@ -183,12 +208,9 @@ export function SwipeDeck<TProfile>({
             scrollEnabled={false}
           />
           <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFillObject, blurStyle]}>
-            <BlurView tint="systemUltraThinMaterialDark" intensity={40} style={StyleSheet.absoluteFillObject} />
+            <BlurView tint="default" intensity={28} style={StyleSheet.absoluteFillObject} />
           </Animated.View>
-          <Animated.View
-            pointerEvents="none"
-            style={[StyleSheet.absoluteFillObject, tintStyle]}
-          />
+          <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFillObject, tintStyle]} />
         </View>
       ) : null}
       <GestureDetector gesture={panGesture}>
@@ -201,6 +223,8 @@ export function SwipeDeck<TProfile>({
           basicInfo={activeItem.card.basicInfo}
           animatedStyle={activeCardStyle}
           scrollEnabled={false}
+          fallbackPhoto={nextItem?.card.galleryPhotos[0]}
+          fallbackVisible={fallbackVisible}
         />
       </GestureDetector>
     </View>
@@ -213,5 +237,8 @@ const styles = StyleSheet.create({
   },
   backCard: {
     ...StyleSheet.absoluteFillObject,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    overflow: "hidden",
   },
 });

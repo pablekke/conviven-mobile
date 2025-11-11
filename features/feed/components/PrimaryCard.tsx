@@ -9,7 +9,7 @@ import {
   TextStyle,
 } from "react-native";
 import Animated, {
-  AnimatedStyleProp,
+  AnimatedStyle,
   cancelAnimation,
   useAnimatedStyle,
   useSharedValue,
@@ -30,7 +30,7 @@ import { BasicInfoPills } from "./BasicInfoPills";
 import { FEED_CONSTANTS } from "../constants/feed.constants";
 import { FeedScrollContext } from "../context/ScrollContext";
 
-type PrimaryCardProps = {
+export type PrimaryCardProps = {
   photos: string[];
   locationStrings: string[];
   locationWidth?: number;
@@ -44,8 +44,10 @@ type PrimaryCardProps = {
   headlineStyle?: TextStyle;
   budgetStyle?: TextStyle;
   infoWrapperStyle?: StyleProp<ViewStyle>;
-  animatedStyle?: AnimatedStyleProp<ViewStyle>;
+  animatedStyle?: AnimatedStyle<ViewStyle>;
   scrollEnabled?: boolean;
+  fallbackPhoto?: string | null;
+  fallbackVisible?: boolean;
 };
 
 function PrimaryCardComponent({
@@ -64,16 +66,22 @@ function PrimaryCardComponent({
   infoWrapperStyle,
   animatedStyle,
   scrollEnabled = false,
+  fallbackPhoto,
+  fallbackVisible = false,
 }: PrimaryCardProps) {
-  const { height: winH, width: winW } = useWindowDimensions();
+  const { height: winH } = useWindowDimensions();
   const tabBarHeight = FEED_CONSTANTS.TAB_BAR_HEIGHT;
   const computedHeroHeight = Math.max(0, winH + tabBarHeight);
   const heroBottomSpacing = tabBarHeight + FEED_CONSTANTS.HERO_BOTTOM_EXTRA;
-  const cardHeight = Math.max(0, computedHeroHeight - heroBottomSpacing + FEED_CONSTANTS.HERO_IMAGE_EXTRA);
+  const cardHeight = Math.max(
+    0,
+    computedHeroHeight - heroBottomSpacing + FEED_CONSTANTS.HERO_IMAGE_EXTRA,
+  );
 
   const scrollRef = useContext(FeedScrollContext);
   const arrowTranslate = useSharedValue(0);
   const [locationOpen, setLocationOpen] = useState(false);
+  const fallbackOpacity = useSharedValue(fallbackVisible ? 1 : 0);
 
   useEffect(() => {
     if (!showScrollCue) return;
@@ -88,8 +96,18 @@ function PrimaryCardComponent({
     };
   }, [arrowTranslate, showScrollCue]);
 
+  useEffect(() => {
+    const target = fallbackVisible ? 1 : 0;
+    const duration = fallbackVisible ? 140 : 0;
+    fallbackOpacity.value = withTiming(target, { duration });
+  }, [fallbackOpacity, fallbackVisible]);
+
   const arrowStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: arrowTranslate.value }],
+  }));
+
+  const fallbackImageStyle = useAnimatedStyle(() => ({
+    opacity: fallbackOpacity.value,
   }));
 
   const overlayStyle = useMemo(() => {
@@ -114,12 +132,19 @@ function PrimaryCardComponent({
 
   return (
     <Animated.View style={[styles.cardContainer, { height: cardHeight }, animatedStyle]}>
-      <PhotoCarousel
-        key={photos[0] ?? `${photos.length}`}
-        photos={photos}
-        height={cardHeight}
-        scrollEnabled={scrollEnabled}
-      />
+      <View style={[styles.heroWrapper, { height: cardHeight }]}>
+        {fallbackPhoto ? (
+          <Animated.View pointerEvents="none" style={styles.fallbackWrapper}>
+            <Animated.Image
+              source={{ uri: fallbackPhoto }}
+              resizeMode="cover"
+              style={[styles.fallbackImage, fallbackImageStyle]}
+              fadeDuration={0}
+            />
+          </Animated.View>
+        ) : null}
+        <PhotoCarousel photos={photos} height={cardHeight} scrollEnabled={scrollEnabled} />
+      </View>
 
       {enableLocationToggle ? (
         <LocationChip
@@ -200,6 +225,17 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
+  },
+  heroWrapper: {
+    width: "100%",
+    position: "relative",
+  },
+  fallbackImage: {
+    width: "100%",
+    height: "100%",
+  },
+  fallbackWrapper: {
+    ...StyleSheet.absoluteFillObject,
   },
   blurOverlay: {
     position: "absolute",

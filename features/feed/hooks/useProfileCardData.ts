@@ -70,9 +70,30 @@ export function createProfileCardData(profile: ProfileLike) {
     "",
   );
   const budgetLabel = (() => {
-    const min = toInt(profile.filters?.budgetMin);
-    const max = toInt(profile.filters?.budgetMax);
-    return `$${min}–$${max}`;
+    const formatMoney = (value: unknown) => {
+      if (value == null) return null;
+      const numberValue = Number(value);
+      if (!Number.isFinite(numberValue)) return null;
+      return new Intl.NumberFormat("es-UY", {
+        style: "currency",
+        currency: "UYU",
+        maximumFractionDigits: 0,
+      }).format(numberValue);
+    };
+
+    const formattedMin = formatMoney(profile.filters?.budgetMin);
+    const formattedMax = formatMoney(profile.filters?.budgetMax);
+
+    if (formattedMin && formattedMax) {
+      return `${formattedMin} – ${formattedMax} / mes`;
+    }
+    if (formattedMin) {
+      return `${formattedMin} / mes`;
+    }
+    if (formattedMax) {
+      return `${formattedMax} / mes`;
+    }
+    return "—";
   })();
   const headline = (() => {
     const baseName = profile.displayName ?? `${profile.firstName} ${profile.lastName}`;
