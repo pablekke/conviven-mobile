@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Animated, StyleSheet, Text, View } from "react-native";
 
 import { PrimaryCard } from "./PrimaryCard";
@@ -24,6 +24,9 @@ type SwipeDeckProps = {
   onDecision?: (payload: { direction: SwipeDirection; profile: ProfileCardSource }) => void;
 };
 
+const BACKGROUND_PROMOTION_DELAY_MS = 420;
+const TRANSITION_UNLOCK_DELAY_MS = 720;
+
 export function SwipeDeck({
   profiles,
   locationWidth,
@@ -33,12 +36,20 @@ export function SwipeDeck({
 }: SwipeDeckProps) {
   const [index, setIndex] = useState(0);
   const [activeSwipeX, setActiveSwipeX] = useState<Animated.Value | null>(null);
+  const [backgroundIndex, setBackgroundIndex] = useState<number | null>(() =>
+    profiles.length > 1 ? 1 : null,
+  );
+  const [transitionLocked, setTransitionLocked] = useState(false);
+
+  const backgroundDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const unlockDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const cards = useMemo(() => profiles.map(createProfileCardData), [profiles]);
+  const totalCards = cards.length;
   const activeCard = cards[index];
-  const nextCard = cards[index + 1];
+  const nextCard = backgroundIndex != null ? cards[backgroundIndex] : undefined;
   const activeProfile = profiles[index];
-  const nextProfile = profiles[index + 1];
+  const nextProfile = backgroundIndex != null ? profiles[backgroundIndex] : undefined;
 
   const activeKey = useMemo(() => {
     if (!activeProfile) return null;
@@ -47,13 +58,62 @@ export function SwipeDeck({
 
   const nextKey = useMemo(() => {
     if (!nextProfile) return null;
-    return `${nextProfile.firstName}-${nextProfile.lastName}-${nextProfile.birthDate}-${index + 1}`;
-  }, [index, nextProfile]);
+    return `${nextProfile.firstName}-${nextProfile.lastName}-${nextProfile.birthDate}-${backgroundIndex ?? index + 1}`;
+  }, [backgroundIndex, index, nextProfile]);
 
   useEffect(() => {
     setIndex(0);
     setActiveSwipeX(null);
+    setBackgroundIndex(profiles.length > 1 ? 1 : null);
+    setTransitionLocked(false);
+    if (backgroundDelayRef.current) {
+      clearTimeout(backgroundDelayRef.current);
+      backgroundDelayRef.current = null;
+    }
+    if (unlockDelayRef.current) {
+      clearTimeout(unlockDelayRef.current);
+      unlockDelayRef.current = null;
+    }
   }, [profiles]);
+
+  useEffect(() => {
+    if (backgroundDelayRef.current) {
+      clearTimeout(backgroundDelayRef.current);
+      backgroundDelayRef.current = null;
+    }
+
+    const candidateIndex = index + 1;
+    if (!totalCards || candidateIndex >= totalCards) {
+      setBackgroundIndex(null);
+      return;
+    }
+
+    backgroundDelayRef.current = setTimeout(() => {
+      setBackgroundIndex(candidateIndex);
+      backgroundDelayRef.current = null;
+    }, BACKGROUND_PROMOTION_DELAY_MS);
+
+    return () => {
+      if (backgroundDelayRef.current) {
+        clearTimeout(backgroundDelayRef.current);
+        backgroundDelayRef.current = null;
+      }
+    };
+  }, [index, totalCards]);
+
+  useEffect(
+    () => () => {
+      if (backgroundDelayRef.current) {
+        clearTimeout(backgroundDelayRef.current);
+        backgroundDelayRef.current = null;
+      }
+      if (unlockDelayRef.current) {
+        clearTimeout(unlockDelayRef.current);
+        unlockDelayRef.current = null;
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!onActiveProfileChange) return;
@@ -66,14 +126,24 @@ export function SwipeDeck({
 
   const handleSwipeComplete = useCallback(
     (direction: SwipeDirection) => {
+      if (transitionLocked) return;
       const currentProfile = profiles[index];
       if (currentProfile) {
         onDecision?.({ direction, profile: currentProfile });
       }
+      setTransitionLocked(true);
       setIndex(prev => prev + 1);
       setActiveSwipeX(null);
+      if (unlockDelayRef.current) {
+        clearTimeout(unlockDelayRef.current);
+        unlockDelayRef.current = null;
+      }
+      unlockDelayRef.current = setTimeout(() => {
+        setTransitionLocked(false);
+        unlockDelayRef.current = null;
+      }, TRANSITION_UNLOCK_DELAY_MS);
     },
-    [index, onDecision, profiles],
+    [index, onDecision, profiles, transitionLocked],
   );
 
   const handleSwipeXChange = useCallback((value: Animated.Value) => {
@@ -115,6 +185,7 @@ export function SwipeDeck({
         basicInfo={activeCard.basicInfo}
         onSwipeComplete={handleSwipeComplete}
         onSwipeXChange={handleSwipeXChange}
+        enableSwipe={!transitionLocked}
       />
     </View>
   );
