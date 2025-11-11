@@ -150,7 +150,8 @@ export function SwipeDeck<TProfile>({
       [-width, 0, width],
       ["rgba(220, 38, 38, 0.32)", "rgba(8, 11, 20, 0.36)", "rgba(34, 197, 94, 0.28)"],
     );
-    return { backgroundColor: color };
+    const overlayOpacity = 1 - Math.min(Math.max(nextProgress.value, 0), 1);
+    return { backgroundColor: color, opacity: overlayOpacity };
   });
 
   useLayoutEffect(() => {
@@ -177,7 +178,7 @@ export function SwipeDeck<TProfile>({
             budget={nextItem.card.budgetLabel}
             basicInfo={nextItem.card.basicInfo}
             showScrollCue={false}
-            enableLocationToggle={false}
+            enableLocationToggle
             animatedStyle={nextCardStyle}
             scrollEnabled={false}
           />
