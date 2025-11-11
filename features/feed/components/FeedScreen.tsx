@@ -7,7 +7,7 @@ import {
   StyleSheet,
   Animated,
 } from "react-native";
-import { UserInfoCard, BackgroundCard, PrimaryCard } from "./index";
+import { CardDeck, UserInfoCard } from "./index";
 import {
   incomingProfilesMock,
   MockedBackendUser,
@@ -17,7 +17,6 @@ import {
   mapBackendToProfileLike,
 } from "../mocks/incomingProfile";
 import { FEED_CONSTANTS } from "../constants/feed.constants";
-import { FeedScrollContext } from "../context/ScrollContext";
 import { useProfileCardData } from "../hooks";
 import { useCallback, useRef, useState } from "react";
 // -------------------- mock data --------------------
@@ -31,13 +30,7 @@ const secondaryProfileLike = mapBackendToProfileLike(secondaryProfile);
 function FeedScreen() {
   const TAB_BAR_HEIGHT = FEED_CONSTANTS.TAB_BAR_HEIGHT;
 
-  const { height: winH, width: screenWidth } = useWindowDimensions();
-  const HERO_HEIGHT = Math.max(0, winH + TAB_BAR_HEIGHT);
-  const HERO_BOTTOM_SPACING = TAB_BAR_HEIGHT + FEED_CONSTANTS.HERO_BOTTOM_EXTRA;
-  const HERO_IMAGE_HEIGHT = Math.max(
-    0,
-    HERO_HEIGHT - HERO_BOTTOM_SPACING + FEED_CONSTANTS.HERO_IMAGE_EXTRA,
-  );
+  const { width: screenWidth } = useWindowDimensions();
 
   const [locW, setLocW] = useState<number | undefined>(undefined);
   const [primarySwipeX, setPrimarySwipeX] = useState<Animated.Value | null>(null);
@@ -94,32 +87,31 @@ function FeedScreen() {
         style={styles.mainScroll}
       >
         {/* HERO */}
-        <View className="relative w-full" style={{ height: HERO_IMAGE_HEIGHT }}>
-          <FeedScrollContext.Provider value={mainRef}>
-            <BackgroundCard
-              photos={secondaryPhotos}
-              locationStrings={secondaryLocations}
-              locationWidth={locW}
-              headline={secondaryHeadline}
-              budget={secondaryBudget}
-              basicInfo={secondaryBasicInfo}
-              swipeX={primarySwipeX ?? undefined}
-              screenWidth={screenWidth}
-            />
-            <PrimaryCard
-              photos={primaryPhotos}
-              locationStrings={primaryLocations}
-              locationWidth={locW}
-              headline={primaryHeadline}
-              budget={primaryBudget}
-              basicInfo={primaryBasicInfo}
-              onSwipeComplete={direction => {
-                console.log(`Swipe ${direction}`);
-              }}
-              onSwipeXChange={handleSwipeXChange}
-            />
-          </FeedScrollContext.Provider>
-        </View>
+        <CardDeck
+          screenWidth={screenWidth}
+          scrollRef={mainRef}
+          swipeX={primarySwipeX}
+          primary={{
+            photos: primaryPhotos,
+            locationStrings: primaryLocations,
+            locationWidth: locW,
+            headline: primaryHeadline,
+            budget: primaryBudget,
+            basicInfo: primaryBasicInfo,
+            onSwipeComplete: direction => {
+              console.log(`Swipe ${direction}`);
+            },
+            onSwipeXChange: handleSwipeXChange,
+          }}
+          secondary={{
+            photos: secondaryPhotos,
+            locationStrings: secondaryLocations,
+            locationWidth: locW,
+            headline: secondaryHeadline,
+            budget: secondaryBudget,
+            basicInfo: secondaryBasicInfo,
+          }}
+        />
         <UserInfoCard
           profile={mapBackendProfileToUiProfile(primaryProfile.profile)}
           location={mapBackendLocationToUi(primaryProfile.location)}

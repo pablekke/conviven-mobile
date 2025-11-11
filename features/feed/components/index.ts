@@ -10,3 +10,4 @@ export { PhotoCarousel } from "./PhotoCarousel";
 export { UserInfoCard } from "./UserInfoCard";
 export { BackgroundCard } from "./BackgroundCard";
 export { PrimaryCard } from "./PrimaryCard";
+export { CardDeck } from "./CardDeck";

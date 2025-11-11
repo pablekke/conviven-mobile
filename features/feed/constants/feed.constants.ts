@@ -9,6 +9,9 @@ export const FEED_CONSTANTS = {
   HERO_BLUR_MAX_HEIGHT: 220,
 } as const;
 
+export const computeHeroImageHeight = (heroHeight: number, heroBottomSpacing: number) =>
+  Math.max(0, heroHeight - heroBottomSpacing + FEED_CONSTANTS.HERO_IMAGE_EXTRA);
+
 export const MOCK_ROOMIES = [
   {
     id: "1",
