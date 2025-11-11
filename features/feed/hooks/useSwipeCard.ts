@@ -64,8 +64,10 @@ export function useSwipeCard({
         useNativeDriver: true,
       }).start(() => {
         onComplete?.(direction);
-        swipeX.setValue(0);
-        setSwipeActive(false);
+        requestAnimationFrame(() => {
+          swipeX.setValue(0);
+          setSwipeActive(false);
+        });
       });
     },
     [disabled, onComplete, screenWidth, swipeX]

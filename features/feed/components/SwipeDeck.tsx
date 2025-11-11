@@ -38,9 +38,21 @@ export function SwipeDeck({
   const activeCard = cards[index];
   const nextCard = cards[index + 1];
   const activeProfile = profiles[index];
+  const nextProfile = profiles[index + 1];
+
+  const activeKey = useMemo(() => {
+    if (!activeProfile) return null;
+    return `${activeProfile.firstName}-${activeProfile.lastName}-${activeProfile.birthDate}-${index}`;
+  }, [activeProfile, index]);
+
+  const nextKey = useMemo(() => {
+    if (!nextProfile) return null;
+    return `${nextProfile.firstName}-${nextProfile.lastName}-${nextProfile.birthDate}-${index + 1}`;
+  }, [index, nextProfile]);
 
   useEffect(() => {
     setIndex(0);
+    setActiveSwipeX(null);
   }, [profiles]);
 
   useEffect(() => {
@@ -59,6 +71,7 @@ export function SwipeDeck({
         onDecision?.({ direction, profile: currentProfile });
       }
       setIndex(prev => prev + 1);
+      setActiveSwipeX(null);
     },
     [index, onDecision, profiles],
   );
@@ -81,6 +94,7 @@ export function SwipeDeck({
     <View style={styles.deckContainer}>
       {nextCard ? (
         <BackgroundCard
+          key={nextKey ?? `bg-${index + 1}`}
           photos={nextCard.galleryPhotos}
           locationStrings={nextCard.locationStrings}
           locationWidth={locationWidth}
@@ -92,6 +106,7 @@ export function SwipeDeck({
         />
       ) : null}
       <PrimaryCard
+        key={activeKey ?? `active-${index}`}
         photos={activeCard.galleryPhotos}
         locationStrings={activeCard.locationStrings}
         locationWidth={locationWidth}
