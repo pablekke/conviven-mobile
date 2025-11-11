@@ -19,7 +19,7 @@ import type {
   BackendUserFilters,
   BackendUserProfile,
 } from "../adapters/feedAdapter";
-import type { ProfileLike } from "../hooks/useProfileCardData";
+import type { ProfileLike } from "../utils/profileCardData";
 
 type CompleteLocation = {
   neighborhood: BackendLocationEntity;

@@ -1,80 +1,44 @@
-import {
-  View,
-  Text,
-  ScrollView,
-  useWindowDimensions,
-  StatusBar,
-  StyleSheet,
-  Animated,
-} from "react-native";
-import { CardDeck, UserInfoCard } from "./index";
-import {
-  incomingProfilesMock,
-  MockedBackendUser,
-  mapBackendFiltersToUi,
-  mapBackendLocationToUi,
-  mapBackendProfileToUiProfile,
-  mapBackendToProfileLike,
-} from "../mocks/incomingProfile";
-import { FEED_CONSTANTS } from "../constants/feed.constants";
-import { useProfileCardData } from "../hooks";
-import { useCallback, useRef, useState } from "react";
-// -------------------- mock data --------------------
-const profiles: MockedBackendUser[] = incomingProfilesMock;
-const primaryProfile = profiles[0];
-const secondaryProfile = profiles[1] ?? profiles[0];
-const primaryProfileLike = mapBackendToProfileLike(primaryProfile);
-const secondaryProfileLike = mapBackendToProfileLike(secondaryProfile);
+import { useCallback, useMemo, useRef, useState } from "react";
+import { ScrollView, StatusBar, StyleSheet, View, useWindowDimensions } from "react-native";
 
-// -------------------- Pantalla --------------------
+import { CardDeck, UserInfoCard } from "./index";
+import { FEED_CONSTANTS } from "../constants/feed.constants";
+import { incomingProfilesMock } from "../mocks/incomingProfile";
+import { createProfileDeckData } from "../utils/createProfileCardData";
+
 function FeedScreen() {
   const TAB_BAR_HEIGHT = FEED_CONSTANTS.TAB_BAR_HEIGHT;
-
   const { width: screenWidth } = useWindowDimensions();
-
-  const [locW, setLocW] = useState<number | undefined>(undefined);
-  const [primarySwipeX, setPrimarySwipeX] = useState<Animated.Value | null>(null);
   const mainRef = useRef<ScrollView | null>(null);
 
-  const handleSwipeXChange = useCallback((value: Animated.Value) => {
-    setPrimarySwipeX(prev => (prev === value ? prev : value));
+  const deckData = useMemo(() => createProfileDeckData(incomingProfilesMock), []);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [deckEnded, setDeckEnded] = useState(false);
+
+  const handleActiveIndexChange = useCallback((index: number) => {
+    setDeckEnded(false);
+    setActiveIndex(index);
   }, []);
 
-  const primaryData = useProfileCardData(primaryProfileLike);
-  const {
-    galleryPhotos: primaryPhotos,
-    locationStrings: primaryLocations,
-    longestLocation: primaryLongestLocation,
-    budgetLabel: primaryBudget,
-    headline: primaryHeadline,
-    basicInfo: primaryBasicInfo,
-  } = primaryData;
+  const handleDeckEnd = useCallback(() => {
+    setDeckEnded(true);
+  }, []);
 
-  const secondaryData = useProfileCardData(secondaryProfileLike);
-  const {
-    galleryPhotos: secondaryPhotos,
-    locationStrings: secondaryLocations,
-    budgetLabel: secondaryBudget,
-    headline: secondaryHeadline,
-    basicInfo: secondaryBasicInfo,
-  } = secondaryData;
+  const safeIndex = useMemo(() => {
+    if (deckData.length === 0) return -1;
+    const maxIndex = deckData.length - 1;
+    if (deckEnded) {
+      return Math.min(activeIndex, maxIndex);
+    }
+    return Math.min(indexOrZero(activeIndex), maxIndex);
+  }, [activeIndex, deckData, deckEnded]);
+
+  const activeItem = safeIndex >= 0 ? deckData[safeIndex] : undefined;
+  const userInfo = activeItem?.userInfo;
 
   return (
     <View className="flex-1" style={styles.screenShell}>
       <StatusBar barStyle="light-content" />
-
-      {/* Medidor oculto del ancho del chip de ubicación */}
-      <View
-        className="absolute -left-[9999px] top-0 flex-row items-center px-3"
-        onLayout={e => {
-          const measuredWidth = e.nativeEvent.layout.width;
-          const maxWidth = screenWidth * 0.7;
-          setLocW(Math.min(measuredWidth, maxWidth));
-        }}
-      >
-        <Text className="text-[13px] font-semibold flex-1">{primaryLongestLocation}</Text>
-        <View style={styles.iconSpacer} />
-      </View>
 
       <ScrollView
         ref={mainRef}
@@ -86,41 +50,33 @@ function FeedScreen() {
         overScrollMode="never"
         style={styles.mainScroll}
       >
-        {/* HERO */}
         <CardDeck
-          screenWidth={screenWidth}
+          data={deckData}
           scrollRef={mainRef}
-          swipeX={primarySwipeX}
-          primary={{
-            photos: primaryPhotos,
-            locationStrings: primaryLocations,
-            locationWidth: locW,
-            headline: primaryHeadline,
-            budget: primaryBudget,
-            basicInfo: primaryBasicInfo,
-            onSwipeComplete: direction => {
-              console.log(`Swipe ${direction}`);
-            },
-            onSwipeXChange: handleSwipeXChange,
+          screenWidth={screenWidth}
+          hapticsEnabled
+          onActiveIndexChange={handleActiveIndexChange}
+          onSwipeComplete={direction => {
+            console.log(`Swipe ${direction}`);
           }}
-          secondary={{
-            photos: secondaryPhotos,
-            locationStrings: secondaryLocations,
-            locationWidth: locW,
-            headline: secondaryHeadline,
-            budget: secondaryBudget,
-            basicInfo: secondaryBasicInfo,
-          }}
+          onEnd={handleDeckEnd}
         />
-        <UserInfoCard
-          profile={mapBackendProfileToUiProfile(primaryProfile.profile)}
-          location={mapBackendLocationToUi(primaryProfile.location)}
-          filters={mapBackendFiltersToUi(primaryProfile.filters)}
-          budgetFull={primaryBudget}
-        />
+
+        {userInfo ? (
+          <UserInfoCard
+            profile={userInfo.profile}
+            location={userInfo.location}
+            filters={userInfo.filters}
+            budgetFull={userInfo.budgetFull}
+          />
+        ) : null}
       </ScrollView>
     </View>
   );
+}
+
+function indexOrZero(value: number) {
+  return Number.isFinite(value) && value >= 0 ? value : 0;
 }
 
 export default FeedScreen;
@@ -128,10 +84,6 @@ export default FeedScreen;
 const styles = StyleSheet.create({
   screenShell: {
     backgroundColor: "transparent",
-  },
-  iconSpacer: {
-    width: 14,
-    height: 14,
   },
   mainScroll: {
     backgroundColor: "transparent",

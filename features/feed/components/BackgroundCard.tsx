@@ -1,92 +1,99 @@
-import React, { memo } from "react";
-import { ImageBackground, StyleSheet, View, useWindowDimensions, Animated } from "react-native";
+import { memo, useMemo } from "react";
+import { StyleSheet, View, type ViewStyle } from "react-native";
+import Animated, { useAnimatedStyle, type AnimatedStyleProp, type SharedValue } from "react-native-reanimated";
 import { BlurView } from "expo-blur";
 
-import { PrimaryCard, PrimaryCardProps } from "./PrimaryCard";
-import { FEED_CONSTANTS } from "../constants/feed.constants";
-import { useSwipeTint } from "../hooks/useSwipeTint"; // 👈 importá tu hook acá
+import { PrimaryCard } from "./PrimaryCard";
+import type { ProfileDeckItem } from "../utils/createProfileCardData";
 
-type BackgroundCardProps = Pick<
-  PrimaryCardProps,
-  "photos" | "locationStrings" | "locationWidth" | "headline" | "budget" | "basicInfo"
-> & {
-  swipeX?: Animated.Value;
-  screenWidth?: number;
-  thresholdRatio?: number;
+type DeckCardData = ProfileDeckItem["primary"];
+
+type BackgroundCardProps = {
+  data: DeckCardData;
+  heroHeight: number;
+  pointerEvents: "auto" | "none";
+  cardStyle: AnimatedStyleProp<ViewStyle>;
+  blurOpacity: SharedValue<number>;
+  likeStyle?: AnimatedStyleProp<ViewStyle>;
+  dislikeStyle?: AnimatedStyleProp<ViewStyle>;
+  locationWidth?: number;
+  enableLocationToggle: boolean;
 };
 
 function BackgroundCardComponent({
-  photos,
-  swipeX,
-  screenWidth,
-  thresholdRatio = 0.25,
-  ...cardProps
+  data,
+  heroHeight,
+  pointerEvents,
+  cardStyle,
+  blurOpacity,
+  likeStyle,
+  dislikeStyle,
+  locationWidth,
+  enableLocationToggle,
 }: BackgroundCardProps) {
-  const backgroundPhoto = photos[0];
-  const { height: winH, width: winW } = useWindowDimensions();
-  const width = screenWidth ?? winW;
+  const blurStyle = useAnimatedStyle(() => ({
+    opacity: blurOpacity.value,
+  }));
 
-  const tabBarHeight = FEED_CONSTANTS.TAB_BAR_HEIGHT;
-  const computedHeroHeight = Math.max(0, winH + tabBarHeight);
-  const heroBottomSpacing = tabBarHeight + FEED_CONSTANTS.HERO_BOTTOM_EXTRA;
-  const cardHeight = Math.max(
-    0,
-    computedHeroHeight - heroBottomSpacing + FEED_CONSTANTS.HERO_IMAGE_EXTRA,
+  const staticCardProps = useMemo(
+    () => ({
+      photos: [...data.photos],
+      locationStrings: [...data.locationStrings],
+      headline: data.headline,
+      budget: data.budget,
+      basicInfo: [...data.basicInfo],
+    }),
+    [data],
   );
 
-  // 🌀 Hook del tinte dinámico
-  const { likeStyle, dislikeStyle } = useSwipeTint({
-    swipeX: swipeX ?? new Animated.Value(0),
-    screenWidth: width,
-    thresholdRatio,
-    likeColor: "#2EA3F2",
-    dislikeColor: "#e01f1f",
-    maxLikeOpacity: 0.25,
-    maxDislikeOpacity: 0.35,
-  });
-
   return (
-    <ImageBackground
-      source={{ uri: backgroundPhoto }}
-      resizeMode="cover"
-      style={[StyleSheet.absoluteFillObject, styles.wrapper, { height: cardHeight }]}
+    <Animated.View
+      pointerEvents={pointerEvents}
+      style={[styles.card, { height: heroHeight }, cardStyle]}
     >
-      <View style={StyleSheet.absoluteFillObject}>
-        <PrimaryCard
-          {...cardProps}
-          photos={photos}
-          enableSwipe={false}
-          showScrollCue={false}
-          enableLocationToggle={false}
-        />
+      <PrimaryCard
+        {...staticCardProps}
+        locationWidth={locationWidth}
+        enableSwipe={false}
+        enableLocationToggle={enableLocationToggle}
+        showScrollCue={enableLocationToggle}
+      />
 
-        {/* Blur del fondo */}
-        <BlurView
-          pointerEvents="none"
-          tint="systemUltraThinMaterialDark"
-          intensity={40}
-          style={StyleSheet.absoluteFillObject}
-        />
+      <Animated.View pointerEvents="none" style={[styles.blurOverlay, blurStyle]}>
+        <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFillObject} />
+        <View style={styles.blurGradient} />
+      </Animated.View>
 
-        {/* Tinte según swipe */}
-        <Animated.View pointerEvents="none" style={likeStyle} />
-        <Animated.View pointerEvents="none" style={dislikeStyle} />
+      {likeStyle ? <Animated.View pointerEvents="none" style={[styles.tint, likeStyle]} /> : null}
+      {dislikeStyle ? (
+        <Animated.View pointerEvents="none" style={[styles.tint, dislikeStyle]} />
+      ) : null}
 
-        {/* Capa oscura final */}
-        <View pointerEvents="none" style={[StyleSheet.absoluteFillObject, styles.tintOverlay]} />
-      </View>
-    </ImageBackground>
+      <View pointerEvents="none" style={[StyleSheet.absoluteFillObject, styles.shadow]} />
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
+  card: {
+    width: "100%",
     overflow: "hidden",
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
   },
-  tintOverlay: {
-    backgroundColor: "rgba(4, 10, 22, 0.45)",
+  blurOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0,
+  },
+  blurGradient: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(4, 10, 22, 0.38)",
+  },
+  tint: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  shadow: {
+    backgroundColor: "rgba(4, 10, 22, 0.32)",
   },
 });
 
