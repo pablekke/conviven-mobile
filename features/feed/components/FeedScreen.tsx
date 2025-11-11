@@ -8,16 +8,24 @@ import {
   Animated,
 } from "react-native";
 import { UserInfoCard, BackgroundCard, PrimaryCard } from "./index";
-import { incomingProfilesMock } from "../mocks/incomingProfile";
+import {
+  incomingProfilesMock,
+  MockedBackendUser,
+  mapBackendFiltersToUi,
+  mapBackendLocationToUi,
+  mapBackendProfileToUiProfile,
+  mapBackendToProfileLike,
+} from "../mocks/incomingProfile";
 import { FEED_CONSTANTS } from "../constants/feed.constants";
 import { FeedScrollContext } from "../context/ScrollContext";
 import { useProfileCardData } from "../hooks";
 import { useCallback, useRef, useState } from "react";
-
 // -------------------- mock data --------------------
-const profiles = incomingProfilesMock;
+const profiles: MockedBackendUser[] = incomingProfilesMock;
 const primaryProfile = profiles[0];
 const secondaryProfile = profiles[1] ?? profiles[0];
+const primaryProfileLike = mapBackendToProfileLike(primaryProfile);
+const secondaryProfileLike = mapBackendToProfileLike(secondaryProfile);
 
 // -------------------- Pantalla --------------------
 function FeedScreen() {
@@ -39,7 +47,7 @@ function FeedScreen() {
     setPrimarySwipeX(prev => (prev === value ? prev : value));
   }, []);
 
-  const primaryData = useProfileCardData(primaryProfile);
+  const primaryData = useProfileCardData(primaryProfileLike);
   const {
     galleryPhotos: primaryPhotos,
     locationStrings: primaryLocations,
@@ -49,7 +57,7 @@ function FeedScreen() {
     basicInfo: primaryBasicInfo,
   } = primaryData;
 
-  const secondaryData = useProfileCardData(secondaryProfile);
+  const secondaryData = useProfileCardData(secondaryProfileLike);
   const {
     galleryPhotos: secondaryPhotos,
     locationStrings: secondaryLocations,
@@ -113,9 +121,9 @@ function FeedScreen() {
           </FeedScrollContext.Provider>
         </View>
         <UserInfoCard
-          profile={primaryProfile.profile}
-          location={primaryProfile.location}
-          filters={primaryProfile.filters}
+          profile={mapBackendProfileToUiProfile(primaryProfile.profile)}
+          location={mapBackendLocationToUi(primaryProfile.location)}
+          filters={mapBackendFiltersToUi(primaryProfile.filters)}
           budgetFull={primaryBudget}
         />
       </ScrollView>

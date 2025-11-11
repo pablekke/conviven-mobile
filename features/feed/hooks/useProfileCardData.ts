@@ -15,7 +15,7 @@ type NamedLocation = {
   neighborhood: { name: string };
 };
 
-type ProfileLike = {
+export type ProfileLike = {
   firstName: string;
   lastName: string;
   displayName?: string | null;

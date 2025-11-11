@@ -20,7 +20,7 @@ import {
 const DEFAULT_PAGE_SIZE = 20;
 
 /** ===== Tipos de payload que viene del backend (según tu ejemplo) ===== */
-interface BackendUserProfile {
+export interface BackendUserProfile {
   id: string;
   userId: string;
   bio: string | null;
@@ -52,18 +52,18 @@ interface BackendUserProfile {
   updatedAt: string | null;
 }
 
-interface BackendLocationEntity {
+export interface BackendLocationEntity {
   id: string;
   name: string;
 }
 
-interface BackendLocation {
+export interface BackendLocation {
   neighborhood?: BackendLocationEntity | null;
   city?: BackendLocationEntity | null;
   department?: BackendLocationEntity | null;
 }
 
-interface BackendUserFilters {
+export interface BackendUserFilters {
   userId: string;
   mainPreferredNeighborhoodId: string | null;
   genderPref: string[] | null;
@@ -76,7 +76,7 @@ interface BackendUserFilters {
   preferredLocations?: BackendLocation[] | null;
 }
 
-interface BackendUserPreferences {
+export interface BackendUserPreferences {
   userId: string;
   noCigarettes: boolean | null;
   noWeed: boolean | null;
@@ -93,7 +93,7 @@ interface BackendUserPreferences {
   lastActiveWithinDays?: number | null;
 }
 
-interface BackendUser {
+export interface BackendUser {
   profile: BackendUserProfile | null;
   filters: BackendUserFilters | null;
   preferences: BackendUserPreferences | null;
@@ -112,7 +112,7 @@ interface BackendUser {
   lastLoginAt?: string | null;
 }
 
-interface BackendFeedItem {
+export interface BackendFeedItem {
   userId: string;
   user: BackendUser | null;
   score: number; // 0..1
@@ -174,7 +174,7 @@ export class FeedAdapter {
       },
       zodiacSign: profile?.zodiacSign ?? undefined,
       profileCompletionRate: user?.profileCompletionRate ?? undefined,
-      photosCount: typeof user?.photosCount === "number" ? user?.photosCount ?? 0 : undefined,
+      photosCount: typeof user?.photosCount === "number" ? (user?.photosCount ?? 0) : undefined,
     };
   }
 
@@ -255,8 +255,9 @@ export class FeedAdapter {
   }
 
   private static getPhotoGallery(user: BackendUser | null, userId: string): string[] {
-    const urls = [user?.photoUrl, ...(user?.secondaryPhotoUrls ?? [])]
-      .filter((url): url is string => typeof url === "string" && url.length > 0);
+    const urls = [user?.photoUrl, ...(user?.secondaryPhotoUrls ?? [])].filter(
+      (url): url is string => typeof url === "string" && url.length > 0,
+    );
     if (urls.length > 0) {
       return urls;
     }
@@ -428,7 +429,11 @@ export class FeedAdapter {
 
     const location = candidateLocations.find(loc => {
       if (!loc) return false;
-      const names = [loc.neighborhood?.name ?? "", loc.city?.name ?? "", loc.department?.name ?? ""];
+      const names = [
+        loc.neighborhood?.name ?? "",
+        loc.city?.name ?? "",
+        loc.department?.name ?? "",
+      ];
       return names.some(name => name.trim().length > 0);
     });
 
