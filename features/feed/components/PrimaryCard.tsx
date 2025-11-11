@@ -41,6 +41,7 @@ export type PrimaryCardProps = {
   headlineStyle?: TextStyle;
   budgetStyle?: TextStyle;
   infoWrapperStyle?: StyleProp<ViewStyle>;
+  containerStyle?: StyleProp<ViewStyle>;
 };
 
 function PrimaryCardComponent({
@@ -61,6 +62,7 @@ function PrimaryCardComponent({
   headlineStyle,
   budgetStyle,
   infoWrapperStyle,
+  containerStyle,
 }: PrimaryCardProps) {
   const { height: winH, width: winW } = useWindowDimensions();
   const tabBarHeight = FEED_CONSTANTS.TAB_BAR_HEIGHT;
@@ -131,7 +133,7 @@ function PrimaryCardComponent({
 
   return (
     <Animated.View
-      style={[styles.cardContainer, { height: cardHeight }, animatedCardStyle]}
+      style={[styles.cardContainer, { height: cardHeight }, animatedCardStyle, containerStyle]}
       {...panHandlers}
     >
       <PhotoCarousel

@@ -1,28 +1,31 @@
-import {
-  View,
-  Text,
-  ScrollView,
-  useWindowDimensions,
-  StatusBar,
-  StyleSheet,
-  Animated,
-} from "react-native";
-import { UserInfoCard, BackgroundCard, PrimaryCard } from "./index";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { View, Text, ScrollView, useWindowDimensions, StatusBar, StyleSheet } from "react-native";
+
+import { UserInfoCard } from "./index";
+import { SwipeDeck, type SwipeDirection } from "./SwipeDeck";
 import { incomingProfilesMock } from "../mocks/incomingProfile";
 import { FEED_CONSTANTS } from "../constants/feed.constants";
 import { FeedScrollContext } from "../context/ScrollContext";
-import { useProfileCardData } from "../hooks";
-import { useCallback, useRef, useState } from "react";
+import { createProfileCardData } from "../utils/createProfileCardData";
 
-// -------------------- mock data --------------------
-const profiles = incomingProfilesMock;
-const primaryProfile = profiles[0];
-const secondaryProfile = profiles[1] ?? profiles[0];
+const MAX_PROFILES = 20;
 
-// -------------------- Pantalla --------------------
+type DeckItem = {
+  id: string;
+  profile: (typeof incomingProfilesMock)[number];
+  card: ReturnType<typeof createProfileCardData>;
+};
+
+function buildDeck(): DeckItem[] {
+  return incomingProfilesMock.slice(0, MAX_PROFILES).map((profile, index) => ({
+    id: (profile as { id?: string }).id ?? `${profile.firstName}-${profile.lastName}-${index}`,
+    profile,
+    card: createProfileCardData(profile),
+  }));
+}
+
 function FeedScreen() {
   const TAB_BAR_HEIGHT = FEED_CONSTANTS.TAB_BAR_HEIGHT;
-
   const { height: winH, width: screenWidth } = useWindowDimensions();
   const HERO_HEIGHT = Math.max(0, winH + TAB_BAR_HEIGHT);
   const HERO_BOTTOM_SPACING = TAB_BAR_HEIGHT + FEED_CONSTANTS.HERO_BOTTOM_EXTRA;
@@ -31,47 +34,46 @@ function FeedScreen() {
     HERO_HEIGHT - HERO_BOTTOM_SPACING + FEED_CONSTANTS.HERO_IMAGE_EXTRA,
   );
 
-  const [locW, setLocW] = useState<number | undefined>(undefined);
-  const [primarySwipeX, setPrimarySwipeX] = useState<Animated.Value | null>(null);
+  const deck = useMemo(() => buildDeck(), []);
+  const deckLength = deck.length;
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [locationWidth, setLocationWidth] = useState<number | undefined>(undefined);
   const mainRef = useRef<ScrollView | null>(null);
 
-  const handleSwipeXChange = useCallback((value: Animated.Value) => {
-    setPrimarySwipeX(prev => (prev === value ? prev : value));
-  }, []);
+  const activeItem = deck[activeIndex] ?? null;
+  const nextIndex = deckLength > 1 ? (activeIndex + 1) % deckLength : null;
+  const nextItem = typeof nextIndex === "number" ? deck[nextIndex] : null;
 
-  const primaryData = useProfileCardData(primaryProfile);
-  const {
-    galleryPhotos: primaryPhotos,
-    locationStrings: primaryLocations,
-    longestLocation: primaryLongestLocation,
-    budgetLabel: primaryBudget,
-    headline: primaryHeadline,
-    basicInfo: primaryBasicInfo,
-  } = primaryData;
+  const handleSwipeComplete = useCallback(
+    (_direction: SwipeDirection) => {
+      setActiveIndex(prev => {
+        if (deckLength === 0) return prev;
+        const next = prev + 1;
+        return next % deckLength;
+      });
+    },
+    [deckLength],
+  );
 
-  const secondaryData = useProfileCardData(secondaryProfile);
-  const {
-    galleryPhotos: secondaryPhotos,
-    locationStrings: secondaryLocations,
-    budgetLabel: secondaryBudget,
-    headline: secondaryHeadline,
-    basicInfo: secondaryBasicInfo,
-  } = secondaryData;
+  if (!activeItem) {
+    return null;
+  }
 
   return (
     <View className="flex-1" style={styles.screenShell}>
       <StatusBar barStyle="light-content" />
 
-      {/* Medidor oculto del ancho del chip de ubicación */}
       <View
         className="absolute -left-[9999px] top-0 flex-row items-center px-3"
         onLayout={e => {
           const measuredWidth = e.nativeEvent.layout.width;
           const maxWidth = screenWidth * 0.7;
-          setLocW(Math.min(measuredWidth, maxWidth));
+          setLocationWidth(Math.min(measuredWidth, maxWidth));
         }}
       >
-        <Text className="text-[13px] font-semibold flex-1">{primaryLongestLocation}</Text>
+        <Text className="text-[13px] font-semibold flex-1" key={activeItem.id}>
+          {activeItem.card.longestLocation}
+        </Text>
         <View style={styles.iconSpacer} />
       </View>
 
@@ -85,38 +87,23 @@ function FeedScreen() {
         overScrollMode="never"
         style={styles.mainScroll}
       >
-        {/* HERO */}
         <View className="relative w-full" style={{ height: HERO_IMAGE_HEIGHT }}>
           <FeedScrollContext.Provider value={mainRef}>
-            <BackgroundCard
-              photos={secondaryPhotos}
-              locationStrings={secondaryLocations}
-              locationWidth={locW}
-              headline={secondaryHeadline}
-              budget={secondaryBudget}
-              basicInfo={secondaryBasicInfo}
-              swipeX={primarySwipeX ?? undefined}
+            <SwipeDeck
+              active={{ id: activeItem.id, data: activeItem.card }}
+              next={nextItem ? { id: nextItem.id, data: nextItem.card } : null}
+              onSwipeComplete={handleSwipeComplete}
+              locationWidth={locationWidth}
               screenWidth={screenWidth}
-            />
-            <PrimaryCard
-              photos={primaryPhotos}
-              locationStrings={primaryLocations}
-              locationWidth={locW}
-              headline={primaryHeadline}
-              budget={primaryBudget}
-              basicInfo={primaryBasicInfo}
-              onSwipeComplete={direction => {
-                console.log(`Swipe ${direction}`);
-              }}
-              onSwipeXChange={handleSwipeXChange}
             />
           </FeedScrollContext.Provider>
         </View>
+
         <UserInfoCard
-          profile={primaryProfile.profile}
-          location={primaryProfile.location}
-          filters={primaryProfile.filters}
-          budgetFull={primaryBudget}
+          profile={activeItem.profile.profile}
+          location={activeItem.profile.location}
+          filters={activeItem.profile.filters}
+          budgetFull={activeItem.card.budgetLabel}
         />
       </ScrollView>
     </View>
