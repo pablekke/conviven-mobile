@@ -1,23 +1,15 @@
-import {
-  View,
-  Text,
-  ScrollView,
-  useWindowDimensions,
-  StatusBar,
-  StyleSheet,
-  Animated,
-} from "react-native";
-import { UserInfoCard, BackgroundCard, PrimaryCard } from "./index";
+import { View, Text, ScrollView, useWindowDimensions, StatusBar, StyleSheet } from "react-native";
+import { UserInfoCard, ProfileDeck } from "./index";
 import { incomingProfilesMock } from "../mocks/incomingProfile";
 import { FEED_CONSTANTS } from "../constants/feed.constants";
 import { FeedScrollContext } from "../context/ScrollContext";
-import { useProfileCardData } from "../hooks";
+import { mapProfileToCardData } from "../hooks";
 import { useCallback, useRef, useState } from "react";
 
 // -------------------- mock data --------------------
-const profiles = incomingProfilesMock;
-const primaryProfile = profiles[0];
-const secondaryProfile = profiles[1] ?? profiles[0];
+type FeedProfile = (typeof incomingProfilesMock)[number];
+
+const DUPLICATE_BATCH_SIZE = 3;
 
 // -------------------- Pantalla --------------------
 function FeedScreen() {
@@ -32,31 +24,41 @@ function FeedScreen() {
   );
 
   const [locW, setLocW] = useState<number | undefined>(undefined);
-  const [primarySwipeX, setPrimarySwipeX] = useState<Animated.Value | null>(null);
+  const [profilePool, setProfilePool] = useState<FeedProfile[]>(() => incomingProfilesMock.slice());
+  const [activeProfile, setActiveProfile] = useState<FeedProfile | null>(() => incomingProfilesMock[0] ?? null);
+  const [activeSnapshot, setActiveSnapshot] = useState(() =>
+    incomingProfilesMock[0] ? mapProfileToCardData(incomingProfilesMock[0]) : null,
+  );
   const mainRef = useRef<ScrollView | null>(null);
 
-  const handleSwipeXChange = useCallback((value: Animated.Value) => {
-    setPrimarySwipeX(prev => (prev === value ? prev : value));
+  const handleActiveProfileChange = useCallback((profile: FeedProfile) => {
+    setActiveProfile(profile);
+    setActiveSnapshot(mapProfileToCardData(profile));
   }, []);
 
-  const primaryData = useProfileCardData(primaryProfile);
-  const {
-    galleryPhotos: primaryPhotos,
-    locationStrings: primaryLocations,
-    longestLocation: primaryLongestLocation,
-    budgetLabel: primaryBudget,
-    headline: primaryHeadline,
-    basicInfo: primaryBasicInfo,
-  } = primaryData;
+  const handleDeckExhausted = useCallback(() => {
+    setActiveProfile(null);
+    setActiveSnapshot(null);
+  }, []);
 
-  const secondaryData = useProfileCardData(secondaryProfile);
-  const {
-    galleryPhotos: secondaryPhotos,
-    locationStrings: secondaryLocations,
-    budgetLabel: secondaryBudget,
-    headline: secondaryHeadline,
-    basicInfo: secondaryBasicInfo,
-  } = secondaryData;
+  const handleSwipeAction = useCallback((profile: FeedProfile, direction: "like" | "dislike") => {
+    const label = profile.displayName ?? `${profile.firstName} ${profile.lastName}`;
+    console.log(`Swipe ${direction} → ${label}`);
+  }, []);
+
+  const createDuplicateBatch = useCallback((): FeedProfile[] => {
+    return incomingProfilesMock
+      .slice(0, DUPLICATE_BATCH_SIZE)
+      .map(profile => JSON.parse(JSON.stringify(profile)) as FeedProfile);
+  }, []);
+
+  const handleRequestMore = useCallback(() => {
+    setProfilePool(prev => {
+      const extra = createDuplicateBatch();
+      if (extra.length === 0) return prev;
+      return [...prev, ...extra];
+    });
+  }, [createDuplicateBatch]);
 
   return (
     <View className="flex-1" style={styles.screenShell}>
@@ -71,7 +73,9 @@ function FeedScreen() {
           setLocW(Math.min(measuredWidth, maxWidth));
         }}
       >
-        <Text className="text-[13px] font-semibold flex-1">{primaryLongestLocation}</Text>
+        <Text className="text-[13px] font-semibold flex-1">
+          {activeSnapshot?.longestLocation ?? ""}
+        </Text>
         <View style={styles.iconSpacer} />
       </View>
 
@@ -88,36 +92,31 @@ function FeedScreen() {
         {/* HERO */}
         <View className="relative w-full" style={{ height: HERO_IMAGE_HEIGHT }}>
           <FeedScrollContext.Provider value={mainRef}>
-            <BackgroundCard
-              photos={secondaryPhotos}
-              locationStrings={secondaryLocations}
+            <ProfileDeck
+              profiles={profilePool}
               locationWidth={locW}
-              headline={secondaryHeadline}
-              budget={secondaryBudget}
-              basicInfo={secondaryBasicInfo}
-              swipeX={primarySwipeX ?? undefined}
-              screenWidth={screenWidth}
-            />
-            <PrimaryCard
-              photos={primaryPhotos}
-              locationStrings={primaryLocations}
-              locationWidth={locW}
-              headline={primaryHeadline}
-              budget={primaryBudget}
-              basicInfo={primaryBasicInfo}
-              onSwipeComplete={direction => {
-                console.log(`Swipe ${direction}`);
-              }}
-              onSwipeXChange={handleSwipeXChange}
+              onActiveProfileChange={handleActiveProfileChange}
+              onSwipeAction={handleSwipeAction}
+              onRequestMore={handleRequestMore}
+              onDeckExhausted={handleDeckExhausted}
             />
           </FeedScrollContext.Provider>
         </View>
-        <UserInfoCard
-          profile={primaryProfile.profile}
-          location={primaryProfile.location}
-          filters={primaryProfile.filters}
-          budgetFull={primaryBudget}
-        />
+        {activeProfile && activeSnapshot ? (
+          <UserInfoCard
+            profile={activeProfile.profile}
+            location={activeProfile.location}
+            filters={activeProfile.filters}
+            budgetFull={activeSnapshot.budgetLabel}
+          />
+        ) : (
+          <View style={styles.emptyInfoBlock}>
+            <Text style={styles.emptyInfoTitle}>No quedan perfiles disponibles.</Text>
+            <Text style={styles.emptyInfoSubtitle}>
+              Estamos cargando nuevas personas para vos.
+            </Text>
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -138,5 +137,22 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     backgroundColor: "transparent",
+  },
+  emptyInfoBlock: {
+    paddingHorizontal: 24,
+    paddingVertical: 32,
+    alignItems: "center",
+  },
+  emptyInfoTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#f8fafc",
+    textAlign: "center",
+    marginBottom: 6,
+  },
+  emptyInfoSubtitle: {
+    fontSize: 14,
+    color: "rgba(248, 250, 252, 0.72)",
+    textAlign: "center",
   },
 });
