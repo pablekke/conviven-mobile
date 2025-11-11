@@ -26,11 +26,11 @@ type SwipeDeckProps = {
   onDecision?: (payload: { direction: SwipeDirection; profile: ProfileCardSource }) => void;
 };
 
-const BACKGROUND_PROMOTION_DELAY_MS = 420;
-const TRANSITION_UNLOCK_DELAY_MS = 720;
-const ACTIVE_FADE_IN_DURATION_MS = 220;
-const OUTGOING_FADE_OUT_DURATION_MS = 260;
-const OUTGOING_FADE_OUT_DELAY_MS = 40;
+const OUTGOING_FADE_OUT_DURATION_MS = 240;
+
+function buildProfileKey(profile: ProfileCardSource, suffix: string) {
+  return `${profile.firstName}-${profile.lastName}-${profile.birthDate}-${suffix}`;
+}
 
 export function SwipeDeck({
   profiles,
@@ -39,174 +39,156 @@ export function SwipeDeck({
   onActiveProfileChange,
   onDecision,
 }: SwipeDeckProps) {
-  const [index, setIndex] = useState(0);
-  const [activeSwipeX, setActiveSwipeX] = useState<Animated.Value | null>(null);
-  const [backgroundIndex, setBackgroundIndex] = useState<number | null>(() =>
+  const [activeIndex, setActiveIndex] = useState<number | null>(() =>
+    profiles.length > 0 ? 0 : null,
+  );
+  const [nextIndex, setNextIndex] = useState<number | null>(() =>
     profiles.length > 1 ? 1 : null,
   );
-  const [transitionLocked, setTransitionLocked] = useState(false);
+  const [activeSwipeX, setActiveSwipeX] = useState<Animated.Value | null>(null);
   const [activeReady, setActiveReady] = useState(false);
+  const [transitioning, setTransitioning] = useState(false);
   const [outgoingSnapshot, setOutgoingSnapshot] = useState<InternalSnapshot | null>(null);
 
-  const activeOpacity = useRef(new Animated.Value(1)).current;
   const outgoingOpacity = useRef(new Animated.Value(1)).current;
 
-  const backgroundDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const unlockDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const cards = useMemo(() => profiles.map(createProfileCardData), [profiles]);
-  const totalCards = cards.length;
-  const activeCard = cards[index];
-  const nextCard = backgroundIndex != null ? cards[backgroundIndex] : undefined;
-  const activeProfile = profiles[index];
-  const nextProfile = backgroundIndex != null ? profiles[backgroundIndex] : undefined;
 
-  const activeKey = useMemo(() => {
-    if (!activeProfile) return null;
-    return `${activeProfile.firstName}-${activeProfile.lastName}-${activeProfile.birthDate}-${index}`;
-  }, [activeProfile, index]);
-
-  const nextKey = useMemo(() => {
-    if (!nextProfile) return null;
-    return `${nextProfile.firstName}-${nextProfile.lastName}-${nextProfile.birthDate}-${backgroundIndex ?? index + 1}`;
-  }, [backgroundIndex, index, nextProfile]);
+  const activeCard = activeIndex != null ? cards[activeIndex] : undefined;
+  const nextCard = nextIndex != null ? cards[nextIndex] : undefined;
+  const activeProfile = activeIndex != null ? profiles[activeIndex] : undefined;
+  const nextProfile = nextIndex != null ? profiles[nextIndex] : undefined;
 
   useEffect(() => {
-    setIndex(0);
-    setActiveSwipeX(null);
-    setBackgroundIndex(profiles.length > 1 ? 1 : null);
-    setTransitionLocked(false);
+    setActiveIndex(profiles.length > 0 ? 0 : null);
+    setNextIndex(profiles.length > 1 ? 1 : null);
     setActiveReady(false);
+    setTransitioning(false);
+    setActiveSwipeX(null);
     setOutgoingSnapshot(null);
     outgoingOpacity.setValue(1);
-    if (backgroundDelayRef.current) {
-      clearTimeout(backgroundDelayRef.current);
-      backgroundDelayRef.current = null;
-    }
-    if (unlockDelayRef.current) {
-      clearTimeout(unlockDelayRef.current);
-      unlockDelayRef.current = null;
-    }
-  }, [profiles]);
+  }, [profiles, outgoingOpacity]);
 
   useEffect(() => {
-    if (backgroundDelayRef.current) {
-      clearTimeout(backgroundDelayRef.current);
-      backgroundDelayRef.current = null;
+    if (nextIndex == null) return;
+    const preview = cards[nextIndex]?.galleryPhotos?.[0];
+    if (preview) {
+      Image.prefetch(preview).catch(() => undefined);
     }
+    const afterNext = nextIndex + 1;
+    if (afterNext < cards.length) {
+      const aheadPreview = cards[afterNext]?.galleryPhotos?.[0];
+      if (aheadPreview) {
+        Image.prefetch(aheadPreview).catch(() => undefined);
+      }
+    }
+  }, [cards, nextIndex]);
 
+  const notifyActiveChange = useCallback(
+    (snapshot: ActiveSnapshot | null) => {
+      onActiveProfileChange?.(snapshot);
+    },
+    [onActiveProfileChange],
+  );
+
+  const fadeOutgoing = useCallback(
+    (snapshotKey?: string) => {
+      if (!outgoingSnapshot && !snapshotKey) return;
+      Animated.timing(outgoingOpacity, {
+        toValue: 0,
+        duration: OUTGOING_FADE_OUT_DURATION_MS,
+        useNativeDriver: true,
+      }).start(({ finished }) => {
+        if (!finished) return;
+        outgoingOpacity.setValue(1);
+        setOutgoingSnapshot(prev => {
+          if (!prev) return null;
+          if (snapshotKey && prev.key !== snapshotKey) {
+            return prev;
+          }
+          return null;
+        });
+      });
+    },
+    [outgoingOpacity, outgoingSnapshot],
+  );
+
+  useEffect(() => {
+    if (!activeCard || !activeProfile || activeIndex == null) {
+      notifyActiveChange(null);
+      return;
+    }
     if (!activeReady) {
       return;
     }
-
-    const candidateIndex = index + 1;
-    if (!totalCards || candidateIndex >= totalCards) {
-      setBackgroundIndex(null);
-      return;
-    }
-
-    backgroundDelayRef.current = setTimeout(() => {
-      setBackgroundIndex(candidateIndex);
-      const preview = cards[candidateIndex]?.galleryPhotos?.[0];
-      if (preview) {
-        Image.prefetch(preview).catch(() => undefined);
-      }
-      backgroundDelayRef.current = null;
-    }, BACKGROUND_PROMOTION_DELAY_MS);
-
-    return () => {
-      if (backgroundDelayRef.current) {
-        clearTimeout(backgroundDelayRef.current);
-        backgroundDelayRef.current = null;
-      }
-    };
-  }, [activeReady, cards, index, totalCards]);
-
-  useEffect(
-    () => () => {
-      if (backgroundDelayRef.current) {
-        clearTimeout(backgroundDelayRef.current);
-        backgroundDelayRef.current = null;
-      }
-      if (unlockDelayRef.current) {
-        clearTimeout(unlockDelayRef.current);
-        unlockDelayRef.current = null;
-      }
-    },
-    [],
-  );
-
-  useEffect(() => {
-    if (!onActiveProfileChange) return;
-    if (!activeCard || !activeProfile) {
-      onActiveProfileChange(null);
-      return;
-    }
-    if (!activeReady) return;
-    onActiveProfileChange({ profile: activeProfile, card: activeCard });
-  }, [activeCard, activeProfile, activeReady, onActiveProfileChange]);
+    notifyActiveChange({ profile: activeProfile, card: activeCard });
+  }, [activeCard, activeIndex, activeProfile, activeReady, notifyActiveChange]);
 
   useEffect(() => {
     if (!activeReady) return;
-    Animated.timing(activeOpacity, {
-      toValue: 1,
-      duration: ACTIVE_FADE_IN_DURATION_MS,
-      useNativeDriver: true,
-    }).start();
-  }, [activeOpacity, activeReady]);
-
-  useEffect(() => {
-    if (!activeReady || !outgoingSnapshot) return;
-    Animated.timing(outgoingOpacity, {
-      toValue: 0,
-      duration: OUTGOING_FADE_OUT_DURATION_MS,
-      delay: OUTGOING_FADE_OUT_DELAY_MS,
-      useNativeDriver: true,
-    }).start(({ finished }) => {
-      if (!finished) return;
-      setOutgoingSnapshot(null);
-      outgoingOpacity.setValue(1);
-    });
-  }, [activeReady, outgoingOpacity, outgoingSnapshot]);
-
-  const handleSwipeComplete = useCallback(
-    (direction: SwipeDirection) => {
-      if (transitionLocked) return;
-      const currentProfile = profiles[index];
-      const currentCard = cards[index];
-      if (currentProfile && currentCard) {
-        const outgoingKey = `${currentProfile.firstName}-${currentProfile.lastName}-${currentProfile.birthDate}-outgoing-${index}`;
-        setOutgoingSnapshot({ profile: currentProfile, card: currentCard, key: outgoingKey });
-        onDecision?.({ direction, profile: currentProfile });
-      }
-      setActiveReady(false);
-      activeOpacity.setValue(0);
-      outgoingOpacity.setValue(1);
-      setTransitionLocked(true);
-      setBackgroundIndex(null);
-      setIndex(prev => prev + 1);
-      setActiveSwipeX(null);
-      if (unlockDelayRef.current) {
-        clearTimeout(unlockDelayRef.current);
-        unlockDelayRef.current = null;
-      }
-      unlockDelayRef.current = setTimeout(() => {
-        setTransitionLocked(false);
-        unlockDelayRef.current = null;
-      }, TRANSITION_UNLOCK_DELAY_MS);
-    },
-    [activeOpacity, cards, index, onDecision, outgoingOpacity, profiles, transitionLocked],
-  );
+    setTransitioning(false);
+    fadeOutgoing();
+  }, [activeReady, fadeOutgoing]);
 
   const handleSwipeXChange = useCallback((value: Animated.Value) => {
     setActiveSwipeX(value);
   }, []);
 
   const handleActiveReady = useCallback(() => {
-    setActiveReady(prev => (prev ? prev : true));
+    setActiveReady(true);
   }, []);
 
-  if (!activeCard || !activeProfile) {
+  const handleSwipeComplete = useCallback(
+    (direction: SwipeDirection) => {
+      if (transitioning || activeIndex == null) return;
+      const currentProfile = profiles[activeIndex];
+      const currentCard = cards[activeIndex];
+      if (!currentProfile || !currentCard) return;
+
+      onDecision?.({ direction, profile: currentProfile });
+
+      const outgoingKey = buildProfileKey(currentProfile, `outgoing-${activeIndex}`);
+      const snapshot: InternalSnapshot = {
+        profile: currentProfile,
+        card: currentCard,
+        key: outgoingKey,
+      };
+      setOutgoingSnapshot(snapshot);
+      outgoingOpacity.setValue(1);
+      setActiveReady(false);
+      setTransitioning(true);
+      setActiveSwipeX(null);
+
+      const newActiveIndex = nextIndex;
+      if (newActiveIndex == null) {
+        setActiveIndex(null);
+        setNextIndex(null);
+        setTransitioning(false);
+        fadeOutgoing(snapshot.key);
+        notifyActiveChange(null);
+        return;
+      }
+
+      setActiveIndex(newActiveIndex);
+      const candidateNext = newActiveIndex + 1;
+      setNextIndex(candidateNext < cards.length ? candidateNext : null);
+    },
+    [
+      activeIndex,
+      cards,
+      fadeOutgoing,
+      nextIndex,
+      notifyActiveChange,
+      onDecision,
+      outgoingOpacity,
+      profiles,
+      transitioning,
+    ],
+  );
+
+  const hasActive = activeCard != null && activeProfile != null && activeIndex != null;
+
+  if (!hasActive && !outgoingSnapshot) {
     return (
       <View style={[styles.deckContainer, styles.emptyState]}>
         <View style={styles.emptyCard}>
@@ -216,21 +198,39 @@ export function SwipeDeck({
     );
   }
 
+  const activeContext = hasActive
+    ? {
+        card: activeCard!,
+        profile: activeProfile!,
+        index: activeIndex!,
+      }
+    : null;
+  const activeKey = activeContext
+    ? buildProfileKey(activeContext.profile, `active-${activeContext.index}`)
+    : undefined;
+  const nextKey =
+    hasActive && nextProfile != null && nextIndex != null
+      ? buildProfileKey(nextProfile, `background-${nextIndex}`)
+      : undefined;
+  const showBackground =
+    hasActive && !transitioning && activeReady && nextCard != null && nextProfile != null;
+
   return (
     <View style={styles.deckContainer}>
-      {nextCard ? (
+      {showBackground ? (
         <BackgroundCard
-          key={nextKey ?? `bg-${index + 1}`}
-          photos={nextCard.galleryPhotos}
-          locationStrings={nextCard.locationStrings}
+          key={nextKey}
+          photos={nextCard!.galleryPhotos}
+          locationStrings={nextCard!.locationStrings}
           locationWidth={locationWidth}
-          headline={nextCard.headline}
-          budget={nextCard.budgetLabel}
-          basicInfo={nextCard.basicInfo}
+          headline={nextCard!.headline}
+          budget={nextCard!.budgetLabel}
+          basicInfo={nextCard!.basicInfo}
           swipeX={activeSwipeX ?? undefined}
           screenWidth={screenWidth}
         />
       ) : null}
+
       {outgoingSnapshot ? (
         <Animated.View
           pointerEvents="none"
@@ -250,24 +250,24 @@ export function SwipeDeck({
           />
         </Animated.View>
       ) : null}
-      <Animated.View
-        pointerEvents="box-none"
-        style={[styles.primaryLayer, { opacity: activeOpacity }]}
-      >
-        <PrimaryCard
-          key={activeKey ?? `active-${index}`}
-          photos={activeCard.galleryPhotos}
-          locationStrings={activeCard.locationStrings}
-          locationWidth={locationWidth}
-          headline={activeCard.headline}
-          budget={activeCard.budgetLabel}
-          basicInfo={activeCard.basicInfo}
-          onSwipeComplete={handleSwipeComplete}
-          onSwipeXChange={handleSwipeXChange}
-          onReady={handleActiveReady}
-          enableSwipe={!transitionLocked && activeReady}
-        />
-      </Animated.View>
+
+      {hasActive && activeContext ? (
+        <View pointerEvents="box-none" style={styles.primaryLayer}>
+          <PrimaryCard
+            key={activeKey}
+            photos={activeContext.card.galleryPhotos}
+            locationStrings={activeContext.card.locationStrings}
+            locationWidth={locationWidth}
+            headline={activeContext.card.headline}
+            budget={activeContext.card.budgetLabel}
+            basicInfo={activeContext.card.basicInfo}
+            onSwipeComplete={handleSwipeComplete}
+            onSwipeXChange={handleSwipeXChange}
+            onReady={handleActiveReady}
+            enableSwipe={activeReady && !transitioning}
+          />
+        </View>
+      ) : null}
     </View>
   );
 }
