@@ -5,4 +5,4 @@ export { useCachedFeed } from "./useCachedFeed";
 export type { UseCachedFeedReturn } from "./useCachedFeed";
 
 export { useSwipeCard } from "./useSwipeCard";
-export { useProfileCardData } from "./useProfileCardData";
+export { useProfileCardData, createProfileCardData } from "./useProfileCardData";

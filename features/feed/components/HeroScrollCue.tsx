@@ -1,9 +1,10 @@
 import { memo } from "react";
-import { Animated, Pressable, StyleSheet, Text, StyleProp, ViewStyle } from "react-native";
+import { Pressable, StyleSheet, Text, StyleProp, ViewStyle } from "react-native";
+import Animated, { AnimatedStyleProp } from "react-native-reanimated";
 import { Feather } from "@expo/vector-icons";
 
 type HeroScrollCueProps = {
-  translateY: Animated.Value;
+  translateStyle: AnimatedStyleProp<ViewStyle>;
   onPress: () => void;
   accessibilityLabel?: string;
   label?: string;
@@ -11,19 +12,15 @@ type HeroScrollCueProps = {
 };
 
 function HeroScrollCueComponent({
-  translateY,
+  translateStyle,
   onPress,
   accessibilityLabel = "Deslizar hacia abajo",
   label = "Deslizar",
   style,
 }: HeroScrollCueProps) {
   return (
-    <Pressable
-      accessibilityLabel={accessibilityLabel}
-      onPress={onPress}
-      style={[styles.container, style]}
-    >
-      <Animated.View style={[styles.content, { transform: [{ translateY }] }]}>
+    <Pressable accessibilityLabel={accessibilityLabel} onPress={onPress} style={[styles.container, style]}>
+      <Animated.View style={[styles.content, translateStyle]}>
         <Feather name="chevron-down" size={28} color="#ffffff" />
       </Animated.View>
       <Text style={styles.label}>{label}</Text>

@@ -52,53 +52,41 @@ function formatLocationString(location: NamedLocation) {
   return `${location.department.name} · ${location.city.name} · ${location.neighborhood.name}`;
 }
 
-export function useProfileCardData(profile: ProfileLike) {
-  const age = useMemo(() => calcAge(profile.birthDate), [profile.birthDate]);
-
-  const basicInfo = useMemo(
-    () => [
-      labelFromRecord(PROFILE_TIDINESS_LABELS, profile.profile.tidiness),
-      labelFromRecord(PROFILE_SCHEDULE_LABELS, profile.profile.schedule),
-      labelFromRecord(PROFILE_DIET_LABELS, profile.profile.diet),
-      labelFromRecord(PROFILE_OCCUPATION_LABELS, profile.profile.occupation),
-    ],
-    [profile.profile],
-  );
-
-  const locationStrings = useMemo(() => {
+export function createProfileCardData(profile: ProfileLike) {
+  const age = calcAge(profile.birthDate);
+  const basicInfo = [
+    labelFromRecord(PROFILE_TIDINESS_LABELS, profile.profile.tidiness),
+    labelFromRecord(PROFILE_SCHEDULE_LABELS, profile.profile.schedule),
+    labelFromRecord(PROFILE_DIET_LABELS, profile.profile.diet),
+    labelFromRecord(PROFILE_OCCUPATION_LABELS, profile.profile.occupation),
+  ];
+  const locationStrings = (() => {
     const mainLocation = formatLocationString(profile.filters.mainPreferredLocation);
     const otherLocations = profile.filters.preferredLocations.map(formatLocationString);
     return [mainLocation, ...otherLocations];
-  }, [profile.filters]);
-
-  const longestLocation = useMemo(
-    () =>
-      locationStrings.reduce((acc, current) => (current.length > acc.length ? current : acc), ""),
-    [locationStrings],
+  })();
+  const longestLocation = locationStrings.reduce(
+    (acc, current) => (current.length > acc.length ? current : acc),
+    "",
   );
-
-  const budgetLabel = useMemo(() => {
+  const budgetLabel = (() => {
     const min = toInt(profile.filters?.budgetMin);
     const max = toInt(profile.filters?.budgetMax);
     return `$${min}–$${max}`;
-  }, [profile.filters]);
-
-  const headline = useMemo(() => {
+  })();
+  const headline = (() => {
     const baseName = profile.displayName ?? `${profile.firstName} ${profile.lastName}`;
     return `${baseName}, ${age}`;
-  }, [age, profile.displayName, profile.firstName, profile.lastName]);
-
-  const galleryPhotos = useMemo(() => {
+  })();
+  const galleryPhotos = (() => {
     const mainPhoto = sanitizePhotoUrl(profile.photoUrl, FALLBACK_PRIMARY_PHOTO);
     const secondaryPhotos = Array.isArray(profile.secondaryPhotoUrls)
       ? profile.secondaryPhotoUrls.map(url => sanitizePhotoUrl(url, FALLBACK_SECONDARY_PHOTO))
       : [];
     return [mainPhoto, ...secondaryPhotos];
-  }, [profile.photoUrl, profile.secondaryPhotoUrls]);
-
+  })();
   const mainPhoto = galleryPhotos[0];
   const mainLocation = locationStrings[0] ?? "—";
-
   return {
     age,
     basicInfo,
@@ -110,4 +98,8 @@ export function useProfileCardData(profile: ProfileLike) {
     mainPhoto,
     mainLocation,
   };
+}
+
+export function useProfileCardData(profile: ProfileLike) {
+  return useMemo(() => createProfileCardData(profile), [profile]);
 }

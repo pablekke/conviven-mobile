@@ -1,6 +1,5 @@
-import { memo, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useContext, useEffect, useMemo, useState } from "react";
 import {
-  Animated,
   StyleSheet,
   View,
   useWindowDimensions,
@@ -9,6 +8,15 @@ import {
   Text,
   TextStyle,
 } from "react-native";
+import Animated, {
+  AnimatedStyleProp,
+  cancelAnimation,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
@@ -20,27 +28,24 @@ import { ProfileHeadline } from "./ProfileHeadline";
 import { BudgetHighlight } from "./BudgetHighlight";
 import { BasicInfoPills } from "./BasicInfoPills";
 import { FEED_CONSTANTS } from "../constants/feed.constants";
-import { useSwipeCard } from "../hooks";
 import { FeedScrollContext } from "../context/ScrollContext";
 
-export type PrimaryCardProps = {
+type PrimaryCardProps = {
   photos: string[];
   locationStrings: string[];
   locationWidth?: number;
   headline: string;
   budget: string;
   basicInfo: readonly string[];
-  blurOverlayStyle?: StyleProp<ViewStyle>;
-  onSwipeComplete?: (direction: "like" | "dislike") => void;
-  onSwipeXChange?: (value: Animated.Value) => void;
-  enableSwipe?: boolean;
-  enableLocationToggle?: boolean;
   showScrollCue?: boolean;
+  enableLocationToggle?: boolean;
   locationChipStyle?: StyleProp<ViewStyle>;
   locationChipTextStyle?: StyleProp<TextStyle>;
   headlineStyle?: TextStyle;
   budgetStyle?: TextStyle;
   infoWrapperStyle?: StyleProp<ViewStyle>;
+  animatedStyle?: AnimatedStyleProp<ViewStyle>;
+  scrollEnabled?: boolean;
 };
 
 function PrimaryCardComponent({
@@ -50,67 +55,42 @@ function PrimaryCardComponent({
   headline,
   budget,
   basicInfo,
-  blurOverlayStyle,
-  onSwipeComplete,
-  onSwipeXChange,
-  enableSwipe = true,
-  enableLocationToggle = true,
   showScrollCue = true,
+  enableLocationToggle = true,
   locationChipStyle,
   locationChipTextStyle,
   headlineStyle,
   budgetStyle,
   infoWrapperStyle,
+  animatedStyle,
+  scrollEnabled = false,
 }: PrimaryCardProps) {
   const { height: winH, width: winW } = useWindowDimensions();
   const tabBarHeight = FEED_CONSTANTS.TAB_BAR_HEIGHT;
   const computedHeroHeight = Math.max(0, winH + tabBarHeight);
   const heroBottomSpacing = tabBarHeight + FEED_CONSTANTS.HERO_BOTTOM_EXTRA;
-  const cardHeight = Math.max(
-    0,
-    computedHeroHeight - heroBottomSpacing + FEED_CONSTANTS.HERO_IMAGE_EXTRA,
-  );
-
-  const swipeHandlers = useSwipeCard({
-    screenWidth: winW,
-    onComplete: onSwipeComplete,
-    disabled: !enableSwipe,
-  });
-
-  const { swipeX, swipeActive, cardStyle: animatedCardStyle, panHandlers } = swipeHandlers;
-
-  useEffect(() => {
-    if (!onSwipeXChange) return;
-    onSwipeXChange(swipeX);
-  }, [onSwipeXChange, swipeX]);
+  const cardHeight = Math.max(0, computedHeroHeight - heroBottomSpacing + FEED_CONSTANTS.HERO_IMAGE_EXTRA);
 
   const scrollRef = useContext(FeedScrollContext);
-  const arrowTranslate = useRef(new Animated.Value(0)).current;
+  const arrowTranslate = useSharedValue(0);
   const [locationOpen, setLocationOpen] = useState(false);
 
   useEffect(() => {
     if (!showScrollCue) return;
-    const bounce = Animated.loop(
-      Animated.sequence([
-        Animated.timing(arrowTranslate, {
-          toValue: 10,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(arrowTranslate, {
-          toValue: 0,
-          duration: 600,
-          useNativeDriver: true,
-        }),
-      ]),
+    arrowTranslate.value = withRepeat(
+      withSequence(withTiming(10, { duration: 800 }), withTiming(0, { duration: 600 })),
+      -1,
+      false,
     );
-
-    bounce.start();
     return () => {
-      bounce.stop();
-      arrowTranslate.setValue(0);
+      cancelAnimation(arrowTranslate);
+      arrowTranslate.value = 0;
     };
   }, [arrowTranslate, showScrollCue]);
+
+  const arrowStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: arrowTranslate.value }],
+  }));
 
   const overlayStyle = useMemo(() => {
     const blurHeight = Math.min(cardHeight * 0.65, FEED_CONSTANTS.HERO_BLUR_MAX_HEIGHT);
@@ -118,26 +98,27 @@ function PrimaryCardComponent({
     return [
       styles.blurOverlay,
       { top, height: blurHeight + FEED_CONSTANTS.HERO_BLUR_OVERHANG },
-      blurOverlayStyle,
     ] as StyleProp<ViewStyle>;
-  }, [blurOverlayStyle, cardHeight]);
+  }, [cardHeight]);
 
   const toggleLocation = () => {
     if (!enableLocationToggle) return;
-    setLocationOpen(v => !v);
+    setLocationOpen(value => !value);
   };
+
+  useEffect(() => {
+    setLocationOpen(false);
+  }, [locationStrings]);
 
   const mainLocation = locationStrings[0] ?? "—";
 
   return (
-    <Animated.View
-      style={[styles.cardContainer, { height: cardHeight }, animatedCardStyle]}
-      {...panHandlers}
-    >
+    <Animated.View style={[styles.cardContainer, { height: cardHeight }, animatedStyle]}>
       <PhotoCarousel
+        key={photos[0] ?? `${photos.length}`}
         photos={photos}
         height={cardHeight}
-        scrollEnabled={enableSwipe ? !swipeActive : false}
+        scrollEnabled={scrollEnabled}
       />
 
       {enableLocationToggle ? (
@@ -194,14 +175,11 @@ function PrimaryCardComponent({
             </View>
             {showScrollCue ? (
               <HeroScrollCue
-                translateY={arrowTranslate}
+                translateStyle={arrowStyle}
                 onPress={() => {
                   const scrollView = scrollRef?.current;
                   if (!scrollView) return;
-                  scrollView.scrollTo({
-                    y: cardHeight,
-                    animated: true,
-                  });
+                  scrollView.scrollTo({ y: cardHeight, animated: true });
                 }}
                 style={styles.scrollCue}
               />

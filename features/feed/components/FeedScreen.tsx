@@ -1,25 +1,19 @@
-import {
-  View,
-  Text,
-  ScrollView,
-  useWindowDimensions,
-  StatusBar,
-  StyleSheet,
-  Animated,
-} from "react-native";
-import { UserInfoCard, BackgroundCard, PrimaryCard } from "./index";
+import { View, Text, ScrollView, useWindowDimensions, StatusBar, StyleSheet } from "react-native";
+import { useRef, useState } from "react";
+
+import { UserInfoCard } from "./index";
+import { SwipeDeck, SwipeDeckItem } from "./SwipeDeck";
 import { incomingProfilesMock } from "../mocks/incomingProfile";
 import { FEED_CONSTANTS } from "../constants/feed.constants";
 import { FeedScrollContext } from "../context/ScrollContext";
-import { useProfileCardData } from "../hooks";
-import { useCallback, useRef, useState } from "react";
+import { createProfileCardData } from "../hooks";
 
-// -------------------- mock data --------------------
 const profiles = incomingProfilesMock;
-const primaryProfile = profiles[0];
-const secondaryProfile = profiles[1] ?? profiles[0];
-
-// -------------------- Pantalla --------------------
+const deckProfiles = profiles.map((profile, index) => ({
+  id: `profile-${index}`,
+  profile,
+  card: createProfileCardData(profile),
+}));
 function FeedScreen() {
   const TAB_BAR_HEIGHT = FEED_CONSTANTS.TAB_BAR_HEIGHT;
 
@@ -32,46 +26,30 @@ function FeedScreen() {
   );
 
   const [locW, setLocW] = useState<number | undefined>(undefined);
-  const [primarySwipeX, setPrimarySwipeX] = useState<Animated.Value | null>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
   const mainRef = useRef<ScrollView | null>(null);
+  const deckItems: SwipeDeckItem<(typeof profiles)[number]>[] = deckProfiles;
 
-  const handleSwipeXChange = useCallback((value: Animated.Value) => {
-    setPrimarySwipeX(prev => (prev === value ? prev : value));
-  }, []);
-
-  const primaryData = useProfileCardData(primaryProfile);
-  const {
-    galleryPhotos: primaryPhotos,
-    locationStrings: primaryLocations,
-    longestLocation: primaryLongestLocation,
-    budgetLabel: primaryBudget,
-    headline: primaryHeadline,
-    basicInfo: primaryBasicInfo,
-  } = primaryData;
-
-  const secondaryData = useProfileCardData(secondaryProfile);
-  const {
-    galleryPhotos: secondaryPhotos,
-    locationStrings: secondaryLocations,
-    budgetLabel: secondaryBudget,
-    headline: secondaryHeadline,
-    basicInfo: secondaryBasicInfo,
-  } = secondaryData;
+  const normalizedIndex = deckItems.length === 0 ? 0 : activeIndex % deckItems.length;
+  const activeItem = deckItems[normalizedIndex];
+  const longestLocation = activeItem?.card.longestLocation ?? "";
+  const budgetLabel = activeItem?.card.budgetLabel ?? "";
+  const activeProfile = activeItem?.profile;
 
   return (
     <View className="flex-1" style={styles.screenShell}>
       <StatusBar barStyle="light-content" />
 
-      {/* Medidor oculto del ancho del chip de ubicación */}
       <View
         className="absolute -left-[9999px] top-0 flex-row items-center px-3"
+        key={longestLocation}
         onLayout={e => {
           const measuredWidth = e.nativeEvent.layout.width;
           const maxWidth = screenWidth * 0.7;
           setLocW(Math.min(measuredWidth, maxWidth));
         }}
       >
-        <Text className="text-[13px] font-semibold flex-1">{primaryLongestLocation}</Text>
+        <Text className="text-[13px] font-semibold flex-1">{longestLocation}</Text>
         <View style={styles.iconSpacer} />
       </View>
 
@@ -85,39 +63,23 @@ function FeedScreen() {
         overScrollMode="never"
         style={styles.mainScroll}
       >
-        {/* HERO */}
         <View className="relative w-full" style={{ height: HERO_IMAGE_HEIGHT }}>
           <FeedScrollContext.Provider value={mainRef}>
-            <BackgroundCard
-              photos={secondaryPhotos}
-              locationStrings={secondaryLocations}
+            <SwipeDeck
+              items={deckItems}
               locationWidth={locW}
-              headline={secondaryHeadline}
-              budget={secondaryBudget}
-              basicInfo={secondaryBasicInfo}
-              swipeX={primarySwipeX ?? undefined}
-              screenWidth={screenWidth}
-            />
-            <PrimaryCard
-              photos={primaryPhotos}
-              locationStrings={primaryLocations}
-              locationWidth={locW}
-              headline={primaryHeadline}
-              budget={primaryBudget}
-              basicInfo={primaryBasicInfo}
-              onSwipeComplete={direction => {
-                console.log(`Swipe ${direction}`);
-              }}
-              onSwipeXChange={handleSwipeXChange}
+              onIndexChange={setActiveIndex}
             />
           </FeedScrollContext.Provider>
         </View>
-        <UserInfoCard
-          profile={primaryProfile.profile}
-          location={primaryProfile.location}
-          filters={primaryProfile.filters}
-          budgetFull={primaryBudget}
-        />
+        {activeProfile ? (
+          <UserInfoCard
+            profile={activeProfile.profile}
+            location={activeProfile.location}
+            filters={activeProfile.filters}
+            budgetFull={budgetLabel}
+          />
+        ) : null}
       </ScrollView>
     </View>
   );
