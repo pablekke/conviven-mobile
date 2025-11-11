@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { StyleProp, StyleSheet, View, ViewStyle, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
@@ -67,26 +67,18 @@ export function SwipeDeck<TProfile>({
   const nextItem = deckLength > 1 ? items[(activeIndex + 1) % deckLength] : undefined;
 
   useEffect(() => {
-    setIndex(prev => {
-      if (deckLength === 0) return 0;
-      return prev % deckLength;
-    });
+    if (deckLength > 0) return;
+    setIndex(0);
   }, [deckLength]);
 
   const finishSwipe = useCallback(
     (direction: SwipeDirection) => {
       if (deckLength === 0) return;
       const currentItem = items[index % deckLength];
-      const nextIndex = (index + 1) % deckLength;
-      blurOpacity.value = 1;
-      nextProgress.value = 0;
-      translateX.value = 0;
-      translateY.value = 0;
-      setIndex(nextIndex);
-      setCanSwipe(true);
+      setIndex(prev => prev + 1);
       onSwipe?.(direction, currentItem);
     },
-    [blurOpacity, deckLength, index, items, nextProgress, onSwipe, translateX, translateY],
+    [deckLength, index, items, onSwipe],
   );
 
   const panGesture = Gesture.Pan()
@@ -160,6 +152,14 @@ export function SwipeDeck<TProfile>({
     );
     return { backgroundColor: color };
   });
+
+  useLayoutEffect(() => {
+    translateX.value = 0;
+    translateY.value = 0;
+    nextProgress.value = 0;
+    blurOpacity.value = 1;
+    setCanSwipe(true);
+  }, [deckLength, index, blurOpacity, nextProgress, setCanSwipe, translateX, translateY]);
 
   if (!activeItem) {
     return null;
