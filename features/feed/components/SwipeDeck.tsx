@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Animated, StyleSheet, Text, View } from "react-native";
+import { Animated, Image, StyleSheet, Text, View } from "react-native";
 
 import { PrimaryCard } from "./PrimaryCard";
 import { BackgroundCard } from "./BackgroundCard";
@@ -16,6 +16,8 @@ type ActiveSnapshot = {
   card: ProfileCardData;
 };
 
+type InternalSnapshot = ActiveSnapshot & { key: string };
+
 type SwipeDeckProps = {
   profiles: readonly ProfileCardSource[];
   locationWidth?: number;
@@ -26,6 +28,9 @@ type SwipeDeckProps = {
 
 const BACKGROUND_PROMOTION_DELAY_MS = 420;
 const TRANSITION_UNLOCK_DELAY_MS = 720;
+const ACTIVE_FADE_IN_DURATION_MS = 220;
+const OUTGOING_FADE_OUT_DURATION_MS = 260;
+const OUTGOING_FADE_OUT_DELAY_MS = 40;
 
 export function SwipeDeck({
   profiles,
@@ -40,6 +45,11 @@ export function SwipeDeck({
     profiles.length > 1 ? 1 : null,
   );
   const [transitionLocked, setTransitionLocked] = useState(false);
+  const [activeReady, setActiveReady] = useState(false);
+  const [outgoingSnapshot, setOutgoingSnapshot] = useState<InternalSnapshot | null>(null);
+
+  const activeOpacity = useRef(new Animated.Value(1)).current;
+  const outgoingOpacity = useRef(new Animated.Value(1)).current;
 
   const backgroundDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const unlockDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -66,6 +76,9 @@ export function SwipeDeck({
     setActiveSwipeX(null);
     setBackgroundIndex(profiles.length > 1 ? 1 : null);
     setTransitionLocked(false);
+    setActiveReady(false);
+    setOutgoingSnapshot(null);
+    outgoingOpacity.setValue(1);
     if (backgroundDelayRef.current) {
       clearTimeout(backgroundDelayRef.current);
       backgroundDelayRef.current = null;
@@ -82,6 +95,10 @@ export function SwipeDeck({
       backgroundDelayRef.current = null;
     }
 
+    if (!activeReady) {
+      return;
+    }
+
     const candidateIndex = index + 1;
     if (!totalCards || candidateIndex >= totalCards) {
       setBackgroundIndex(null);
@@ -90,6 +107,10 @@ export function SwipeDeck({
 
     backgroundDelayRef.current = setTimeout(() => {
       setBackgroundIndex(candidateIndex);
+      const preview = cards[candidateIndex]?.galleryPhotos?.[0];
+      if (preview) {
+        Image.prefetch(preview).catch(() => undefined);
+      }
       backgroundDelayRef.current = null;
     }, BACKGROUND_PROMOTION_DELAY_MS);
 
@@ -99,7 +120,7 @@ export function SwipeDeck({
         backgroundDelayRef.current = null;
       }
     };
-  }, [index, totalCards]);
+  }, [activeReady, cards, index, totalCards]);
 
   useEffect(
     () => () => {
@@ -121,17 +142,48 @@ export function SwipeDeck({
       onActiveProfileChange(null);
       return;
     }
+    if (!activeReady) return;
     onActiveProfileChange({ profile: activeProfile, card: activeCard });
-  }, [activeCard, activeProfile, onActiveProfileChange]);
+  }, [activeCard, activeProfile, activeReady, onActiveProfileChange]);
+
+  useEffect(() => {
+    if (!activeReady) return;
+    Animated.timing(activeOpacity, {
+      toValue: 1,
+      duration: ACTIVE_FADE_IN_DURATION_MS,
+      useNativeDriver: true,
+    }).start();
+  }, [activeOpacity, activeReady]);
+
+  useEffect(() => {
+    if (!activeReady || !outgoingSnapshot) return;
+    Animated.timing(outgoingOpacity, {
+      toValue: 0,
+      duration: OUTGOING_FADE_OUT_DURATION_MS,
+      delay: OUTGOING_FADE_OUT_DELAY_MS,
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      if (!finished) return;
+      setOutgoingSnapshot(null);
+      outgoingOpacity.setValue(1);
+    });
+  }, [activeReady, outgoingOpacity, outgoingSnapshot]);
 
   const handleSwipeComplete = useCallback(
     (direction: SwipeDirection) => {
       if (transitionLocked) return;
       const currentProfile = profiles[index];
-      if (currentProfile) {
+      const currentCard = cards[index];
+      if (currentProfile && currentCard) {
+        const outgoingKey = `${currentProfile.firstName}-${currentProfile.lastName}-${currentProfile.birthDate}-outgoing-${index}`;
+        setOutgoingSnapshot({ profile: currentProfile, card: currentCard, key: outgoingKey });
         onDecision?.({ direction, profile: currentProfile });
       }
+      setActiveReady(false);
+      activeOpacity.setValue(0);
+      outgoingOpacity.setValue(1);
       setTransitionLocked(true);
+      setBackgroundIndex(null);
       setIndex(prev => prev + 1);
       setActiveSwipeX(null);
       if (unlockDelayRef.current) {
@@ -143,11 +195,15 @@ export function SwipeDeck({
         unlockDelayRef.current = null;
       }, TRANSITION_UNLOCK_DELAY_MS);
     },
-    [index, onDecision, profiles, transitionLocked],
+    [activeOpacity, cards, index, onDecision, outgoingOpacity, profiles, transitionLocked],
   );
 
   const handleSwipeXChange = useCallback((value: Animated.Value) => {
     setActiveSwipeX(value);
+  }, []);
+
+  const handleActiveReady = useCallback(() => {
+    setActiveReady(prev => (prev ? prev : true));
   }, []);
 
   if (!activeCard || !activeProfile) {
@@ -175,18 +231,43 @@ export function SwipeDeck({
           screenWidth={screenWidth}
         />
       ) : null}
-      <PrimaryCard
-        key={activeKey ?? `active-${index}`}
-        photos={activeCard.galleryPhotos}
-        locationStrings={activeCard.locationStrings}
-        locationWidth={locationWidth}
-        headline={activeCard.headline}
-        budget={activeCard.budgetLabel}
-        basicInfo={activeCard.basicInfo}
-        onSwipeComplete={handleSwipeComplete}
-        onSwipeXChange={handleSwipeXChange}
-        enableSwipe={!transitionLocked}
-      />
+      {outgoingSnapshot ? (
+        <Animated.View
+          pointerEvents="none"
+          style={[styles.outgoingLayer, { opacity: outgoingOpacity }]}
+        >
+          <PrimaryCard
+            key={outgoingSnapshot.key}
+            photos={outgoingSnapshot.card.galleryPhotos}
+            locationStrings={outgoingSnapshot.card.locationStrings}
+            locationWidth={locationWidth}
+            headline={outgoingSnapshot.card.headline}
+            budget={outgoingSnapshot.card.budgetLabel}
+            basicInfo={outgoingSnapshot.card.basicInfo}
+            enableSwipe={false}
+            showScrollCue={false}
+            enableLocationToggle={false}
+          />
+        </Animated.View>
+      ) : null}
+      <Animated.View
+        pointerEvents="box-none"
+        style={[styles.primaryLayer, { opacity: activeOpacity }]}
+      >
+        <PrimaryCard
+          key={activeKey ?? `active-${index}`}
+          photos={activeCard.galleryPhotos}
+          locationStrings={activeCard.locationStrings}
+          locationWidth={locationWidth}
+          headline={activeCard.headline}
+          budget={activeCard.budgetLabel}
+          basicInfo={activeCard.basicInfo}
+          onSwipeComplete={handleSwipeComplete}
+          onSwipeXChange={handleSwipeXChange}
+          onReady={handleActiveReady}
+          enableSwipe={!transitionLocked && activeReady}
+        />
+      </Animated.View>
     </View>
   );
 }
@@ -194,6 +275,15 @@ export function SwipeDeck({
 const styles = StyleSheet.create({
   deckContainer: {
     flex: 1,
+    position: "relative",
+  },
+  primaryLayer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 2,
+  },
+  outgoingLayer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 3,
   },
   emptyState: {
     alignItems: "center",

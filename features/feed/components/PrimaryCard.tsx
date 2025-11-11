@@ -41,6 +41,7 @@ export type PrimaryCardProps = {
   headlineStyle?: TextStyle;
   budgetStyle?: TextStyle;
   infoWrapperStyle?: StyleProp<ViewStyle>;
+  onReady?: () => void;
 };
 
 function PrimaryCardComponent({
@@ -61,6 +62,7 @@ function PrimaryCardComponent({
   headlineStyle,
   budgetStyle,
   infoWrapperStyle,
+  onReady,
 }: PrimaryCardProps) {
   const { height: winH, width: winW } = useWindowDimensions();
   const tabBarHeight = FEED_CONSTANTS.TAB_BAR_HEIGHT;
@@ -138,6 +140,7 @@ function PrimaryCardComponent({
         photos={photos}
         height={cardHeight}
         scrollEnabled={enableSwipe ? !swipeActive : false}
+        onFirstPhotoLoaded={onReady}
       />
 
       {enableLocationToggle ? (
