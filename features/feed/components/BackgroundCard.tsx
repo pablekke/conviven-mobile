@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { ImageBackground, StyleSheet, View, useWindowDimensions, Animated } from "react-native";
+import { Animated, ImageBackground, StyleSheet, View, useWindowDimensions } from "react-native";
 import { BlurView } from "expo-blur";
 
 import { PrimaryCard, PrimaryCardProps } from "./PrimaryCard";
@@ -8,11 +8,23 @@ import { useSwipeTint } from "../hooks/useSwipeTint"; // 👈 importá tu hook a
 
 type BackgroundCardProps = Pick<
   PrimaryCardProps,
-  "photos" | "locationStrings" | "locationWidth" | "headline" | "budget" | "basicInfo"
+  | "photos"
+  | "locationStrings"
+  | "locationWidth"
+  | "headline"
+  | "budget"
+  | "basicInfo"
+  | "onSwipeComplete"
+  | "onSwipeXChange"
+  | "enableSwipe"
+  | "enableLocationToggle"
+  | "showScrollCue"
 > & {
   swipeX?: Animated.Value;
   screenWidth?: number;
   thresholdRatio?: number;
+  blurEnabled?: boolean;
+  blurProgress?: Animated.AnimatedInterpolation<number> | Animated.Value;
 };
 
 function BackgroundCardComponent({
@@ -20,8 +32,16 @@ function BackgroundCardComponent({
   swipeX,
   screenWidth,
   thresholdRatio = 0.25,
+  blurEnabled = true,
+  blurProgress,
+  enableSwipe = false,
+  enableLocationToggle = false,
+  showScrollCue = false,
+  onSwipeComplete,
+  onSwipeXChange,
   ...cardProps
 }: BackgroundCardProps) {
+  console.log("BackgroundCardComponent", cardProps);
   const backgroundPhoto = photos[0];
   const { height: winH, width: winW } = useWindowDimensions();
   const width = screenWidth ?? winW;
@@ -45,6 +65,8 @@ function BackgroundCardComponent({
     maxDislikeOpacity: 0.35,
   });
 
+  const resolvedBlurOpacity = blurEnabled ? (blurProgress ?? 1) : 0;
+
   return (
     <ImageBackground
       source={{ uri: backgroundPhoto }}
@@ -55,25 +77,49 @@ function BackgroundCardComponent({
         <PrimaryCard
           {...cardProps}
           photos={photos}
-          enableSwipe={false}
-          showScrollCue={false}
-          enableLocationToggle={false}
+          enableSwipe={enableSwipe}
+          showScrollCue={showScrollCue}
+          enableLocationToggle={enableLocationToggle}
+          onSwipeComplete={onSwipeComplete}
+          onSwipeXChange={onSwipeXChange}
         />
 
-        {/* Blur del fondo */}
-        <BlurView
-          pointerEvents="none"
-          tint="systemUltraThinMaterialDark"
-          intensity={40}
-          style={StyleSheet.absoluteFillObject}
-        />
+        {blurEnabled ? (
+          <>
+            {/* Blur del fondo */}
+            <Animated.View
+              pointerEvents="none"
+              style={[StyleSheet.absoluteFillObject, { opacity: resolvedBlurOpacity }]}
+            >
+              <BlurView
+                pointerEvents="none"
+                tint="systemUltraThinMaterialDark"
+                intensity={40}
+                style={StyleSheet.absoluteFillObject}
+              />
+            </Animated.View>
 
-        {/* Tinte según swipe */}
-        <Animated.View pointerEvents="none" style={likeStyle} />
-        <Animated.View pointerEvents="none" style={dislikeStyle} />
+            {/* Tinte según swipe */}
+            <Animated.View
+              pointerEvents="none"
+              style={[StyleSheet.absoluteFillObject, { opacity: resolvedBlurOpacity }]}
+            >
+              <Animated.View pointerEvents="none" style={likeStyle} />
+              <Animated.View pointerEvents="none" style={dislikeStyle} />
+            </Animated.View>
 
-        {/* Capa oscura final */}
-        <View pointerEvents="none" style={[StyleSheet.absoluteFillObject, styles.tintOverlay]} />
+            {/* Capa oscura final */}
+            <Animated.View
+              pointerEvents="none"
+              style={[StyleSheet.absoluteFillObject, { opacity: resolvedBlurOpacity }]}
+            >
+              <View
+                pointerEvents="none"
+                style={[StyleSheet.absoluteFillObject, styles.tintOverlay]}
+              />
+            </Animated.View>
+          </>
+        ) : null}
       </View>
     </ImageBackground>
   );
