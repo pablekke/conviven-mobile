@@ -3,6 +3,7 @@ import {
   Animated,
   StyleSheet,
   View,
+  Image,
   useWindowDimensions,
   StyleProp,
   ViewStyle,
@@ -12,7 +13,6 @@ import {
 import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
-
 import { PhotoCarousel } from "./PhotoCarousel";
 import { LocationChip } from "./LocationChip";
 import HeroScrollCue from "./HeroScrollCue";

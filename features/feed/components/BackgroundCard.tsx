@@ -4,7 +4,7 @@ import { BlurView } from "expo-blur";
 
 import { PrimaryCard, PrimaryCardProps } from "./PrimaryCard";
 import { FEED_CONSTANTS } from "../constants/feed.constants";
-import { useSwipeTint } from "../hooks/useSwipeTint"; // 👈 importá tu hook acá
+import { useSwipeTint } from "../hooks/useSwipeTint";
 
 type BackgroundCardProps = Pick<
   PrimaryCardProps,
@@ -41,7 +41,6 @@ function BackgroundCardComponent({
   onSwipeXChange,
   ...cardProps
 }: BackgroundCardProps) {
-  console.log("BackgroundCardComponent", cardProps);
   const backgroundPhoto = photos[0];
   const { height: winH, width: winW } = useWindowDimensions();
   const width = screenWidth ?? winW;
@@ -69,7 +68,7 @@ function BackgroundCardComponent({
 
   return (
     <ImageBackground
-      source={{ uri: backgroundPhoto }}
+      key={backgroundPhoto}
       resizeMode="cover"
       style={[StyleSheet.absoluteFillObject, styles.wrapper, { height: cardHeight }]}
     >

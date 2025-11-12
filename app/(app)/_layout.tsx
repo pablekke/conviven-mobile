@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
 import { Tabs } from "expo-router";
 import { BottomTabBar, BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { StyleSheet, View } from "react-native";
@@ -16,23 +17,32 @@ function CustomTabBar(props: BottomTabBarProps) {
 const tabBarStyles = StyleSheet.create({
   wrapper: {
     paddingTop: 8,
-    backgroundColor: "#ffffff",
+    backgroundColor: "transparent",
     borderTopWidth: 0,
     borderTopColor: "transparent",
-    // 👇 importante: no recortes el contenido
-    // overflow: "hidden",
   },
   bar: {
     height: 70,
-    backgroundColor: "#ffffff",
+    backgroundColor: "transparent",
     borderTopWidth: 0,
     borderTopColor: "transparent",
     shadowOpacity: 0,
     elevation: 0,
   },
-  background: {
-    flex: 1,
-    backgroundColor: "#ffffff",
+  blurBackground: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+  },
+  blurOverlayLight: {
+    backgroundColor: "rgba(255, 255, 255, 0.65)",
+  },
+  blurOverlayDark: {
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
   },
   iconContainer: {
     width: 36,
@@ -44,7 +54,7 @@ const tabBarStyles = StyleSheet.create({
 });
 
 export default function AppLayout() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   const getTabBarIcon = (name: keyof typeof Ionicons.glyphMap) => {
     return ({ color, size, focused }: { color: string; size: number; focused: boolean }) => {
@@ -74,7 +84,16 @@ export default function AppLayout() {
           paddingTop: 2,
         },
         tabBarStyle: tabBarStyles.bar,
-        tabBarBackground: () => <View style={tabBarStyles.background} />,
+        tabBarBackground: () => (
+          <BlurView
+            intensity={60}
+            tint={isDark ? "dark" : "light"}
+            style={[
+              tabBarStyles.blurBackground,
+              isDark ? tabBarStyles.blurOverlayDark : tabBarStyles.blurOverlayLight,
+            ]}
+          />
+        ),
         sceneStyle: {
           backgroundColor: "transparent",
         },

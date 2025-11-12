@@ -63,6 +63,22 @@ function CardDeckComponent({
 
   const sharedSwipeX = useMemo(() => swipeX ?? internalSwipeX, [internalSwipeX, swipeX]);
 
+  useEffect(() => {
+    console.log(
+      "[CardDeck] primary photos",
+      primaryCardProps.photos?.[0],
+      primaryCardProps.photos?.length,
+    );
+  }, [primaryCardProps.photos]);
+
+  useEffect(() => {
+    console.log("[CardDeck] secondary photos", secondary.photos?.[0], secondary.photos?.length);
+  }, [secondary.photos]);
+
+  useEffect(() => {
+    console.log("[CardDeck] activeCard", activeCard);
+  }, [activeCard]);
+
   const animateSwap = useCallback(
     (from: "primary" | "secondary", direction: "like" | "dislike") => {
       const to = from === "primary" ? "secondary" : "primary";
@@ -76,12 +92,13 @@ function CardDeckComponent({
         primary: to === "primary" ? 100 : 50,
         secondary: to === "secondary" ? 100 : 50,
       });
+      console.log("[CardDeck] animateSwap", { from, to, direction });
       incomingOpacity.setValue(1);
 
       Animated.parallel([
         Animated.timing(outgoingOpacity, {
           toValue: 0,
-          duration: 180,
+          duration: 0,
           useNativeDriver: true,
         }),
         Animated.timing(outgoingBlur, {
@@ -172,8 +189,8 @@ function CardDeckComponent({
             blurProgress={secondaryBlur}
             blurEnabled
             enableSwipe={!isTransitioning && activeCard === "secondary"}
-            enableLocationToggle={!isTransitioning && activeCard === "secondary"}
-            showScrollCue={activeCard === "secondary"}
+            enableLocationToggle
+            showScrollCue
             onSwipeComplete={activeCard === "secondary" ? handleSecondarySwipeComplete : undefined}
             onSwipeXChange={activeCard === "secondary" ? handleSecondarySwipeXChange : undefined}
           />
@@ -193,8 +210,8 @@ function CardDeckComponent({
             blurProgress={primaryBlur}
             blurEnabled
             enableSwipe={!isTransitioning && activeCard === "primary"}
-            enableLocationToggle={!isTransitioning && activeCard === "primary"}
-            showScrollCue={activeCard === "primary"}
+            enableLocationToggle
+            showScrollCue
             onSwipeComplete={activeCard === "primary" ? handlePrimarySwipeComplete : undefined}
             onSwipeXChange={activeCard === "primary" ? handlePrimarySwipeXChange : undefined}
           />
