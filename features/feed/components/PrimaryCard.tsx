@@ -126,12 +126,12 @@ function PrimaryCardComponent({
     if (!enableLocationToggle) return;
     setLocationOpen(v => !v);
   };
-
+  console.log("[PrimaryCard] locationStrings", locationStrings);
   const mainLocation = locationStrings[0] ?? "—";
 
   return (
     <Animated.View
-      style={[styles.cardContainer, { height: cardHeight }, animatedCardStyle]}
+      style={[styles.cardContainer, { height: cardHeight }]}
       {...panHandlers}
     >
       <PhotoCarousel
@@ -142,7 +142,7 @@ function PrimaryCardComponent({
 
       {enableLocationToggle ? (
         <LocationChip
-          locations={locationStrings}
+          locations={locationStrings ?? ["Sin ubicación"]}
           width={locationWidth}
           isOpen={locationOpen}
           onToggle={toggleLocation}

@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
 import type { ScrollView, ViewStyle } from "react-native";
 import { Animated, StyleSheet, View, useWindowDimensions } from "react-native";
@@ -26,10 +26,15 @@ type CardDeckProps = {
   secondary: CardDeckCardProps;
 };
 
+const buildCardIdentity = (card: CardDeckCardProps) => {
+  const firstPhoto = card.photos?.[0] ?? "";
+  return `${firstPhoto}|${card.headline}|${card.budget}`;
+};
+
 function CardDeckComponent({
   screenWidth,
   scrollRef,
-  swipeX,
+  swipeX: _swipeX,
   className = "relative w-full",
   style,
   primary,
@@ -42,18 +47,9 @@ function CardDeckComponent({
   const heroImageHeight = computeHeroImageHeight(heroHeight, heroBottomSpacing);
   const width = screenWidth ?? winW;
 
-  const [deckZ, setDeckZ] = useState<{ primary: number; secondary: number }>({
-    primary: 100,
-    secondary: 50,
-  });
-  const [activeCard, setActiveCard] = useState<"primary" | "secondary">("primary");
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [internalSwipeX, setInternalSwipeX] = useState<Animated.Value | undefined>(undefined);
-
   const primaryBlur = useRef(new Animated.Value(0)).current;
   const secondaryBlur = useRef(new Animated.Value(1)).current;
   const primaryOpacity = useRef(new Animated.Value(1)).current;
-  const secondaryOpacity = useRef(new Animated.Value(1)).current;
 
   const {
     onSwipeComplete: primaryOnSwipeComplete,
@@ -61,7 +57,13 @@ function CardDeckComponent({
     ...primaryCardProps
   } = primary;
 
-  const sharedSwipeX = useMemo(() => swipeX ?? internalSwipeX, [internalSwipeX, swipeX]);
+  const [primarySnapshot, setPrimarySnapshot] = useState<CardDeckCardProps>(primaryCardProps);
+  const [secondarySnapshot, setSecondarySnapshot] = useState<CardDeckCardProps>(secondary);
+
+  const primaryIdentity = buildCardIdentity(primaryCardProps);
+  const secondaryIdentity = buildCardIdentity(secondary);
+  const primaryIdentityRef = useRef(primaryIdentity);
+  const secondaryIdentityRef = useRef(secondaryIdentity);
 
   useEffect(() => {
     console.log(
@@ -76,144 +78,79 @@ function CardDeckComponent({
   }, [secondary.photos]);
 
   useEffect(() => {
-    console.log("[CardDeck] activeCard", activeCard);
-  }, [activeCard]);
+    if (primaryIdentityRef.current === primaryIdentity) {
+      return;
+    }
+    primaryIdentityRef.current = primaryIdentity;
+    setPrimarySnapshot(primaryCardProps);
+    primaryOpacity.setValue(1);
+  }, [primaryCardProps, primaryIdentity, primaryOpacity]);
 
-  const animateSwap = useCallback(
-    (from: "primary" | "secondary", direction: "like" | "dislike") => {
-      const to = from === "primary" ? "secondary" : "primary";
-      const outgoingOpacity = from === "primary" ? primaryOpacity : secondaryOpacity;
-      const incomingOpacity = from === "primary" ? secondaryOpacity : primaryOpacity;
-      const outgoingBlur = from === "primary" ? primaryBlur : secondaryBlur;
-      const incomingBlur = from === "primary" ? secondaryBlur : primaryBlur;
+  useEffect(() => {
+    if (secondaryIdentityRef.current === secondaryIdentity) {
+      return;
+    }
+    secondaryIdentityRef.current = secondaryIdentity;
+    setSecondarySnapshot(secondary);
+  }, [secondary, secondaryIdentity]);
 
-      setIsTransitioning(true);
-      setDeckZ({
-        primary: to === "primary" ? 100 : 50,
-        secondary: to === "secondary" ? 100 : 50,
-      });
-      console.log("[CardDeck] animateSwap", { from, to, direction });
-      incomingOpacity.setValue(1);
-
-      Animated.parallel([
-        Animated.timing(outgoingOpacity, {
-          toValue: 0,
-          duration: 0,
-          useNativeDriver: true,
-        }),
-        Animated.timing(outgoingBlur, {
-          toValue: 1,
-          duration: 220,
-          useNativeDriver: true,
-        }),
-        Animated.timing(incomingBlur, {
-          toValue: 0,
-          duration: 220,
-          useNativeDriver: true,
-        }),
-      ]).start(({ finished }) => {
-        if (!finished) {
-          return;
-        }
-        outgoingOpacity.setValue(1);
-        setActiveCard(to);
-        setInternalSwipeX(undefined);
-        setIsTransitioning(false);
+  const handlePrimarySwipeComplete = useCallback(
+    (direction: "like" | "dislike") => {
+      primaryOpacity.setValue(0);
+      setPrimarySnapshot(secondarySnapshot);
+      Animated.timing(primaryOpacity, {
+        toValue: 1,
+        duration: 220,
+        useNativeDriver: true,
+      }).start(({ finished }) => {
+        if (!finished) return;
         primaryOnSwipeComplete?.(direction);
       });
     },
-    [primaryBlur, primaryOnSwipeComplete, primaryOpacity, secondaryBlur, secondaryOpacity],
-  );
-
-  const handlePrimarySwipeComplete = useCallback(
-    (direction: "like" | "dislike") => animateSwap("primary", direction),
-    [animateSwap],
-  );
-
-  const handleSecondarySwipeComplete = useCallback(
-    (direction: "like" | "dislike") => animateSwap("secondary", direction),
-    [animateSwap],
+    [primaryOnSwipeComplete, primaryOpacity, secondarySnapshot],
   );
 
   const handlePrimarySwipeXChange = useCallback(
     (value: Animated.Value) => {
-      if (activeCard !== "primary") return;
-      setInternalSwipeX(value);
       primaryOnSwipeXChange?.(value);
     },
-    [activeCard, primaryOnSwipeXChange],
-  );
-
-  const handleSecondarySwipeXChange = useCallback(
-    (value: Animated.Value) => {
-      if (activeCard !== "secondary") return;
-      setInternalSwipeX(value);
-      primaryOnSwipeXChange?.(value);
-    },
-    [activeCard, primaryOnSwipeXChange],
+    [primaryOnSwipeXChange],
   );
 
   useEffect(() => {
-    setDeckZ({ primary: 100, secondary: 50 });
-    setActiveCard("primary");
     primaryBlur.setValue(0);
     secondaryBlur.setValue(1);
-    primaryOpacity.setValue(1);
-    secondaryOpacity.setValue(1);
-    setInternalSwipeX(undefined);
-    setIsTransitioning(false);
-  }, [
-    primaryBlur,
-    primaryCardProps.photos?.[0],
-    secondary.photos?.[0],
-    secondaryBlur,
-    primaryOpacity,
-    secondaryOpacity,
-  ]);
+  }, [primaryBlur, primaryIdentity, secondaryIdentity, secondaryBlur]);
 
   return (
     <View className={className} style={[{ height: heroImageHeight }, style]}>
       <FeedScrollContext.Provider value={scrollRef}>
-        <Animated.View
-          pointerEvents={!isTransitioning && activeCard === "secondary" ? "auto" : "none"}
-          style={[
-            StyleSheet.absoluteFillObject,
-            { zIndex: deckZ.secondary },
-            { opacity: secondaryOpacity },
-          ]}
-        >
+        <View style={styles.secondaryLayer}>
           <BackgroundCard
-            {...secondary}
-            swipeX={sharedSwipeX}
+            {...secondarySnapshot}
             screenWidth={width}
             blurProgress={secondaryBlur}
             blurEnabled
-            enableSwipe={!isTransitioning && activeCard === "secondary"}
+            enableSwipe={false}
             enableLocationToggle
             showScrollCue
-            onSwipeComplete={activeCard === "secondary" ? handleSecondarySwipeComplete : undefined}
-            onSwipeXChange={activeCard === "secondary" ? handleSecondarySwipeXChange : undefined}
           />
-        </Animated.View>
+        </View>
 
         <Animated.View
-          pointerEvents={!isTransitioning && activeCard === "primary" ? "auto" : "none"}
-          style={[
-            StyleSheet.absoluteFillObject,
-            { zIndex: deckZ.primary },
-            { opacity: primaryOpacity },
-          ]}
+          pointerEvents="auto"
+          style={[styles.primaryLayer, { opacity: primaryOpacity }]}
         >
           <BackgroundCard
-            {...primaryCardProps}
+            {...primarySnapshot}
             screenWidth={width}
             blurProgress={primaryBlur}
             blurEnabled
-            enableSwipe={!isTransitioning && activeCard === "primary"}
+            enableSwipe
             enableLocationToggle
             showScrollCue
-            onSwipeComplete={activeCard === "primary" ? handlePrimarySwipeComplete : undefined}
-            onSwipeXChange={activeCard === "primary" ? handlePrimarySwipeXChange : undefined}
+            onSwipeComplete={handlePrimarySwipeComplete}
+            onSwipeXChange={handlePrimarySwipeXChange}
           />
         </Animated.View>
       </FeedScrollContext.Provider>
@@ -222,3 +159,14 @@ function CardDeckComponent({
 }
 
 export const CardDeck = memo(CardDeckComponent);
+
+const styles = StyleSheet.create({
+  secondaryLayer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 50,
+  },
+  primaryLayer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 100,
+  },
+});

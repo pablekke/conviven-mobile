@@ -98,25 +98,7 @@ function BackgroundCardComponent({
               />
             </Animated.View>
 
-            {/* Tinte según swipe */}
-            <Animated.View
-              pointerEvents="none"
-              style={[StyleSheet.absoluteFillObject, { opacity: resolvedBlurOpacity }]}
-            >
-              <Animated.View pointerEvents="none" style={likeStyle} />
-              <Animated.View pointerEvents="none" style={dislikeStyle} />
-            </Animated.View>
 
-            {/* Capa oscura final */}
-            <Animated.View
-              pointerEvents="none"
-              style={[StyleSheet.absoluteFillObject, { opacity: resolvedBlurOpacity }]}
-            >
-              <View
-                pointerEvents="none"
-                style={[StyleSheet.absoluteFillObject, styles.tintOverlay]}
-              />
-            </Animated.View>
           </>
         ) : null}
       </View>
