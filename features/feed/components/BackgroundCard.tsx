@@ -19,6 +19,7 @@ type BackgroundCardProps = Pick<
   | "enableSwipe"
   | "enableLocationToggle"
   | "showScrollCue"
+  | "swipeOpacityEnabled"
 > & {
   swipeX?: Animated.Value;
   screenWidth?: number;
@@ -39,6 +40,7 @@ function BackgroundCardComponent({
   showScrollCue = false,
   onSwipeComplete,
   onSwipeXChange,
+  swipeOpacityEnabled = true,
   ...cardProps
 }: BackgroundCardProps) {
   const backgroundPhoto = photos[0];
@@ -81,6 +83,7 @@ function BackgroundCardComponent({
           enableLocationToggle={enableLocationToggle}
           onSwipeComplete={onSwipeComplete}
           onSwipeXChange={onSwipeXChange}
+          swipeOpacityEnabled={swipeOpacityEnabled}
         />
 
         {blurEnabled ? (
@@ -97,8 +100,6 @@ function BackgroundCardComponent({
                 style={StyleSheet.absoluteFillObject}
               />
             </Animated.View>
-
-
           </>
         ) : null}
       </View>

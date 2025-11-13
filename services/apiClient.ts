@@ -110,7 +110,12 @@ function ensureRequestId(headers: Record<string, string>, requestId?: string): s
   return id;
 }
 
-const AUTH_PUBLIC_PATHS = [/^\/auth\/login/i, /^\/auth\/register/i, /^\/auth\/refresh/i];
+const AUTH_PUBLIC_PATHS = [
+  /^\/auth\/login/i,
+  /^\/auth\/register/i,
+  /^\/auth\/refresh/i,
+  /^\/locations(?:\/|$)/i,
+];
 
 function shouldAttachAuth(endpoint: string): boolean {
   const normalized = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;

@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Animated, PanResponder } from "react-native";
+import { Animated, PanResponder, type ViewStyle } from "react-native";
 
 type SwipeDirection = "like" | "dislike";
 
@@ -12,6 +12,7 @@ interface UseSwipeCardOptions {
   dragResistance?: number;
   /** grados máx de inclinación a cada lado */
   tiltMaxDeg?: number;
+  opacityEnabled?: boolean;
 }
 
 export function useSwipeCard({
@@ -19,16 +20,14 @@ export function useSwipeCard({
   onComplete,
   thresholdRatio = 0.25,
   disabled = false,
-  dragResistance = 0.9,   // más chico = más duro
+  dragResistance = 0.9, // más chico = más duro
   tiltMaxDeg = 13,
+  opacityEnabled = true,
 }: UseSwipeCardOptions) {
   const swipeX = useRef(new Animated.Value(0)).current;
   const [swipeActiveState, setSwipeActive] = useState(false);
 
-  const likeThreshold = useMemo(
-    () => screenWidth * thresholdRatio,
-    [screenWidth, thresholdRatio]
-  );
+  const likeThreshold = useMemo(() => screenWidth * thresholdRatio, [screenWidth, thresholdRatio]);
 
   const rotation = useMemo(() => {
     if (disabled) return "0deg";
@@ -38,10 +37,27 @@ export function useSwipeCard({
     });
   }, [disabled, screenWidth, swipeX, tiltMaxDeg]);
 
-  const cardStyle = useMemo(
-    () => (disabled ? {} : { transform: [{ translateX: swipeX }, { rotate: rotation }] }),
-    [disabled, rotation, swipeX]
-  );
+  const fadeStart = useMemo(() => screenWidth * 0.3, [screenWidth]);
+
+  const opacity = useMemo(() => {
+    if (disabled || !opacityEnabled) return undefined;
+    return swipeX.interpolate({
+      inputRange: [-screenWidth, -fadeStart, 0, fadeStart, screenWidth],
+      outputRange: [0, 1, 1, 1, 0],
+      extrapolate: "clamp",
+    });
+  }, [disabled, fadeStart, opacityEnabled, screenWidth, swipeX]);
+
+  const cardStyle = useMemo<Animated.WithAnimatedValue<ViewStyle> | undefined>(() => {
+    if (disabled) return undefined;
+    const style: Animated.WithAnimatedValue<ViewStyle> = {
+      transform: [{ translateX: swipeX }, { rotate: rotation }],
+    };
+    if (opacity) {
+      style.opacity = opacity as Animated.AnimatedInterpolation<string | number>;
+    }
+    return style;
+  }, [disabled, opacity, rotation, swipeX]);
 
   const resetSwipe = useCallback(() => {
     if (disabled) return;
@@ -60,7 +76,7 @@ export function useSwipeCard({
       if (disabled) return;
       Animated.timing(swipeX, {
         toValue: direction === "like" ? screenWidth + 160 : -screenWidth - 160,
-        duration: 220,
+        duration: 320,
         useNativeDriver: true,
       }).start(() => {
         onComplete?.(direction);
@@ -68,7 +84,7 @@ export function useSwipeCard({
         setSwipeActive(false);
       });
     },
-    [disabled, onComplete, screenWidth, swipeX]
+    [disabled, onComplete, screenWidth, swipeX],
   );
 
   const panResponder = useMemo(() => {

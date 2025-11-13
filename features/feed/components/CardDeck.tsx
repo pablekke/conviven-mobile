@@ -59,6 +59,8 @@ function CardDeckComponent({
 
   const [primarySnapshot, setPrimarySnapshot] = useState<CardDeckCardProps>(primaryCardProps);
   const [secondarySnapshot, setSecondarySnapshot] = useState<CardDeckCardProps>(secondary);
+  const [swipeOpacityEnabled, setSwipeOpacityEnabled] = useState(false);
+  const pendingOpacityEnableRef = useRef(false);
 
   const primaryIdentity = buildCardIdentity(primaryCardProps);
   const secondaryIdentity = buildCardIdentity(secondary);
@@ -96,11 +98,13 @@ function CardDeckComponent({
 
   const handlePrimarySwipeComplete = useCallback(
     (direction: "like" | "dislike") => {
+      setSwipeOpacityEnabled(false);
       primaryOpacity.setValue(0);
+      pendingOpacityEnableRef.current = true;
       setPrimarySnapshot(secondarySnapshot);
       Animated.timing(primaryOpacity, {
         toValue: 1,
-        duration: 220,
+        duration: 320,
         useNativeDriver: true,
       }).start(({ finished }) => {
         if (!finished) return;
@@ -122,6 +126,15 @@ function CardDeckComponent({
     secondaryBlur.setValue(1);
   }, [primaryBlur, primaryIdentity, secondaryIdentity, secondaryBlur]);
 
+  useEffect(() => {
+    if (!pendingOpacityEnableRef.current) return;
+    pendingOpacityEnableRef.current = false;
+    const timeout = setTimeout(() => {
+      setSwipeOpacityEnabled(true);
+    }, 300); //retrasa que vuelva la opacidad para que vuelva a aparecer la primary
+    return () => clearTimeout(timeout);
+  }, [primarySnapshot]);
+
   return (
     <View className={className} style={[{ height: heroImageHeight }, style]}>
       <FeedScrollContext.Provider value={scrollRef}>
@@ -134,6 +147,7 @@ function CardDeckComponent({
             enableSwipe={false}
             enableLocationToggle
             showScrollCue
+            swipeOpacityEnabled={false}
           />
         </View>
 
@@ -151,6 +165,7 @@ function CardDeckComponent({
             showScrollCue
             onSwipeComplete={handlePrimarySwipeComplete}
             onSwipeXChange={handlePrimarySwipeXChange}
+            swipeOpacityEnabled={swipeOpacityEnabled}
           />
         </Animated.View>
       </FeedScrollContext.Provider>

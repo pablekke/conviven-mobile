@@ -3,7 +3,6 @@ import {
   Animated,
   StyleSheet,
   View,
-  Image,
   useWindowDimensions,
   StyleProp,
   ViewStyle,
@@ -41,6 +40,7 @@ export type PrimaryCardProps = {
   headlineStyle?: TextStyle;
   budgetStyle?: TextStyle;
   infoWrapperStyle?: StyleProp<ViewStyle>;
+  swipeOpacityEnabled?: boolean;
 };
 
 function PrimaryCardComponent({
@@ -61,6 +61,7 @@ function PrimaryCardComponent({
   headlineStyle,
   budgetStyle,
   infoWrapperStyle,
+  swipeOpacityEnabled = true,
 }: PrimaryCardProps) {
   const { height: winH, width: winW } = useWindowDimensions();
   const tabBarHeight = FEED_CONSTANTS.TAB_BAR_HEIGHT;
@@ -75,6 +76,7 @@ function PrimaryCardComponent({
     screenWidth: winW,
     onComplete: onSwipeComplete,
     disabled: !enableSwipe,
+    opacityEnabled: swipeOpacityEnabled,
   });
 
   const { swipeX, swipeActive, cardStyle: animatedCardStyle, panHandlers } = swipeHandlers;
@@ -131,7 +133,7 @@ function PrimaryCardComponent({
 
   return (
     <Animated.View
-      style={[styles.cardContainer, { height: cardHeight }]}
+      style={[styles.cardContainer, { height: cardHeight }, animatedCardStyle]}
       {...panHandlers}
     >
       <PhotoCarousel

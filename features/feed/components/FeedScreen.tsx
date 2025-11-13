@@ -23,6 +23,7 @@ function FeedScreen() {
 
   const deck = useProfileDeck(profiles);
   const { primaryCard, secondaryCard, primaryBackend, advance } = deck;
+  const [noMoreProfiles, setNoMoreProfiles] = useState(deck.total === 0);
 
   const primaryLongestLocation = useMemo(
     () => primaryCard.longestLocation ?? "",
@@ -36,7 +37,10 @@ function FeedScreen() {
   const handleSwipeComplete = useCallback(
     (direction: "like" | "dislike") => {
       console.log(`Swipe ${direction}`);
-      advance(direction);
+      const advanced = advance(direction);
+      if (!advanced) {
+        setNoMoreProfiles(true);
+      }
     },
     [advance],
   );
@@ -70,34 +74,42 @@ function FeedScreen() {
         overScrollMode="never"
         style={styles.mainScroll}
       >
-        {/* HERO */}
-        <CardDeck
-          screenWidth={screenWidth}
-          scrollRef={mainRef}
-          primary={{
-            photos: primaryCard.galleryPhotos,
-            locationStrings: primaryCard.locationStrings,
-            locationWidth: locW,
-            headline: primaryCard.headline,
-            budget: primaryCard.budgetLabel,
-            basicInfo: primaryCard.basicInfo,
-            onSwipeComplete: handleSwipeComplete,
-          }}
-          secondary={{
-            photos: secondaryCard.galleryPhotos,
-            locationStrings: secondaryCard.locationStrings,
-            locationWidth: locW,
-            headline: secondaryCard.headline,
-            budget: secondaryCard.budgetLabel,
-            basicInfo: secondaryCard.basicInfo,
-          }}
-        />
-        <UserInfoCard
-          profile={mapBackendProfileToUiProfile(activeBackend.profile)}
-          location={mapBackendLocationToUi(activeBackend.location)}
-          filters={mapBackendFiltersToUi(activeBackend.filters)}
-          budgetFull={primaryCard.budgetLabel}
-        />
+        {noMoreProfiles ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyTitle}>No hay más personas</Text>
+            <Text style={styles.emptySubtitle}>Vuelve más tarde para ver nuevos perfiles.</Text>
+          </View>
+        ) : (
+          <>
+            <CardDeck
+              screenWidth={screenWidth}
+              scrollRef={mainRef}
+              primary={{
+                photos: primaryCard.galleryPhotos,
+                locationStrings: primaryCard.locationStrings,
+                locationWidth: locW,
+                headline: primaryCard.headline,
+                budget: primaryCard.budgetLabel,
+                basicInfo: primaryCard.basicInfo,
+                onSwipeComplete: handleSwipeComplete,
+              }}
+              secondary={{
+                photos: secondaryCard.galleryPhotos,
+                locationStrings: secondaryCard.locationStrings,
+                locationWidth: locW,
+                headline: secondaryCard.headline,
+                budget: secondaryCard.budgetLabel,
+                basicInfo: secondaryCard.basicInfo,
+              }}
+            />
+            <UserInfoCard
+              profile={mapBackendProfileToUiProfile(activeBackend.profile)}
+              location={mapBackendLocationToUi(activeBackend.location)}
+              filters={mapBackendFiltersToUi(activeBackend.filters)}
+              budgetFull={primaryCard.budgetLabel}
+            />
+          </>
+        )}
       </ScrollView>
     </View>
   );
@@ -118,5 +130,21 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     backgroundColor: "transparent",
+  },
+  emptyState: {
+    marginTop: 96,
+    alignItems: "center",
+    gap: 12,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "white",
+  },
+  emptySubtitle: {
+    fontSize: 16,
+    color: "rgba(255,255,255,0.7)",
+    textAlign: "center",
+    paddingHorizontal: 24,
   },
 });

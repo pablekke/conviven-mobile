@@ -12,8 +12,8 @@ function BasicInfoPillsComponent({ items }: BasicInfoPillsProps) {
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-2 mb-8">
       <View className="flex-row">
-        {items.map(item => (
-          <Pill key={item}>{item}</Pill>
+        {items.map((item, index) => (
+          <Pill key={`${item}-${index}`}>{item}</Pill>
         ))}
       </View>
     </ScrollView>

@@ -82,8 +82,8 @@ export function useProfileDeck(profiles: readonly MockedBackendUser[]): UseProfi
   const tertiaryProfile = tertiaryIndex != null ? profileLikes[tertiaryIndex] : null;
 
   const primaryCard = useProfileCardData(primaryProfile ?? fallbackProfile);
-  const secondaryCard = useProfileCardData(secondaryProfile ?? fallbackProfile);
-  const tertiaryCard = useProfileCardData(tertiaryProfile ?? fallbackProfile);
+  const secondaryCard = useProfileCardData(secondaryProfile ?? EMPTY_PROFILE);
+  const tertiaryCard = useProfileCardData(tertiaryProfile ?? EMPTY_PROFILE);
 
   const advance = useCallback(
     (_direction: SwipeDirection) => {
