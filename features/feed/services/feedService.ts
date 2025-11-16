@@ -67,6 +67,7 @@ class FeedService {
     totalPages: number;
     hasNext: boolean;
     hasPrev: boolean;
+    raw: BackendFeedResponse;
   }> {
     try {
       const params = new URLSearchParams({
@@ -83,7 +84,11 @@ class FeedService {
       const backendData: BackendFeedResponse = isBackendFeedResponse(data)
         ? (data as BackendFeedResponse)
         : ({ ...data, items: data.items as unknown[] as any[] } as unknown as BackendFeedResponse);
-      return FeedAdapter.mapBackendResponseToFeedResponse(backendData);
+      const mapped = FeedAdapter.mapBackendResponseToFeedResponse(backendData);
+      return {
+        ...mapped,
+        raw: backendData,
+      };
     } catch (error) {
       console.error("Error fetching matching feed:", error);
       throw error;

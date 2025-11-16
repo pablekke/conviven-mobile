@@ -7,9 +7,9 @@ import { useProfileCardData, type ProfileLike } from "./useProfileCardData";
 type SwipeDirection = "like" | "dislike";
 
 const EMPTY_LOCATION = {
-  department: { name: "" },
-  city: { name: "" },
-  neighborhood: { name: "" },
+  department: { name: "Mongolandia" },
+  city: { name: "Mongolandia" },
+  neighborhood: { name: "Mongolandia" },
 };
 
 const EMPTY_PROFILE: ProfileLike = {

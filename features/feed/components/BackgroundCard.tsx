@@ -4,7 +4,6 @@ import { BlurView } from "expo-blur";
 
 import { PrimaryCard, PrimaryCardProps } from "./PrimaryCard";
 import { FEED_CONSTANTS } from "../constants/feed.constants";
-import { useSwipeTint } from "../hooks/useSwipeTint";
 
 type BackgroundCardProps = Pick<
   PrimaryCardProps,
@@ -21,18 +20,12 @@ type BackgroundCardProps = Pick<
   | "showScrollCue"
   | "swipeOpacityEnabled"
 > & {
-  swipeX?: Animated.Value;
-  screenWidth?: number;
-  thresholdRatio?: number;
   blurEnabled?: boolean;
   blurProgress?: Animated.AnimatedInterpolation<number> | Animated.Value;
 };
 
 function BackgroundCardComponent({
   photos,
-  swipeX,
-  screenWidth,
-  thresholdRatio = 0.25,
   blurEnabled = true,
   blurProgress,
   enableSwipe = false,
@@ -44,8 +37,7 @@ function BackgroundCardComponent({
   ...cardProps
 }: BackgroundCardProps) {
   const backgroundPhoto = photos[0];
-  const { height: winH, width: winW } = useWindowDimensions();
-  const width = screenWidth ?? winW;
+  const { height: winH } = useWindowDimensions();
 
   const tabBarHeight = FEED_CONSTANTS.TAB_BAR_HEIGHT;
   const computedHeroHeight = Math.max(0, winH + tabBarHeight);
@@ -54,17 +46,6 @@ function BackgroundCardComponent({
     0,
     computedHeroHeight - heroBottomSpacing + FEED_CONSTANTS.HERO_IMAGE_EXTRA,
   );
-
-  // 🌀 Hook del tinte dinámico
-  const { likeStyle, dislikeStyle } = useSwipeTint({
-    swipeX: swipeX ?? new Animated.Value(0),
-    screenWidth: width,
-    thresholdRatio,
-    likeColor: "#2EA3F2",
-    dislikeColor: "#e01f1f",
-    maxLikeOpacity: 0.25,
-    maxDislikeOpacity: 0.35,
-  });
 
   const resolvedBlurOpacity = blurEnabled ? (blurProgress ?? 1) : 0;
 
@@ -100,6 +81,17 @@ function BackgroundCardComponent({
                 style={StyleSheet.absoluteFillObject}
               />
             </Animated.View>
+
+            {/* Capa oscura final */}
+            <Animated.View
+              pointerEvents="none"
+              style={[StyleSheet.absoluteFillObject, { opacity: resolvedBlurOpacity }]}
+            >
+              <View
+                pointerEvents="none"
+                style={[StyleSheet.absoluteFillObject, styles.tintOverlay]}
+              />
+            </Animated.View>
           </>
         ) : null}
       </View>
@@ -114,7 +106,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 24,
   },
   tintOverlay: {
-    backgroundColor: "rgba(4, 10, 22, 0.45)",
+    backgroundColor: "rgba(4, 10, 22, 0.2)",
   },
 });
 

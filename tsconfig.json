@@ -2,6 +2,7 @@
   "extends": "expo/tsconfig.base.json",
   "compilerOptions": {
     "strict": false,
+    "strictNullChecks": true,
     "baseUrl": ".",
     "paths": { "@/*": ["./*"] },
     "esModuleInterop": true,

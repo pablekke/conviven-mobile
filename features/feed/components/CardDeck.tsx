@@ -7,6 +7,7 @@ import { FeedScrollContext } from "../context/ScrollContext";
 import { FEED_CONSTANTS, computeHeroImageHeight } from "../constants/feed.constants";
 import { BackgroundCard } from "./BackgroundCard";
 import type { PrimaryCardProps } from "./PrimaryCard";
+import { useDeckSwipeTint } from "../hooks/useDeckSwipeTint";
 
 type CardDeckCardProps = Pick<
   PrimaryCardProps,
@@ -59,7 +60,7 @@ function CardDeckComponent({
 
   const [primarySnapshot, setPrimarySnapshot] = useState<CardDeckCardProps>(primaryCardProps);
   const [secondarySnapshot, setSecondarySnapshot] = useState<CardDeckCardProps>(secondary);
-  const [swipeOpacityEnabled, setSwipeOpacityEnabled] = useState(false);
+  const [swipeOpacityEnabled, setSwipeOpacityEnabled] = useState(true);
   const pendingOpacityEnableRef = useRef(false);
 
   const primaryIdentity = buildCardIdentity(primaryCardProps);
@@ -102,6 +103,7 @@ function CardDeckComponent({
       primaryOpacity.setValue(0);
       pendingOpacityEnableRef.current = true;
       setPrimarySnapshot(secondarySnapshot);
+      tint.reset();
       Animated.timing(primaryOpacity, {
         toValue: 1,
         duration: 320,
@@ -116,6 +118,7 @@ function CardDeckComponent({
 
   const handlePrimarySwipeXChange = useCallback(
     (value: Animated.Value) => {
+      tint.setDriver(value);
       primaryOnSwipeXChange?.(value);
     },
     [primaryOnSwipeXChange],
@@ -131,9 +134,12 @@ function CardDeckComponent({
     pendingOpacityEnableRef.current = false;
     const timeout = setTimeout(() => {
       setSwipeOpacityEnabled(true);
-    }, 300); //retrasa que vuelva la opacidad para que vuelva a aparecer la primary
+    }, 900); //retrasa que vuelva la opacidad para que vuelva a aparecer la primary
     return () => clearTimeout(timeout);
   }, [primarySnapshot]);
+
+  const tint = useDeckSwipeTint(width);
+  const { likeStyle, dislikeStyle } = tint;
 
   return (
     <View className={className} style={[{ height: heroImageHeight }, style]}>
@@ -141,7 +147,6 @@ function CardDeckComponent({
         <View style={styles.secondaryLayer}>
           <BackgroundCard
             {...secondarySnapshot}
-            screenWidth={width}
             blurProgress={secondaryBlur}
             blurEnabled
             enableSwipe={false}
@@ -149,6 +154,8 @@ function CardDeckComponent({
             showScrollCue
             swipeOpacityEnabled={false}
           />
+          <Animated.View pointerEvents="none" style={[styles.tintLayer, dislikeStyle]} />
+          <Animated.View pointerEvents="none" style={[styles.tintLayer, likeStyle]} />
         </View>
 
         <Animated.View
@@ -157,7 +164,6 @@ function CardDeckComponent({
         >
           <BackgroundCard
             {...primarySnapshot}
-            screenWidth={width}
             blurProgress={primaryBlur}
             blurEnabled
             enableSwipe
@@ -179,9 +185,20 @@ const styles = StyleSheet.create({
   secondaryLayer: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 50,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    overflow: "hidden",
   },
   primaryLayer: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 100,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    overflow: "hidden",
+  },
+  tintLayer: {
+    ...StyleSheet.absoluteFillObject,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
 });

@@ -1,5 +1,5 @@
 import { View, Text, ScrollView, useWindowDimensions, StatusBar, StyleSheet } from "react-native";
-import { CardDeck, UserInfoCard } from "./index";
+import { CardDeck, UserInfoCard, EmptyFeedCard } from "./index";
 import {
   incomingProfilesMock,
   MockedBackendUser,
@@ -10,8 +10,9 @@ import {
 import { FEED_CONSTANTS } from "../constants/feed.constants";
 import { useProfileDeck } from "../hooks/useProfileDeck";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-// -------------------- mock data --------------------
-const profiles: MockedBackendUser[] = incomingProfilesMock;
+import { feedService } from "../services";
+import { mapBackendItemToMockedUser } from "../adapters/backendToMockedUser";
+import { FEED_USE_MOCK } from "../../../config/env";
 // -------------------- Pantalla --------------------
 function FeedScreen() {
   const TAB_BAR_HEIGHT = FEED_CONSTANTS.TAB_BAR_HEIGHT;
@@ -19,11 +20,61 @@ function FeedScreen() {
   const { width: screenWidth } = useWindowDimensions();
 
   const [locW, setLocW] = useState<number | undefined>(undefined);
+  const [profiles, setProfiles] = useState<MockedBackendUser[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [noMoreProfiles, setNoMoreProfiles] = useState(false);
   const mainRef = useRef<ScrollView | null>(null);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadProfiles = async () => {
+      if (FEED_USE_MOCK) {
+        if (isMounted) {
+          setProfiles(incomingProfilesMock);
+          setNoMoreProfiles(incomingProfilesMock.length === 0);
+          setIsLoading(false);
+        }
+        return;
+      }
+
+      try {
+        const response = await feedService.getMatchingFeed(1, FEED_CONSTANTS.ROOMIES_PER_PAGE);
+        const backendProfiles = response.raw.items
+          .map(mapBackendItemToMockedUser)
+          .filter(Boolean) as MockedBackendUser[];
+
+        if (!isMounted) return;
+
+        if (backendProfiles.length > 0) {
+          setProfiles(backendProfiles);
+          setNoMoreProfiles(false);
+        } else {
+          setProfiles([]);
+          setNoMoreProfiles(true);
+        }
+      } catch (error) {
+        console.warn("[FeedScreen] Backend feed unavailable:", error);
+        if (isMounted) {
+          setProfiles([]);
+          setNoMoreProfiles(true);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadProfiles();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const deck = useProfileDeck(profiles);
-  const { primaryCard, secondaryCard, primaryBackend, advance } = deck;
-  const [noMoreProfiles, setNoMoreProfiles] = useState(deck.total === 0);
+  const { primaryCard, secondaryCard, primaryBackend, advance, total } = deck;
 
   const primaryLongestLocation = useMemo(
     () => primaryCard.longestLocation ?? "",
@@ -45,7 +96,11 @@ function FeedScreen() {
     [advance],
   );
 
-  const activeBackend = primaryBackend ?? profiles[0];
+  useEffect(() => {
+    if (total > 0) {
+      setNoMoreProfiles(false);
+    }
+  }, [total]);
 
   return (
     <View className="flex-1" style={styles.screenShell}>
@@ -74,11 +129,8 @@ function FeedScreen() {
         overScrollMode="never"
         style={styles.mainScroll}
       >
-        {noMoreProfiles ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>No hay más personas</Text>
-            <Text style={styles.emptySubtitle}>Vuelve más tarde para ver nuevos perfiles.</Text>
-          </View>
+        {isLoading ? null : noMoreProfiles || total === 0 ? (
+          <EmptyFeedCard />
         ) : (
           <>
             <CardDeck
@@ -102,12 +154,14 @@ function FeedScreen() {
                 basicInfo: secondaryCard.basicInfo,
               }}
             />
-            <UserInfoCard
-              profile={mapBackendProfileToUiProfile(activeBackend.profile)}
-              location={mapBackendLocationToUi(activeBackend.location)}
-              filters={mapBackendFiltersToUi(activeBackend.filters)}
-              budgetFull={primaryCard.budgetLabel}
-            />
+            {primaryBackend ? (
+              <UserInfoCard
+                profile={mapBackendProfileToUiProfile(primaryBackend.profile)}
+                location={mapBackendLocationToUi(primaryBackend.location)}
+                filters={mapBackendFiltersToUi(primaryBackend.filters)}
+                budgetFull={primaryCard.budgetLabel}
+              />
+            ) : null}
           </>
         )}
       </ScrollView>
@@ -130,21 +184,5 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     backgroundColor: "transparent",
-  },
-  emptyState: {
-    marginTop: 96,
-    alignItems: "center",
-    gap: 12,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "white",
-  },
-  emptySubtitle: {
-    fontSize: 16,
-    color: "rgba(255,255,255,0.7)",
-    textAlign: "center",
-    paddingHorizontal: 24,
   },
 });
