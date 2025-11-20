@@ -134,7 +134,7 @@ function CardDeckComponent({
     pendingOpacityEnableRef.current = false;
     const timeout = setTimeout(() => {
       setSwipeOpacityEnabled(true);
-    }, 900); //retrasa que vuelva la opacidad para que vuelva a aparecer la primary
+    }, 300); //retrasa que vuelva la opacidad para que vuelva a aparecer la primary
     return () => clearTimeout(timeout);
   }, [primarySnapshot]);
 

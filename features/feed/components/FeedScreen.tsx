@@ -133,34 +133,34 @@ function FeedScreen() {
           <EmptyFeedCard />
         ) : (
           <>
-            <CardDeck
-              screenWidth={screenWidth}
-              scrollRef={mainRef}
-              primary={{
+        <CardDeck
+          screenWidth={screenWidth}
+          scrollRef={mainRef}
+          primary={{
                 photos: primaryCard.galleryPhotos,
                 locationStrings: primaryCard.locationStrings,
-                locationWidth: locW,
+            locationWidth: locW,
                 headline: primaryCard.headline,
                 budget: primaryCard.budgetLabel,
                 basicInfo: primaryCard.basicInfo,
                 onSwipeComplete: handleSwipeComplete,
-              }}
-              secondary={{
+          }}
+          secondary={{
                 photos: secondaryCard.galleryPhotos,
                 locationStrings: secondaryCard.locationStrings,
-                locationWidth: locW,
+            locationWidth: locW,
                 headline: secondaryCard.headline,
                 budget: secondaryCard.budgetLabel,
                 basicInfo: secondaryCard.basicInfo,
-              }}
-            />
+          }}
+        />
             {primaryBackend ? (
-              <UserInfoCard
+        <UserInfoCard
                 profile={mapBackendProfileToUiProfile(primaryBackend.profile)}
                 location={mapBackendLocationToUi(primaryBackend.location)}
                 filters={mapBackendFiltersToUi(primaryBackend.filters)}
                 budgetFull={primaryCard.budgetLabel}
-              />
+        />
             ) : null}
           </>
         )}

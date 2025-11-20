@@ -48,7 +48,18 @@ function sanitizePhotoUrl(url: unknown, fallback: string): string {
   return parsed;
 }
 
-function formatLocationString(location: NamedLocation) {
+function formatLocationString(location: NamedLocation, isFirst: boolean = false) {
+  const departmentName = location.department.name?.trim() ?? "";
+  const isMontevideo = departmentName.toLowerCase() === "montevideo";
+  const neighborhoodName = location.neighborhood.name?.trim() ?? "";
+
+  if (isMontevideo) {
+    if (isFirst) {
+      return `Montevideo · ${neighborhoodName}`;
+    }
+    return neighborhoodName;
+  }
+
   return `${location.department.name} · ${location.city.name} · ${location.neighborhood.name}`;
 }
 
@@ -66,8 +77,10 @@ export function useProfileCardData(profile: ProfileLike) {
   );
 
   const locationStrings = useMemo(() => {
-    const mainLocation = formatLocationString(profile.filters.mainPreferredLocation);
-    const otherLocations = profile.filters.preferredLocations.map(formatLocationString);
+    const mainLocation = formatLocationString(profile.filters.mainPreferredLocation, true);
+    const otherLocations = profile.filters.preferredLocations.map(loc =>
+      formatLocationString(loc, false),
+    );
     return [mainLocation, ...otherLocations];
   }, [profile.filters]);
 

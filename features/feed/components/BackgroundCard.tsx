@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import { memo } from "react";
 import { Animated, ImageBackground, StyleSheet, View, useWindowDimensions } from "react-native";
 import { BlurView } from "expo-blur";
 
@@ -83,7 +83,7 @@ function BackgroundCardComponent({
             </Animated.View>
 
             {/* Capa oscura final */}
-            <Animated.View
+              <Animated.View
               pointerEvents="none"
               style={[StyleSheet.absoluteFillObject, { opacity: resolvedBlurOpacity }]}
             >

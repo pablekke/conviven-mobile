@@ -6,7 +6,7 @@ export const DEV_MODE = process.env.EXPO_PUBLIC_DEV_MODE === "true";
 const API_BASE_URL_LOCAL = process.env.EXPO_PUBLIC_API_BASE_URL_LOCAL!;
 const API_BASE_URL_PROD = process.env.EXPO_PUBLIC_API_BASE_URL_PROD!;
 
-export const API_BASE_URL = `${DEV_MODE ? API_BASE_URL_LOCAL : API_BASE_URL_PROD}/scheduler/api`;
+export const API_BASE_URL = `${DEV_MODE ? API_BASE_URL_LOCAL : API_BASE_URL_PROD}/api`;
 
 export const API_TIMEOUT = parseInt(process.env.EXPO_PUBLIC_API_TIMEOUT ?? "15000", 10);
 

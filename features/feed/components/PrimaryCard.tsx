@@ -46,7 +46,6 @@ export type PrimaryCardProps = {
 function PrimaryCardComponent({
   photos,
   locationStrings,
-  locationWidth,
   headline,
   budget,
   basicInfo,
@@ -89,9 +88,11 @@ function PrimaryCardComponent({
   const scrollRef = useContext(FeedScrollContext);
   const arrowTranslate = useRef(new Animated.Value(0)).current;
   const [locationOpen, setLocationOpen] = useState(false);
+  const [activeLocationIndex, setActiveLocationIndex] = useState(0);
 
   useEffect(() => {
     setLocationOpen(false);
+    setActiveLocationIndex(0);
   }, [locationStrings, headline, budget]);
 
   useEffect(() => {
@@ -128,12 +129,7 @@ function PrimaryCardComponent({
     ] as StyleProp<ViewStyle>;
   }, [blurOverlayStyle, cardHeight]);
 
-  const toggleLocation = () => {
-    if (!enableLocationToggle) return;
-    setLocationOpen(v => !v);
-  };
-  console.log("[PrimaryCard] locationStrings", locationStrings);
-  const mainLocation = locationStrings[0] ?? "—";
+  const mainLocation = locationStrings[activeLocationIndex] ?? locationStrings[0] ?? "—";
 
   return (
     <Animated.View
@@ -149,15 +145,17 @@ function PrimaryCardComponent({
       {enableLocationToggle ? (
         <LocationChip
           locations={locationStrings ?? ["Sin ubicación"]}
-          width={locationWidth}
+          activeLabel={mainLocation}
           isOpen={locationOpen}
-          onToggle={toggleLocation}
+          onToggle={() => setLocationOpen(v => !v)}
+          onSelect={(_loc, index) => {
+            setActiveLocationIndex(index);
+          }}
         />
       ) : (
         <View
           style={[
             styles.staticLocationChip,
-            locationWidth != null ? { width: locationWidth } : null,
             locationChipStyle,
           ]}
         >
