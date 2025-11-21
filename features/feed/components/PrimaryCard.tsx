@@ -8,18 +8,18 @@ import {
   ViewStyle,
   Text,
   TextStyle,
+  Image,
 } from "react-native";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
-import { PhotoCarousel } from "./PhotoCarousel";
+// import { PhotoCarousel } from "./PhotoCarousel";
 import { LocationChip } from "./LocationChip";
 import HeroScrollCue from "./HeroScrollCue";
 import { ProfileHeadline } from "./ProfileHeadline";
 import { BudgetHighlight } from "./BudgetHighlight";
 import { BasicInfoPills } from "./BasicInfoPills";
 import { FEED_CONSTANTS } from "../constants/feed.constants";
-import { useSwipeCard } from "../hooks";
 import { FeedScrollContext } from "../context/ScrollContext";
 
 export type PrimaryCardProps = {
@@ -30,9 +30,6 @@ export type PrimaryCardProps = {
   budget: string;
   basicInfo: readonly string[];
   blurOverlayStyle?: StyleProp<ViewStyle>;
-  onSwipeComplete?: (direction: "like" | "dislike") => void;
-  onSwipeXChange?: (value: Animated.Value) => void;
-  enableSwipe?: boolean;
   enableLocationToggle?: boolean;
   showScrollCue?: boolean;
   locationChipStyle?: StyleProp<ViewStyle>;
@@ -40,7 +37,7 @@ export type PrimaryCardProps = {
   headlineStyle?: TextStyle;
   budgetStyle?: TextStyle;
   infoWrapperStyle?: StyleProp<ViewStyle>;
-  swipeOpacityEnabled?: boolean;
+  style?: StyleProp<ViewStyle>;
 };
 
 function PrimaryCardComponent({
@@ -50,9 +47,6 @@ function PrimaryCardComponent({
   budget,
   basicInfo,
   blurOverlayStyle,
-  onSwipeComplete,
-  onSwipeXChange,
-  enableSwipe = true,
   enableLocationToggle = true,
   showScrollCue = true,
   locationChipStyle,
@@ -60,9 +54,9 @@ function PrimaryCardComponent({
   headlineStyle,
   budgetStyle,
   infoWrapperStyle,
-  swipeOpacityEnabled = true,
+  style,
 }: PrimaryCardProps) {
-  const { height: winH, width: winW } = useWindowDimensions();
+  const { height: winH } = useWindowDimensions();
   const tabBarHeight = FEED_CONSTANTS.TAB_BAR_HEIGHT;
   const computedHeroHeight = Math.max(0, winH + tabBarHeight);
   const heroBottomSpacing = tabBarHeight + FEED_CONSTANTS.HERO_BOTTOM_EXTRA;
@@ -70,20 +64,7 @@ function PrimaryCardComponent({
     0,
     computedHeroHeight - heroBottomSpacing + FEED_CONSTANTS.HERO_IMAGE_EXTRA,
   );
-
-  const swipeHandlers = useSwipeCard({
-    screenWidth: winW,
-    onComplete: onSwipeComplete,
-    disabled: !enableSwipe,
-    opacityEnabled: swipeOpacityEnabled,
-  });
-
-  const { swipeX, swipeActive, cardStyle: animatedCardStyle, panHandlers } = swipeHandlers;
-
-  useEffect(() => {
-    if (!onSwipeXChange) return;
-    onSwipeXChange(swipeX);
-  }, [onSwipeXChange, swipeX]);
+  const mainPhoto = photos?.[0];
 
   const scrollRef = useContext(FeedScrollContext);
   const arrowTranslate = useRef(new Animated.Value(0)).current;
@@ -101,7 +82,7 @@ function PrimaryCardComponent({
       Animated.sequence([
         Animated.timing(arrowTranslate, {
           toValue: 10,
-          duration: 800,
+          duration: 300,
           useNativeDriver: true,
         }),
         Animated.timing(arrowTranslate, {
@@ -132,15 +113,20 @@ function PrimaryCardComponent({
   const mainLocation = locationStrings[activeLocationIndex] ?? locationStrings[0] ?? "—";
 
   return (
-    <Animated.View
-      style={[styles.cardContainer, { height: cardHeight }, animatedCardStyle]}
-      {...panHandlers}
-    >
-      <PhotoCarousel
+    <Animated.View style={[styles.cardContainer, { height: cardHeight }, style]}>
+      {/* <PhotoCarousel
         photos={photos}
         height={cardHeight}
-        scrollEnabled={enableSwipe ? !swipeActive : false}
-      />
+        scrollEnabled={false}
+      /> */}
+
+      {mainPhoto ? (
+        <Image
+          source={{ uri: mainPhoto }}
+          style={[styles.heroImage, { height: cardHeight }]}
+          resizeMode="cover"
+        />
+      ) : null}
 
       {enableLocationToggle ? (
         <LocationChip
@@ -153,12 +139,7 @@ function PrimaryCardComponent({
           }}
         />
       ) : (
-        <View
-          style={[
-            styles.staticLocationChip,
-            locationChipStyle,
-          ]}
-        >
+        <View style={[styles.staticLocationChip, locationChipStyle]}>
           <Text style={[styles.staticLocationChipText, locationChipTextStyle]} numberOfLines={1}>
             {mainLocation}
           </Text>
@@ -226,6 +207,9 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
+  },
+  heroImage: {
+    width: "100%",
   },
   blurOverlay: {
     position: "absolute",

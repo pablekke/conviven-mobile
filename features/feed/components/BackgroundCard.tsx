@@ -1,5 +1,6 @@
 import { memo } from "react";
-import { Animated, ImageBackground, StyleSheet, View, useWindowDimensions } from "react-native";
+import { ImageBackground, StyleSheet, View, useWindowDimensions } from "react-native";
+import Animated, { useAnimatedStyle, SharedValue } from "react-native-reanimated";
 import { BlurView } from "expo-blur";
 
 import { PrimaryCard, PrimaryCardProps } from "./PrimaryCard";
@@ -13,27 +14,19 @@ type BackgroundCardProps = Pick<
   | "headline"
   | "budget"
   | "basicInfo"
-  | "onSwipeComplete"
-  | "onSwipeXChange"
-  | "enableSwipe"
   | "enableLocationToggle"
   | "showScrollCue"
-  | "swipeOpacityEnabled"
 > & {
   blurEnabled?: boolean;
-  blurProgress?: Animated.AnimatedInterpolation<number> | Animated.Value;
+  blurProgress?: SharedValue<number>;
 };
 
 function BackgroundCardComponent({
   photos,
   blurEnabled = true,
   blurProgress,
-  enableSwipe = false,
   enableLocationToggle = false,
   showScrollCue = false,
-  onSwipeComplete,
-  onSwipeXChange,
-  swipeOpacityEnabled = true,
   ...cardProps
 }: BackgroundCardProps) {
   const backgroundPhoto = photos[0];
@@ -47,7 +40,11 @@ function BackgroundCardComponent({
     computedHeroHeight - heroBottomSpacing + FEED_CONSTANTS.HERO_IMAGE_EXTRA,
   );
 
-  const resolvedBlurOpacity = blurEnabled ? (blurProgress ?? 1) : 0;
+  const blurStyle = useAnimatedStyle(() => {
+    return {
+      opacity: blurEnabled ? (blurProgress?.value ?? 1) : 0,
+    };
+  });
 
   return (
     <ImageBackground
@@ -59,21 +56,14 @@ function BackgroundCardComponent({
         <PrimaryCard
           {...cardProps}
           photos={photos}
-          enableSwipe={enableSwipe}
           showScrollCue={showScrollCue}
           enableLocationToggle={enableLocationToggle}
-          onSwipeComplete={onSwipeComplete}
-          onSwipeXChange={onSwipeXChange}
-          swipeOpacityEnabled={swipeOpacityEnabled}
         />
 
         {blurEnabled ? (
           <>
             {/* Blur del fondo */}
-            <Animated.View
-              pointerEvents="none"
-              style={[StyleSheet.absoluteFillObject, { opacity: resolvedBlurOpacity }]}
-            >
+            <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFillObject, blurStyle]}>
               <BlurView
                 pointerEvents="none"
                 tint="systemUltraThinMaterialDark"
@@ -83,15 +73,10 @@ function BackgroundCardComponent({
             </Animated.View>
 
             {/* Capa oscura final */}
-              <Animated.View
+            <Animated.View
               pointerEvents="none"
-              style={[StyleSheet.absoluteFillObject, { opacity: resolvedBlurOpacity }]}
-            >
-              <View
-                pointerEvents="none"
-                style={[StyleSheet.absoluteFillObject, styles.tintOverlay]}
-              />
-            </Animated.View>
+              style={[StyleSheet.absoluteFillObject, styles.tintOverlay, blurStyle]}
+            />
           </>
         ) : null}
       </View>

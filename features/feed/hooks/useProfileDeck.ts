@@ -87,18 +87,14 @@ export function useProfileDeck(profiles: readonly MockedBackendUser[]): UseProfi
 
   const advance = useCallback(
     (_direction: SwipeDirection) => {
-      let advanced = false;
-      setCursor(prev => {
-        if (profileLikes.length === 0) return 0;
-        if (prev >= profileLikes.length - 1) {
-          return prev;
-        }
-        advanced = true;
-        return prev + 1;
-      });
-      return advanced;
+      if (profileLikes.length === 0) return false;
+      if (cursor >= profileLikes.length - 1) {
+        return false;
+      }
+      setCursor(prev => prev + 1);
+      return true;
     },
-    [profileLikes.length],
+    [cursor, profileLikes.length],
   );
 
   const activeBackendProfile =
