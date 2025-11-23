@@ -1,6 +1,21 @@
 import { resilientRequest } from "./apiClient";
 import { City, Department, Neighborhood } from "@/types/user";
 import { API } from "@/constants";
+import { HttpMethod } from "@/core/enums/http.enums";
+
+function resolveMethod(method?: string | null): HttpMethod {
+  if (!method) {
+    return HttpMethod.GET;
+  }
+
+  const normalized = method.toUpperCase() as keyof typeof HttpMethod;
+
+  if (normalized in HttpMethod) {
+    return HttpMethod[normalized];
+  }
+
+  return HttpMethod.GET;
+}
 
 async function request(path: string, options: RequestInit = {}): Promise<any> {
   const headers: Record<string, string> = {
@@ -8,7 +23,7 @@ async function request(path: string, options: RequestInit = {}): Promise<any> {
     ...(options.headers ? (options.headers as Record<string, string>) : {}),
   };
 
-  const method = (options.method ?? "GET") as "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+  const method = resolveMethod(options.method);
   let body: any = options.body;
 
   if (typeof body === "string") {
@@ -24,8 +39,8 @@ async function request(path: string, options: RequestInit = {}): Promise<any> {
     method,
     headers,
     body,
-    allowQueue: method !== "GET",
-    useCache: method === "GET",
+    allowQueue: method !== HttpMethod.GET,
+    useCache: method === HttpMethod.GET,
   });
 }
 

@@ -4,7 +4,6 @@ export { default as LoadingScreen } from "./LoadingScreen";
 export { default as Spinner } from "./Spinner";
 
 // Componentes de formulario
-export { default as LoginForm } from "./LoginForm";
 export { default as RegisterForm } from "./RegisterForm";
 
 // Componentes de selección

@@ -1,19 +1,24 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
 
-import { useTheme } from "../context/ThemeContext";
-import { LoginCredentials } from "../types/user";
-import Button from "./Button";
+import Button from "@/components/Button";
+import { useTheme } from "@/context/ThemeContext";
+import type { LoginCredentials } from "@/types/user";
+
+import { LOGIN_FORM_DEFAULTS, LOGIN_COPY } from "../constants";
+import type { LoginFormErrors } from "../types";
 
 interface LoginFormProps {
   onSubmit: (credentials: LoginCredentials) => Promise<void>;
   isLoading?: boolean;
+  onFocusField?: (field: keyof LoginCredentials) => void;
 }
 
-export default function LoginForm({ onSubmit, isLoading = false }: LoginFormProps) {
-  const [email, setEmail] = useState("firulete@ejemplo.com");
-  const [password, setPassword] = useState("contraseña123");
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+export default function LoginForm({ onSubmit, isLoading = false, onFocusField }: LoginFormProps) {
+  const defaults = useMemo(() => LOGIN_FORM_DEFAULTS, []);
+  const [email, setEmail] = useState<string>(defaults.email ?? "");
+  const [password, setPassword] = useState<string>(defaults.password ?? "");
+  const [errors, setErrors] = useState<LoginFormErrors>({});
   const { colors } = useTheme();
   const inputStyle = {
     backgroundColor: colors.card,
@@ -21,7 +26,7 @@ export default function LoginForm({ onSubmit, isLoading = false }: LoginFormProp
   };
 
   const validate = (): boolean => {
-    const newErrors: { email?: string; password?: string } = {};
+    const newErrors: LoginFormErrors = {};
 
     if (!email) {
       newErrors.email = "Email is required";
@@ -41,11 +46,7 @@ export default function LoginForm({ onSubmit, isLoading = false }: LoginFormProp
 
   const handleSubmit = async () => {
     if (validate()) {
-      try {
-        await onSubmit({ email, password });
-      } catch (error) {
-        throw error;
-      }
+      await onSubmit({ email, password });
     }
   };
 
@@ -61,7 +62,10 @@ export default function LoginForm({ onSubmit, isLoading = false }: LoginFormProp
           placeholderTextColor={colors.mutedForeground}
           autoCapitalize="none"
           keyboardType="email-address"
-          onFocus={() => setErrors({ ...errors, email: undefined })}
+          onFocus={() => {
+            setErrors({ ...errors, email: undefined });
+            onFocusField?.("email");
+          }}
           style={inputStyle}
         />
         {errors.email && (
@@ -80,7 +84,10 @@ export default function LoginForm({ onSubmit, isLoading = false }: LoginFormProp
           placeholder="Your password"
           placeholderTextColor={colors.mutedForeground}
           secureTextEntry
-          onFocus={() => setErrors({ ...errors, password: undefined })}
+          onFocus={() => {
+            setErrors({ ...errors, password: undefined });
+            onFocusField?.("password");
+          }}
           style={inputStyle}
         />
         {errors.password && (
@@ -90,12 +97,7 @@ export default function LoginForm({ onSubmit, isLoading = false }: LoginFormProp
 
       <TouchableOpacity
         className="mb-4 self-end"
-        onPress={() =>
-          Alert.alert(
-            "Reset Password",
-            "This feature would redirect to a password reset flow in a real app.",
-          )
-        }
+        onPress={() => Alert.alert("Reset Password", LOGIN_COPY.forgotPassword)}
         activeOpacity={0.7}
       >
         <Text className="font-conviven-semibold text-primary">Forgot password?</Text>

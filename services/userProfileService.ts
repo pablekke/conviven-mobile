@@ -1,9 +1,24 @@
 import { UserProfile, UserSearchPreferences } from "../types/user";
 import { resilientRequest } from "./apiClient";
+import { HttpMethod } from "@/core/enums/http.enums";
+
+function resolveMethod(method?: string | null): HttpMethod {
+  if (!method) {
+    return HttpMethod.GET;
+  }
+
+  const normalized = method.toUpperCase() as keyof typeof HttpMethod;
+
+  if (normalized in HttpMethod) {
+    return HttpMethod[normalized];
+  }
+
+  return HttpMethod.GET;
+}
 
 class UserProfileService {
   private async makeRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const method = (options.method ?? "GET") as "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+    const method = resolveMethod(options.method);
     let body: any = options.body;
 
     if (typeof body === "string") {
@@ -19,8 +34,8 @@ class UserProfileService {
       method,
       headers: options.headers as Record<string, string> | undefined,
       body,
-      allowQueue: method !== "GET",
-      useCache: method === "GET",
+      allowQueue: method !== HttpMethod.GET,
+      useCache: method === HttpMethod.GET,
     });
   }
 

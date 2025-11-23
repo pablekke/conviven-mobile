@@ -1,6 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
 
-import React from "react";
 import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 import { useTheme } from "../../../context/ThemeContext";
 

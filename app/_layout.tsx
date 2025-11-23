@@ -7,6 +7,7 @@ import Spinner from "../components/Spinner";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useFonts } from "expo-font";
 import Toast from "react-native-toast-message";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { AuthProvider, useAuth } from "../context/AuthContext";
 import { ThemeProvider, useTheme } from "../context/ThemeContext";
@@ -155,7 +156,7 @@ export default function RootLayout() {
   }
 
   return (
-    <>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <ThemeProvider>
           <ResilienceProvider>
@@ -169,7 +170,7 @@ export default function RootLayout() {
         </ThemeProvider>
       </SafeAreaProvider>
       <Toast />
-    </>
+    </GestureHandlerRootView>
   );
 }
 

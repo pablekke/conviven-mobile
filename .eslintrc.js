@@ -12,12 +12,15 @@ module.exports = {
     {
       files: ["*.ts", "*.tsx", "*.d.ts"],
       parserOptions: {
-        project: "./tsconfig.json",
+        project: "./tsconfig.eslint.json",
+        tsconfigRootDir: process.cwd(),
       },
       rules: {
         "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
         "react/react-in-jsx-scope": "off",
         "react-native/no-inline-styles": "warn",
+        "@typescript-eslint/strict-boolean-expressions": "off",
+        "@typescript-eslint/prefer-nullish-coalescing": "off",
       },
     },
   ],

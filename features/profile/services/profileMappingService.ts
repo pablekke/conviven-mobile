@@ -16,9 +16,13 @@ class ProfileMappingService {
    * Mapea el estado de fumador desde la API al formato del formulario
    */
   private mapSmokingStatus(smokesCigarettes?: string): string {
-    if (smokesCigarettes === SmokingStatus.NO) return "no";
-    if (smokesCigarettes === SmokingStatus.YES) return "yes";
-    if (smokesCigarettes === SmokingStatus.SOCIALLY) return "social";
+    if (!smokesCigarettes) return "";
+
+    const normalized = smokesCigarettes.toUpperCase();
+
+    if (normalized === SmokingStatus.NO) return "no";
+    if (normalized === "YES" || normalized === SmokingStatus.REGULAR) return "yes";
+    if (normalized === SmokingStatus.SOCIALLY) return "social";
     return "";
   }
 
@@ -63,10 +67,14 @@ class ProfileMappingService {
    * API: EARLY_BIRD, MIXED, NIGHT_OWL, ANY -> UI: morning, mixed, evening
    */
   private mapWorkSchedule(schedule?: string): string {
-    if (schedule === SchedulePreference.EARLY_BIRD) return "morning";
-    if (schedule === SchedulePreference.MIXED) return "mixed";
-    if (schedule === SchedulePreference.NIGHT_OWL) return "evening";
-    if (schedule === SchedulePreference.ANY) return "mixed";
+    if (!schedule) return "";
+
+    const normalized = schedule.toUpperCase();
+
+    if (normalized === SchedulePreference.EARLY_BIRD) return "morning";
+    if (normalized === SchedulePreference.MIXED) return "mixed";
+    if (normalized === SchedulePreference.NIGHT_OWL) return "evening";
+    if (normalized === "ANY") return "mixed";
     return "";
   }
 
@@ -75,9 +83,13 @@ class ProfileMappingService {
    * API: EARLY_BIRD, MIXED, NIGHT_OWL, ANY -> UI: early_bird, flexible, night_owl
    */
   private mapSleepTime(schedule?: string): string {
-    if (schedule === SchedulePreference.EARLY_BIRD) return "early_bird";
-    if (schedule === SchedulePreference.NIGHT_OWL) return "night_owl";
-    if (schedule === SchedulePreference.MIXED || schedule === SchedulePreference.ANY) {
+    if (!schedule) return "";
+
+    const normalized = schedule.toUpperCase();
+
+    if (normalized === SchedulePreference.EARLY_BIRD) return "early_bird";
+    if (normalized === SchedulePreference.NIGHT_OWL) return "night_owl";
+    if (normalized === SchedulePreference.MIXED || normalized === "ANY") {
       return "flexible";
     }
     return "";

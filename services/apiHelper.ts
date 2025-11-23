@@ -1,13 +1,15 @@
 import { resilientRequest } from "./apiClient";
+import { HttpMethod } from "@/core/enums/http.enums";
 
 /**
  * GET - Obtener recurso
  */
-export async function apiGet<T>(endpoint: string): Promise<T> {
+export async function apiGet<T>(endpoint: string, options?: { timeout?: number }): Promise<T> {
   return resilientRequest<T>({
     endpoint,
-    method: "GET",
+    method: HttpMethod.GET,
     useCache: true,
+    timeout: options?.timeout,
   });
 }
 
@@ -17,7 +19,7 @@ export async function apiGet<T>(endpoint: string): Promise<T> {
 export async function apiPost<T>(endpoint: string, body?: any): Promise<T> {
   return resilientRequest<T>({
     endpoint,
-    method: "POST",
+    method: HttpMethod.POST,
     body,
     allowQueue: true,
   });
@@ -29,7 +31,7 @@ export async function apiPost<T>(endpoint: string, body?: any): Promise<T> {
 export async function apiPut<T>(endpoint: string, body?: any): Promise<T> {
   return resilientRequest<T>({
     endpoint,
-    method: "PUT",
+    method: HttpMethod.PUT,
     body,
     allowQueue: true,
   });
@@ -41,7 +43,7 @@ export async function apiPut<T>(endpoint: string, body?: any): Promise<T> {
 export async function apiPatch<T>(endpoint: string, body?: any): Promise<T> {
   return resilientRequest<T>({
     endpoint,
-    method: "PATCH",
+    method: HttpMethod.PATCH,
     body,
     allowQueue: true,
   });
@@ -53,7 +55,7 @@ export async function apiPatch<T>(endpoint: string, body?: any): Promise<T> {
 export async function apiDelete<T>(endpoint: string): Promise<T> {
   return resilientRequest<T>({
     endpoint,
-    method: "DELETE",
+    method: HttpMethod.DELETE,
     allowQueue: true,
   });
 }
@@ -64,7 +66,7 @@ export async function apiDelete<T>(endpoint: string): Promise<T> {
  */
 export async function apiRequest<T>(
   endpoint: string,
-  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
+  method: HttpMethod,
   options: {
     body?: any;
     headers?: Record<string, string>;
@@ -77,8 +79,8 @@ export async function apiRequest<T>(
     headers: options.headers,
     body: options.body,
     timeout: options.timeout,
-    allowQueue: method !== "GET",
-    useCache: method === "GET",
+    allowQueue: method !== HttpMethod.GET,
+    useCache: method === HttpMethod.GET,
   });
 }
 
@@ -100,8 +102,8 @@ export class BaseApiService {
   /**
    * GET - Obtener recurso(s)
    */
-  protected async get<T>(path: string = ""): Promise<T> {
-    return apiGet<T>(this.buildEndpoint(path));
+  protected async get<T>(path: string = "", options?: { timeout?: number }): Promise<T> {
+    return apiGet<T>(this.buildEndpoint(path), options);
   }
 
   /**

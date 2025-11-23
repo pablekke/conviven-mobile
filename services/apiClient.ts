@@ -6,6 +6,7 @@ import { getCachedValue, setCachedValue } from "./resilience/cache";
 import { persistentRequestQueue } from "./resilience/requestQueue";
 import { errorEmitter, offlineEmitter } from "./resilience/state";
 import { HttpError, NetworkError, buildUrl, fetchWithTimeout, parseResponse } from "./http";
+import { HttpMethod, NonGetHttpMethod } from "@/core/enums/http.enums";
 import { authSession, SessionExpiredError } from "./auth/sessionManager";
 
 const REQUEST_TIMEOUT = 8000;
@@ -13,8 +14,6 @@ const MAX_RETRIES = 2;
 const OFFLINE_MESSAGE = "Modo limitado: sin conexión";
 
 const offlineState = { active: false };
-
-type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 type RequestOrigin = "direct" | "queue";
 
@@ -111,7 +110,12 @@ function ensureRequestId(headers: Record<string, string>, requestId?: string): s
   return id;
 }
 
-const AUTH_PUBLIC_PATHS = [/^\/auth\/login/i, /^\/auth\/register/i, /^\/auth\/refresh/i];
+const AUTH_PUBLIC_PATHS = [
+  /^\/auth\/login/i,
+  /^\/auth\/register/i,
+  /^\/auth\/refresh/i,
+  /^\/locations(?:\/|$)/i,
+];
 
 function shouldAttachAuth(endpoint: string): boolean {
   const normalized = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
@@ -159,7 +163,10 @@ export async function resilientRequest<T>(options: ResilientRequestOptions): Pro
 
       const shouldAuthorize = shouldAttachAuth(endpoint);
 
-      const { body: normalizedBody, headers: normalizedHeaders } = normalizeBody(body, headersForAttempt);
+      const { body: normalizedBody, headers: normalizedHeaders } = normalizeBody(
+        body,
+        headersForAttempt,
+      );
 
       if (shouldAuthorize) {
         const token = await authSession.getAccessToken();
@@ -286,14 +293,12 @@ export async function resilientRequest<T>(options: ResilientRequestOptions): Pro
 
   if (method !== "GET" && origin === "direct" && shouldQueueRequest(body, allowQueue)) {
     const headersForQueue: Record<string, string> = { ...baseHeaders };
-    if (method !== "GET") {
-      effectiveRequestId = ensureRequestId(headersForQueue, effectiveRequestId);
-    }
+    effectiveRequestId = ensureRequestId(headersForQueue, effectiveRequestId);
 
     const queueItemAdded = await persistentRequestQueue.enqueue({
       requestId: effectiveRequestId ?? createRequestId(),
       endpoint,
-      method: method as "POST" | "PUT" | "PATCH" | "DELETE",
+      method: method as NonGetHttpMethod,
       body,
       headers: headersForQueue,
     });

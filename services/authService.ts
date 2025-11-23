@@ -3,9 +3,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { User, LoginCredentials, RegisterCredentials } from "@/types/user";
 import { mapUserFromApi } from "./mappers/userMapper";
 import { resilientRequest } from "./apiClient";
+import { HttpError } from "./http";
 import { API } from "@/constants";
 import { authSession } from "./auth/sessionManager";
 import { extractAccessToken, extractRefreshToken } from "./auth/tokenUtils";
+import { HttpMethod } from "@/core/enums/http.enums";
 
 const USER_DATA_KEY = "user_data";
 
@@ -17,7 +19,7 @@ export default class AuthService {
   static async login(credentials: LoginCredentials): Promise<User> {
     const data = await resilientRequest<any>({
       endpoint: API.LOGIN,
-      method: "POST",
+      method: HttpMethod.POST,
       headers: {
         "Content-Type": "application/json",
       },
@@ -68,7 +70,7 @@ export default class AuthService {
 
     const data = await resilientRequest<any>({
       endpoint: "/users/register",
-      method: "POST",
+      method: HttpMethod.POST,
       headers: {
         "Content-Type": "application/json",
       },
@@ -121,7 +123,7 @@ export default class AuthService {
       if (refreshToken) {
         await resilientRequest({
           endpoint: API.LOGOUT,
-          method: "POST",
+          method: HttpMethod.POST,
           headers: {
             "Content-Type": "application/json",
           },
@@ -138,12 +140,26 @@ export default class AuthService {
   }
 
   static async getCurrentUser(): Promise<User | null> {
+    const hasSession = await authSession.hasSession();
+
+    if (!hasSession) {
+      await AsyncStorage.removeItem(USER_DATA_KEY);
+      return null;
+    }
+
     try {
       const user = await this.fetchCurrentUser();
       await persistUser(user);
       return user;
     } catch (error) {
       console.error("Get current user error:", error);
+
+      if (error instanceof HttpError && (error.status === 401 || error.status === 404)) {
+        await authSession.clearTokens();
+        await AsyncStorage.removeItem(USER_DATA_KEY);
+        return null;
+      }
+
       const cachedUser = await AsyncStorage.getItem(USER_DATA_KEY);
       return cachedUser ? (JSON.parse(cachedUser) as User) : null;
     }
@@ -174,7 +190,7 @@ export default class AuthService {
   private static async fetchCurrentUser(): Promise<User> {
     const data = await resilientRequest<any>({
       endpoint: "/users/me",
-      method: "GET",
+      method: HttpMethod.GET,
       useCache: false,
     });
 

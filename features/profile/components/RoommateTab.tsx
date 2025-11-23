@@ -1,7 +1,6 @@
 import { StyleSheet, Text, View, ScrollView } from "react-native";
 import { QuestionRow } from "../components/QuestionRow";
 import { Feather } from "@expo/vector-icons";
-import React from "react";
 
 interface RoommateTabProps {
   getSelectedLabel: (key: string) => string;

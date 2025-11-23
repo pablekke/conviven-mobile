@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { persistentRequestQueue, QueuedRequest } from "../resilience/requestQueue";
+import { HttpMethod } from "@/core/enums/http.enums";
 
 describe("PersistentRequestQueue", () => {
   beforeEach(async () => {
@@ -12,7 +13,7 @@ describe("PersistentRequestQueue", () => {
     const baseRequest: QueuedRequest = {
       requestId: "abc-123",
       endpoint: "/test",
-      method: "POST",
+      method: HttpMethod.POST,
       body: { value: 1 },
       headers: { "Content-Type": "application/json" },
     };
@@ -34,7 +35,7 @@ describe("PersistentRequestQueue", () => {
     await persistentRequestQueue.enqueue({
       requestId: "req-1",
       endpoint: "/one",
-      method: "POST",
+      method: HttpMethod.POST,
       body: { test: 1 },
       headers: { "Content-Type": "application/json" },
     });
@@ -42,7 +43,7 @@ describe("PersistentRequestQueue", () => {
     await persistentRequestQueue.enqueue({
       requestId: "req-2",
       endpoint: "/two",
-      method: "PUT",
+      method: HttpMethod.PUT,
       body: { test: 2 },
       headers: { "Content-Type": "application/json" },
     });

@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import NetInfo from "@react-native-community/netinfo";
 
-import { STATUS_PAGE_URL } from "@/config/env";
 import { flushQueuedRequests } from "@/services/apiClient";
 import { loadRemoteConfig, RemoteConfig } from "@/services/remoteConfigService";
 import { persistentRequestQueue } from "@/services/resilience/requestQueue";
@@ -18,7 +17,7 @@ interface ResilienceContextValue {
   lastErrorMessage: string | null;
   maintenance: boolean;
   maintenanceMessage?: string;
-  statusPageUrl: string;
+  statusPageUrl?: string;
   queueSize: number;
   refreshRemoteConfig: () => Promise<void>;
   flushQueue: () => Promise<void>;
@@ -33,7 +32,7 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
   const [queueSize, setQueueSize] = useState(0);
   const [maintenance, setMaintenance] = useState(false);
   const [maintenanceMessage, setMaintenanceMessage] = useState<string | undefined>(undefined);
-  const [statusPageUrl, setStatusPageUrl] = useState<string>(STATUS_PAGE_URL);
+  const [statusPageUrl, setStatusPageUrl] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const unsubscribeOffline = offlineEmitter.subscribe(({ active }) => {
@@ -48,15 +47,10 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
       setQueueSize(pending);
     });
 
-    const unsubscribeMaintenance = maintenanceEmitter.subscribe(
-      ({ active, message, statusPageUrl }) => {
-        setMaintenance(active);
-        setMaintenanceMessage(message);
-        if (statusPageUrl) {
-          setStatusPageUrl(statusPageUrl);
-        }
-      },
-    );
+    const unsubscribeMaintenance = maintenanceEmitter.subscribe(({ active, message }) => {
+      setMaintenance(active);
+      setMaintenanceMessage(message);
+    });
 
     persistentRequestQueue
       .size()
@@ -88,6 +82,7 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
           // Valores por defecto si falla la carga
           setMaintenance(false);
           setMaintenanceMessage(undefined);
+          setStatusPageUrl(undefined);
         }
       }
     };
@@ -95,9 +90,9 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
     // Timeout para evitar bloqueos infinitos
     const timeout = setTimeout(() => {
       if (mounted) {
-        console.warn("resilience:config:timeout");
         setMaintenance(false);
         setMaintenanceMessage(undefined);
+        setStatusPageUrl(undefined);
       }
     }, 5000);
 
@@ -153,9 +148,9 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
   }, [offlineSignal, networkOffline]);
 
   const applyRemoteConfig = (config: RemoteConfig) => {
-    setStatusPageUrl(config.statusPageUrl);
     setMaintenance(config.maintenanceMode);
     setMaintenanceMessage(config.maintenanceMessage);
+    setStatusPageUrl(config.statusPageUrl || undefined);
   };
 
   const offline = offlineSignal || networkOffline;

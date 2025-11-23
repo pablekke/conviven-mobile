@@ -1,34 +1,101 @@
 import { Ionicons } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
 import { Tabs } from "expo-router";
-import React from "react";
+import { BottomTabBar, BottomTabBarProps } from "@react-navigation/bottom-tabs";
+import { StyleSheet, View } from "react-native";
 
 import { useTheme } from "../../context/ThemeContext";
 
+function CustomTabBar(props: BottomTabBarProps) {
+  return (
+    <View style={tabBarStyles.wrapper}>
+      <BottomTabBar {...props} />
+    </View>
+  );
+}
+
+const tabBarStyles = StyleSheet.create({
+  wrapper: {
+    paddingTop: 8,
+    backgroundColor: "transparent",
+    borderTopWidth: 0,
+    borderTopColor: "transparent",
+  },
+  bar: {
+    height: 70,
+    backgroundColor: "transparent",
+    borderTopWidth: 0,
+    borderTopColor: "transparent",
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  blurBackground: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+  },
+  blurOverlayLight: {
+    backgroundColor: "rgba(255, 255, 255, 0.65)",
+  },
+  blurOverlayDark: {
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+  },
+  iconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});
+
 export default function AppLayout() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   const getTabBarIcon = (name: keyof typeof Ionicons.glyphMap) => {
-    return ({ color, size }: { color: string; size: number }) => (
-      <Ionicons name={name} size={size} color={color} />
-    );
+    return ({ color, size, focused }: { color: string; size: number; focused: boolean }) => {
+      const primaryColor = colors.primary ?? "#2563EB";
+      const iconColor = focused ? primaryColor : color;
+      const backgroundColor = focused ? `${primaryColor}22` : "transparent";
+
+      return (
+        <View style={[tabBarStyles.iconContainer, { backgroundColor }]}>
+          <Ionicons name={name} size={focused ? size + 2 : size} color={iconColor} />
+        </View>
+      );
+    };
   };
 
   return (
     <Tabs
+      tabBar={props => <CustomTabBar {...props} />}
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.mutedForeground,
-        tabBarStyle: {
-          paddingVertical: 0,
-          paddingTop: 2,
-          paddingBottom: 3,
-          backgroundColor: colors.sidebarBackground,
-          borderTopWidth: 0,
-          borderTopColor: colors.sidebarBorder,
-        },
         tabBarLabelStyle: {
           fontSize: 12,
           fontFamily: "Inter-Medium",
+        },
+        tabBarItemStyle: {
+          paddingTop: 2,
+        },
+        tabBarStyle: tabBarStyles.bar,
+        tabBarBackground: () => (
+          <BlurView
+            intensity={60}
+            tint={isDark ? "dark" : "light"}
+            style={[
+              tabBarStyles.blurBackground,
+              isDark ? tabBarStyles.blurOverlayDark : tabBarStyles.blurOverlayLight,
+            ]}
+          />
+        ),
+        sceneStyle: {
+          backgroundColor: "transparent",
         },
         headerShown: false,
       }}
@@ -46,7 +113,7 @@ export default function AppLayout() {
         options={{
           title: "Chats",
           tabBarIcon: getTabBarIcon("chatbubbles-outline"),
-          tabBarLabel: "Chats",
+          tabBarLabel: "Roomies",
         }}
       />
       <Tabs.Screen
@@ -57,24 +124,9 @@ export default function AppLayout() {
           tabBarLabel: "Perfil",
         }}
       />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="conversation/[id]"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="edit-profile/index"
-        options={{
-          href: null,
-        }}
-      />
+      <Tabs.Screen name="settings" options={{ href: null }} />
+      <Tabs.Screen name="conversation/[id]" options={{ href: null }} />
+      <Tabs.Screen name="edit-profile/index" options={{ href: null }} />
     </Tabs>
   );
 }

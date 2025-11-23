@@ -1,5 +1,6 @@
+import React, { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+
 import { Alert, ScrollView, Switch, Text, TouchableOpacity, View } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -68,7 +69,7 @@ const SettingItem: React.FC<SettingItemProps> = ({
 export default function SettingsScreen() {
   const { logout } = useAuth();
   const { theme, setTheme } = useTheme();
-  const [notifications, setNotifications] = React.useState(true);
+  const [notifications, setNotifications] = useState(true);
 
   const handleLogout = () => {
     Alert.alert("Logout", "Are you sure you want to logout?", [

@@ -24,7 +24,7 @@ export async function trackRequestTelemetry(payload: RequestTelemetry): Promise<
       timestamp: new Date().toISOString(),
     };
 
-    console.info("telemetry:request", telemetryRecord);
+    //console.info("telemetry:request", telemetryRecord);
   } catch (error) {
     console.warn("telemetry:error", error);
   }

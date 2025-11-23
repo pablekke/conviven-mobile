@@ -51,8 +51,8 @@ Los componentes acceden a este estado a través del hook `useAuth`.
 
 ### 4. Componentes de UI
 
-- `LoginForm.tsx`: formulario de ingreso
-- `RegisterForm.tsx`: formulario de registro con todos los campos requeridos por el backend
+- `features/login/components/LoginForm.tsx`: formulario de ingreso desacoplado
+- `components/RegisterForm.tsx`: formulario de registro con todos los campos requeridos por el backend
 - `LoadingScreen.tsx`: indicador durante operaciones de autenticación
 - `Button.tsx`: botón reutilizable con distintos estados
 
