@@ -11,7 +11,7 @@ function EmptyFeedCardComponent() {
   const heroImageHeight = computeHeroImageHeight(heroHeight, heroBottomSpacing);
 
   return (
-    <View style={[styles.container, { height: heroImageHeight }]}>
+    <View style={[styles.container, { height: heroImageHeight }]} pointerEvents="none">
       <LinearGradient
         colors={["#1a1a2e", "#16213e", "#0f3460"]}
         start={{ x: 0, y: 0 }}

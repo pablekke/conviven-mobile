@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, useWindowDimensions, StatusBar, StyleSheet } from "react-native";
+import { View, ScrollView, useWindowDimensions, StatusBar, StyleSheet } from "react-native";
 import { CardDeck, UserInfoCard, EmptyFeedCard } from "./index";
 import {
   incomingProfilesMock,
@@ -9,7 +9,7 @@ import {
 } from "../mocks/incomingProfile";
 import { FEED_CONSTANTS } from "../constants/feed.constants";
 import { useProfileDeck } from "../hooks/useProfileDeck";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { feedService } from "../services";
 import { mapBackendItemToMockedUser } from "../adapters/backendToMockedUser";
 import { FEED_USE_MOCK } from "../../../config/env";
@@ -19,7 +19,6 @@ function FeedScreen() {
 
   const { width: screenWidth } = useWindowDimensions();
 
-  const [locW, setLocW] = useState<number | undefined>(undefined);
   const [profiles, setProfiles] = useState<MockedBackendUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [noMoreProfiles, setNoMoreProfiles] = useState(false);
@@ -76,15 +75,6 @@ function FeedScreen() {
   const deck = useProfileDeck(profiles);
   const { primaryCard, secondaryCard, primaryBackend, advance, total } = deck;
 
-  const primaryLongestLocation = useMemo(
-    () => primaryCard.longestLocation ?? "",
-    [primaryCard.longestLocation],
-  );
-
-  useEffect(() => {
-    setLocW(undefined);
-  }, [primaryLongestLocation]);
-
   const scrollToTop = useCallback(() => {
     const scrollView = mainRef.current;
     if (!scrollView) return;
@@ -96,7 +86,6 @@ function FeedScreen() {
 
   const handleSwipeComplete = useCallback(
     (direction: "like" | "dislike") => {
-      console.log(`Swipe ${direction}`);
       scrollToTop();
       const advanced = advance(direction);
       if (!advanced) {
@@ -116,19 +105,6 @@ function FeedScreen() {
     <View className="flex-1" style={styles.screenShell}>
       <StatusBar barStyle="light-content" />
 
-      {/* Medidor oculto del ancho del chip de ubicación */}
-      <View
-        className="absolute -left-[9999px] top-0 flex-row items-center px-3"
-        onLayout={e => {
-          const measuredWidth = e.nativeEvent.layout.width;
-          const maxWidth = screenWidth * 0.7;
-          setLocW(Math.min(measuredWidth, maxWidth));
-        }}
-      >
-        <Text className="text-[13px] font-semibold flex-1">{primaryLongestLocation}</Text>
-        <View style={styles.iconSpacer} />
-      </View>
-
       <ScrollView
         ref={mainRef}
         className="flex-1"
@@ -137,9 +113,10 @@ function FeedScreen() {
         bounces={false}
         alwaysBounceVertical={false}
         overScrollMode="never"
+        scrollEnabled={!noMoreProfiles && total > 0 && !!deck.primaryProfile}
         style={styles.mainScroll}
       >
-        {isLoading ? null : noMoreProfiles || total === 0 ? (
+        {isLoading ? null : noMoreProfiles || total === 0 || !deck.primaryProfile ? (
           <EmptyFeedCard />
         ) : (
           <>
@@ -149,7 +126,6 @@ function FeedScreen() {
               primary={{
                 photos: primaryCard.galleryPhotos,
                 locationStrings: primaryCard.locationStrings,
-                locationWidth: locW,
                 headline: primaryCard.headline,
                 budget: primaryCard.budgetLabel,
                 basicInfo: primaryCard.basicInfo,
@@ -158,13 +134,12 @@ function FeedScreen() {
               secondary={{
                 photos: secondaryCard.galleryPhotos,
                 locationStrings: secondaryCard.locationStrings,
-                locationWidth: locW,
                 headline: secondaryCard.headline,
                 budget: secondaryCard.budgetLabel,
                 basicInfo: secondaryCard.basicInfo,
               }}
             />
-            {primaryBackend ? (
+            {primaryBackend && primaryCard.galleryPhotos.length > 0 ? (
               <UserInfoCard
                 profile={mapBackendProfileToUiProfile(primaryBackend.profile)}
                 location={mapBackendLocationToUi(primaryBackend.location)}
@@ -185,10 +160,7 @@ const styles = StyleSheet.create({
   screenShell: {
     backgroundColor: "transparent",
   },
-  iconSpacer: {
-    width: 14,
-    height: 14,
-  },
+
   mainScroll: {
     backgroundColor: "transparent",
   },

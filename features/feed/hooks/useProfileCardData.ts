@@ -36,18 +36,6 @@ export type ProfileLike = {
   };
 };
 
-const FALLBACK_PRIMARY_PHOTO =
-  "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=1480&auto=format&fit=crop";
-const FALLBACK_SECONDARY_PHOTO =
-  "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=1480&auto=format&fit=crop";
-
-function sanitizePhotoUrl(url: unknown, fallback: string): string {
-  if (!url) return fallback;
-  const parsed = String(url);
-  if (parsed.trim() === "" || parsed.includes("PONELE")) return fallback;
-  return parsed;
-}
-
 function formatLocationString(location: NamedLocation, isFirst: boolean = false) {
   const departmentName = location.department.name?.trim() ?? "";
   const isMontevideo = departmentName.toLowerCase() === "montevideo";
@@ -63,26 +51,29 @@ function formatLocationString(location: NamedLocation, isFirst: boolean = false)
   return `${location.department.name} · ${location.city.name} · ${location.neighborhood.name}`;
 }
 
-export function useProfileCardData(profile: ProfileLike) {
-  const age = useMemo(() => calcAge(profile.birthDate), [profile.birthDate]);
+export function useProfileCardData(profile: ProfileLike | null | undefined) {
+  const age = useMemo(() => {
+    if (!profile?.birthDate) return 0;
+    return calcAge(profile.birthDate);
+  }, [profile?.birthDate]);
 
-  const basicInfo = useMemo(
-    () => [
+  const basicInfo = useMemo(() => {
+    if (!profile?.profile) return [];
+    return [
       labelFromRecord(PROFILE_TIDINESS_LABELS, profile.profile.tidiness),
       labelFromRecord(PROFILE_SCHEDULE_LABELS, profile.profile.schedule),
       labelFromRecord(PROFILE_DIET_LABELS, profile.profile.diet),
       labelFromRecord(PROFILE_OCCUPATION_LABELS, profile.profile.occupation),
-    ],
-    [profile.profile],
-  );
+    ];
+  }, [profile?.profile]);
 
   const locationStrings = useMemo(() => {
+    if (!profile?.filters?.mainPreferredLocation) return ["—"];
     const mainLocation = formatLocationString(profile.filters.mainPreferredLocation, true);
-    const otherLocations = profile.filters.preferredLocations.map(loc =>
-      formatLocationString(loc, false),
-    );
+    const otherLocations =
+      profile.filters.preferredLocations?.map(loc => formatLocationString(loc, false)) ?? [];
     return [mainLocation, ...otherLocations];
-  }, [profile.filters]);
+  }, [profile?.filters]);
 
   const longestLocation = useMemo(
     () =>
@@ -91,23 +82,27 @@ export function useProfileCardData(profile: ProfileLike) {
   );
 
   const budgetLabel = useMemo(() => {
-    const min = toInt(profile.filters?.budgetMin);
-    const max = toInt(profile.filters?.budgetMax);
+    if (!profile?.filters) return "$0–$0";
+    const min = toInt(profile.filters.budgetMin);
+    const max = toInt(profile.filters.budgetMax);
     return `$${min}–$${max}`;
-  }, [profile.filters]);
+  }, [profile?.filters]);
 
   const headline = useMemo(() => {
-    const baseName = profile.displayName ?? `${profile.firstName} ${profile.lastName}`;
+    if (!profile) return "";
+    const baseName = profile.displayName ?? `${profile.firstName ?? ""} ${profile.lastName ?? ""}`;
     return `${baseName}, ${age}`;
-  }, [age, profile.displayName, profile.firstName, profile.lastName]);
+  }, [age, profile]);
 
   const galleryPhotos = useMemo(() => {
-    const mainPhoto = sanitizePhotoUrl(profile.photoUrl, FALLBACK_PRIMARY_PHOTO);
+    if (!profile) return [];
+    const mainPhoto = profile.photoUrl ? String(profile.photoUrl) : "";
     const secondaryPhotos = Array.isArray(profile.secondaryPhotoUrls)
-      ? profile.secondaryPhotoUrls.map(url => sanitizePhotoUrl(url, FALLBACK_SECONDARY_PHOTO))
+      ? profile.secondaryPhotoUrls.filter((url): url is string => !!url).map(String)
       : [];
-    return [mainPhoto, ...secondaryPhotos];
-  }, [profile.photoUrl, profile.secondaryPhotoUrls]);
+    const allPhotos = mainPhoto ? [mainPhoto, ...secondaryPhotos] : secondaryPhotos;
+    return allPhotos;
+  }, [profile]);
 
   const mainPhoto = galleryPhotos[0];
   const mainLocation = locationStrings[0] ?? "—";

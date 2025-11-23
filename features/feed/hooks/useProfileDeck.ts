@@ -6,33 +6,6 @@ import { useProfileCardData, type ProfileLike } from "./useProfileCardData";
 
 type SwipeDirection = "like" | "dislike";
 
-const EMPTY_LOCATION = {
-  department: { name: "Mongolandia" },
-  city: { name: "Mongolandia" },
-  neighborhood: { name: "Mongolandia" },
-};
-
-const EMPTY_PROFILE: ProfileLike = {
-  firstName: "",
-  lastName: "",
-  displayName: "",
-  birthDate: "2000-01-01",
-  photoUrl: null,
-  secondaryPhotoUrls: [],
-  profile: {
-    tidiness: null,
-    schedule: null,
-    diet: null,
-    occupation: null,
-  },
-  filters: {
-    budgetMin: 0,
-    budgetMax: 0,
-    mainPreferredLocation: EMPTY_LOCATION,
-    preferredLocations: [],
-  },
-};
-
 export type DeckCardSnapshot = ReturnType<typeof useProfileCardData>;
 
 type UseProfileDeckResult = {
@@ -68,8 +41,6 @@ export function useProfileDeck(profiles: readonly MockedBackendUser[]): UseProfi
     setCursor(clampedCursor);
   }, [clampedCursor, cursor]);
 
-  const fallbackProfile = profileLikes[0] ?? EMPTY_PROFILE;
-
   const primaryProfile = profileLikes[clampedCursor] ?? null;
   const secondaryIndex = clampedCursor + 1 < profileLikes.length ? clampedCursor + 1 : null;
   const tertiaryIndex = clampedCursor + 2 < profileLikes.length ? clampedCursor + 2 : null;
@@ -81,9 +52,9 @@ export function useProfileDeck(profiles: readonly MockedBackendUser[]): UseProfi
   const secondaryProfile = secondaryIndex != null ? profileLikes[secondaryIndex] : null;
   const tertiaryProfile = tertiaryIndex != null ? profileLikes[tertiaryIndex] : null;
 
-  const primaryCard = useProfileCardData(primaryProfile ?? fallbackProfile);
-  const secondaryCard = useProfileCardData(secondaryProfile ?? EMPTY_PROFILE);
-  const tertiaryCard = useProfileCardData(tertiaryProfile ?? EMPTY_PROFILE);
+  const primaryCard = useProfileCardData(primaryProfile || undefined);
+  const secondaryCard = useProfileCardData(secondaryProfile);
+  const tertiaryCard = useProfileCardData(tertiaryProfile);
 
   const advance = useCallback(
     (_direction: SwipeDirection) => {

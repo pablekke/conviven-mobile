@@ -8,19 +8,22 @@ import Animated, {
   useAnimatedStyle,
   useDerivedValue,
   useSharedValue,
-  withSpring,
   withTiming,
+  useAnimatedProps,
 } from "react-native-reanimated";
 
 import { FeedScrollContext } from "../context/ScrollContext";
 import { FEED_CONSTANTS, computeHeroImageHeight } from "../constants/feed.constants";
 import { BackgroundCard } from "./BackgroundCard";
 import { PrimaryCard } from "./PrimaryCard";
+import { EmptyFeedCard } from "./EmptyFeedCard";
 import type { CardDeckCardProps, CardDeckProps } from "../types";
 import { BlurView } from "expo-blur";
 
+const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
+
 const SCREEN_WIDTH = Dimensions.get("window").width;
-const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.3;
+const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25;
 const ROTATION_DEG = 15;
 
 const buildCardIdentity = (card: CardDeckCardProps) => {
@@ -89,7 +92,7 @@ function CardDeckComponent({
           }
         });
       } else {
-        translationX.value = withTiming(0, { duration: 200 });
+        translationX.value = withTiming(0, { duration: 220 });
         // translationY.value = withSpring(0, { damping: 15, stiffness: 120 });
       }
     });
@@ -121,13 +124,19 @@ function CardDeckComponent({
     );
   });
 
-  const nextCardBlur = useDerivedValue(() => {
+  const blurIntensity = useDerivedValue(() => {
     return interpolate(
       Math.abs(translationX.value),
-      [0, SCREEN_WIDTH / 2],
-      [1, 0],
+      [0, SCREEN_WIDTH],
+      [60, 0],
       Extrapolation.CLAMP,
     );
+  });
+
+  const blurProps = useAnimatedProps(() => {
+    return {
+      intensity: blurIntensity.value,
+    };
   });
 
   // Animated Styles
@@ -156,38 +165,47 @@ function CardDeckComponent({
       <FeedScrollContext.Provider value={scrollRef}>
         {/* Secondary (Back) Card */}
         <Animated.View style={[styles.secondaryLayer, backCardStyle]}>
-          <BackgroundCard
-            {...secondary}
-            blurEnabled
-            blurProgress={nextCardBlur}
-            enableLocationToggle
-            showScrollCue
-          />
-          <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFillObject]}>
-            <BlurView
-              tint="systemUltraThinMaterialDark"
-              intensity={20}
-              style={StyleSheet.absoluteFillObject}
-            />
-          </Animated.View>
+          {secondary.photos && secondary.photos.length > 0 ? (
+            <>
+              <BackgroundCard
+                {...secondary}
+                blurEnabled={false}
+                enableLocationToggle
+                showScrollCue
+              />
+              <AnimatedBlurView
+                tint="systemUltraThinMaterialDark"
+                animatedProps={blurProps}
+                style={StyleSheet.absoluteFillObject}
+              />
+            </>
+          ) : (
+            <EmptyFeedCard />
+          )}
         </Animated.View>
 
         {/* Primary (Front) Card */}
         <GestureDetector gesture={panGesture}>
           <Animated.View style={[styles.primaryLayer, frontCardStyle]}>
-            <PrimaryCard {...primary} enableLocationToggle showScrollCue />
+            {primary.photos && primary.photos.length > 0 ? (
+              <>
+                <PrimaryCard {...primary} enableLocationToggle showScrollCue />
 
-            {/* Like Tint (Blue) */}
-            <Animated.View
-              pointerEvents="none"
-              style={[styles.tintLayer, styles.likeTint, likeTintStyle]}
-            />
+                {/* Like Tint (Blue) */}
+                <Animated.View
+                  pointerEvents="none"
+                  style={[styles.tintLayer, styles.likeTint, likeTintStyle]}
+                />
 
-            {/* Dislike Tint (Red) */}
-            <Animated.View
-              pointerEvents="none"
-              style={[styles.tintLayer, styles.dislikeTint, dislikeTintStyle]}
-            />
+                {/* Dislike Tint (Red) */}
+                <Animated.View
+                  pointerEvents="none"
+                  style={[styles.tintLayer, styles.dislikeTint, dislikeTintStyle]}
+                />
+              </>
+            ) : (
+              <EmptyFeedCard />
+            )}
           </Animated.View>
         </GestureDetector>
       </FeedScrollContext.Provider>
