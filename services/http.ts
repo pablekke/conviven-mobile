@@ -53,7 +53,7 @@ export async function fetchWithTimeout(
 
 export async function parseResponse(response: Response): Promise<any> {
   if (response.status === 502 || response.status === 503 || response.status === 504) {
-    throw new NetworkError();
+    throw new NetworkError("El servidor no está disponible");
   }
 
   const contentType = response.headers.get("content-type");
@@ -64,21 +64,44 @@ export async function parseResponse(response: Response): Promise<any> {
       payload = await response.json();
     } else {
       const text = await response.text();
+
+      // Detectar si la respuesta es HTML (ngrok offline, error pages, etc)
+      if (text.trim().startsWith("<!DOCTYPE") || text.trim().startsWith("<html")) {
+        // Es una página HTML de error, no JSON
+        if (text.includes("ngrok") && text.includes("offline")) {
+          throw new NetworkError("El servidor no está disponible en este momento");
+        }
+        throw new NetworkError("El servidor no está disponible");
+      }
+
       payload = text || null;
     }
   } catch (error) {
-    throw new NetworkError();
+    // Si ya es un NetworkError, re-lanzarlo
+    if (error instanceof NetworkError) {
+      throw error;
+    }
+    throw new NetworkError("Error de conexión");
   }
 
   if (!response.ok) {
-    const message =
-      typeof payload === "string"
-        ? payload
-        : payload?.message || payload?.error || "Sin conexión";
+    // Si el payload es HTML, no mostrarlo al usuario
+    let message: string;
+
+    if (
+      typeof payload === "string" &&
+      (payload.includes("<!DOCTYPE") || payload.includes("<html"))
+    ) {
+      message = "El servidor no está disponible";
+    } else {
+      message =
+        typeof payload === "string"
+          ? payload
+          : payload?.message || payload?.error || "Error del servidor";
+    }
 
     throw new HttpError(response.status, message, payload);
   }
 
   return payload;
 }
-

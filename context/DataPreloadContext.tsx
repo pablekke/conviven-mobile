@@ -162,8 +162,19 @@ export const DataPreloadProvider: React.FC<DataPreloadProviderProps> = ({ childr
 
   // Preload all data
   const preloadAllData = useCallback(async () => {
-    if (!user || !isAuthenticated || authLoading) return;
+    if (!user || !isAuthenticated || authLoading) {
+      console.log(
+        "[DataPreload] Skipping preload - user:",
+        !!user,
+        "auth:",
+        isAuthenticated,
+        "loading:",
+        authLoading,
+      );
+      return;
+    }
 
+    console.log("[DataPreload] Starting preload...");
     setState(prev => ({
       ...prev,
       isPreloading: true,
@@ -173,10 +184,14 @@ export const DataPreloadProvider: React.FC<DataPreloadProviderProps> = ({ childr
 
     try {
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error("Preload timeout")), 10000);
+        setTimeout(() => reject(new Error("Preload timeout")), 1000);
       });
 
-      await Promise.race([Promise.allSettled([loadChats(), loadProfile()]), timeoutPromise]);
+      const results = await Promise.race([
+        Promise.allSettled([loadChats(), loadProfile()]),
+        timeoutPromise,
+      ]);
+      console.log("[DataPreload] Preload completed successfully", results);
 
       setState(prev => ({
         ...prev,
@@ -185,7 +200,7 @@ export const DataPreloadProvider: React.FC<DataPreloadProviderProps> = ({ childr
         preloadError: null,
       }));
     } catch (error) {
-      console.error("Error en precarga general:", error);
+      console.error("[DataPreload] Error en precarga general:", error);
       setState(prev => ({
         ...prev,
         isPreloading: false,
