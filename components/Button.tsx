@@ -1,5 +1,6 @@
-import { Pressable, Text } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { useTheme } from "../context/ThemeContext";
+import Spinner from "./Spinner";
 
 type Props = {
   label: string;
@@ -7,6 +8,7 @@ type Props = {
   variant?: "primary" | "secondary" | "danger";
   disabled?: boolean;
   fullWidth?: boolean;
+  isLoading?: boolean;
 };
 
 type Variant = NonNullable<Props["variant"]>;
@@ -17,13 +19,16 @@ export default function Button({
   variant = "primary",
   disabled = false,
   fullWidth = true,
+  isLoading = false,
 }: Props) {
   const { colors } = useTheme();
+  const isInteractiveDisabled = disabled || isLoading;
 
   const resolveBackgroundColor = (v: Variant): string => {
     if (disabled) {
       return colors.muted;
     }
+
     switch (v) {
       case "primary":
         return colors.primary;
@@ -36,10 +41,11 @@ export default function Button({
     }
   };
 
-  const resolveTextColor = (v: Variant): string => {
-    if (disabled) {
+  const resolveContentColor = (v: Variant): string => {
+    if (disabled && !isLoading) {
       return colors.mutedForeground;
     }
+
     switch (v) {
       case "primary":
         return colors.primaryForeground;
@@ -51,6 +57,8 @@ export default function Button({
         return colors.primaryForeground;
     }
   };
+
+  const labelColor = resolveContentColor(variant);
 
   const containerClasses = [
     "rounded-xl",
@@ -66,16 +74,22 @@ export default function Button({
   return (
     <Pressable
       className={containerClasses}
-      onPress={disabled ? undefined : onPress}
-      disabled={disabled}
+      onPress={isInteractiveDisabled ? undefined : onPress}
+      disabled={isInteractiveDisabled}
       style={({ pressed }) => ({
-        opacity: pressed && !disabled ? 0.9 : 1,
+        opacity: isLoading ? 0.9 : pressed && !isInteractiveDisabled ? 0.9 : 1,
         backgroundColor: resolveBackgroundColor(variant),
       })}
     >
-      <Text className={`${textClasses} text-center`} style={{ color: resolveTextColor(variant) }}>
-        {label}
-      </Text>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
+        {isLoading ? (
+          <Spinner size={22} color={labelColor} />
+        ) : (
+          <Text className={`${textClasses} text-center`} style={{ color: labelColor }}>
+            {label}
+          </Text>
+        )}
+      </View>
     </Pressable>
   );
 }

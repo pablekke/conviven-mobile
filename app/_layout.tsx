@@ -13,6 +13,7 @@ import { AuthProvider, useAuth } from "../context/AuthContext";
 import { ThemeProvider, useTheme } from "../context/ThemeContext";
 import { DataPreloadProvider, useDataPreload } from "../context/DataPreloadContext";
 import { ResilienceProvider, useResilience } from "../context/ResilienceContext";
+import { useFeedPrefetch } from "@/features/feed/hooks";
 
 import OfflineBanner from "../components/OfflineBanner";
 import MaintenanceScreen from "../components/MaintenanceScreen";
@@ -29,15 +30,16 @@ function AuthRoot() {
   const segments = useSegments();
   const router = useRouter();
   const { colors, theme } = useTheme();
+  const { prefetchFeed, clearPrefetch } = useFeedPrefetch();
 
   const getTargetRoute = useCallback(() => {
     if (!user?.firstName || !user?.lastName || !user?.departmentId || !user?.neighborhoodId) {
-      return "/profile";
+      return "/";
     }
     return "/(app)";
   }, [user]);
 
-  const handleNavigation = useCallback(() => {
+  const handleNavigation = useCallback(async () => {
     const inAuthGroup = segments[0] === "auth";
 
     if (isLoading) {
@@ -47,14 +49,28 @@ function AuthRoot() {
     if (!isAuthenticated && !inAuthGroup) {
       router.replace("/auth/login");
     } else if (isAuthenticated && inAuthGroup) {
-      router.replace(getTargetRoute());
+      try {
+        await prefetchFeed();
+      } catch (error) {
+        console.warn("[AuthRoot] Error precargando feed:", error);
+      } finally {
+        router.replace(getTargetRoute());
+      }
     }
     // No redirigir si ya está en app - evita loops
-  }, [isAuthenticated, segments, isLoading, router, getTargetRoute]);
+  }, [isAuthenticated, segments, isLoading, router, getTargetRoute, prefetchFeed]);
 
   useEffect(() => {
-    handleNavigation();
+    handleNavigation().catch(error => {
+      console.warn("[AuthRoot] Error manejando navegación:", error);
+    });
   }, [handleNavigation]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      clearPrefetch();
+    }
+  }, [isAuthenticated, clearPrefetch]);
 
   useEffect(() => {
     if (isAuthenticated && preloadCompleted && !isPreloading) {
@@ -151,7 +167,7 @@ export default function RootLayout() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={styles.fullScreen}>
       <SafeAreaProvider>
         <ThemeProvider>
           <ResilienceProvider>

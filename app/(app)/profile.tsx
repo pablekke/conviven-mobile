@@ -6,11 +6,12 @@ import TabTransition from "../../components/TabTransition";
 import { ProfileCard } from "../../features/profile/components";
 import { useProfileScreen } from "../../features/profile/hooks";
 import { useAuth } from "../../context/AuthContext";
+import Spinner from "../../components/Spinner";
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, userName, userAge, progressPercentage } = useProfileScreen();
-  const { logout } = useAuth();
+  const { logout, isLogoutInProgress } = useAuth();
 
   if (!user) {
     return (
@@ -38,8 +39,19 @@ export default function ProfileScreen() {
             <Text style={styles.primaryButtonText}>Buscar compañero</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-            <Text style={styles.logoutButtonText}>Cerrar sesión</Text>
+          <TouchableOpacity
+            style={[styles.logoutButton, isLogoutInProgress && styles.logoutButtonDisabled]}
+            onPress={isLogoutInProgress ? undefined : logout}
+            activeOpacity={isLogoutInProgress ? 1 : 0.7}
+            disabled={isLogoutInProgress}
+          >
+            <View style={styles.logoutButtonContent}>
+              {isLogoutInProgress ? (
+                <Spinner size={28} color="#ffffff" />
+              ) : (
+                <Text style={styles.logoutButtonText}>Cerrar sesión</Text>
+              )}
+            </View>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -80,6 +92,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: 16,
+  },
+  logoutButtonDisabled: {
+    opacity: 0.8,
+  },
+  logoutButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
   logoutButtonText: {
     color: "#ffffff",

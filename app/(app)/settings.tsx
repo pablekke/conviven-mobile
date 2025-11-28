@@ -67,11 +67,15 @@ const SettingItem: React.FC<SettingItemProps> = ({
 };
 
 export default function SettingsScreen() {
-  const { logout } = useAuth();
+  const { logout, isLogoutInProgress } = useAuth();
   const { theme, setTheme } = useTheme();
   const [notifications, setNotifications] = useState(true);
 
   const handleLogout = () => {
+    if (isLogoutInProgress) {
+      return;
+    }
+
     Alert.alert("Logout", "Are you sure you want to logout?", [
       {
         text: "Cancel",
@@ -79,7 +83,9 @@ export default function SettingsScreen() {
       },
       {
         text: "Logout",
-        onPress: () => logout(),
+        onPress: () => {
+          logout().catch(() => undefined);
+        },
         style: "destructive",
       },
     ]);
@@ -193,7 +199,12 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        <Button label="Logout" onPress={handleLogout} variant="danger" />
+        <Button
+          label={isLogoutInProgress ? "Cerrando sesión..." : "Logout"}
+          onPress={handleLogout}
+          variant="danger"
+          isLoading={isLogoutInProgress}
+        />
       </View>
     </ScrollView>
   );
