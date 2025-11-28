@@ -1,5 +1,6 @@
 // Components
 export * from "./components";
+export * from "./components/ChatSearchBar";
 
 // Hooks
 export * from "./hooks";

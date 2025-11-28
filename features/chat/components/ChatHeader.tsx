@@ -12,8 +12,8 @@ export interface ChatHeaderProps {
 
 export const ChatHeader: React.FC<ChatHeaderProps> = ({ subtitle = "Charlá, coordiná y fluí" }) => {
   return (
-    <View className="px-6 pt-4 pb-3">
-      <Text className="text-3xl font-conviven-bold text-foreground mt-1">{subtitle}</Text>
+    <View className="px-6 pt-2 pb-1">
+      <Text className="text-xl font-conviven-bold text-white mt-1">{subtitle}</Text>
     </View>
   );
 };
