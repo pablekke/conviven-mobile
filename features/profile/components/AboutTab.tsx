@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
   tabContent: {
     flex: 1,
     paddingHorizontal: 16,
-    paddingTop: 24,
+    paddingTop: 8,
     paddingBottom: 20,
   },
   section: {
@@ -113,17 +113,27 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#222222",
+    color: "#1A1A1A",
+    fontFamily: "Inter-Bold",
   },
   aboutTextInput: {
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
+    borderWidth: 1.5,
+    borderColor: "#E5E5E5",
     borderRadius: 12,
-    padding: 12,
+    padding: 14,
     fontSize: 16,
-    color: "#222222",
+    color: "#1A1A1A",
     textAlignVertical: "top",
     minHeight: 120,
-    backgroundColor: "#FAFAFA",
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+    fontFamily: "Inter-Regular",
   },
 });

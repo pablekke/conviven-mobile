@@ -86,6 +86,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#222222",
+    color: "#1A1A1A",
+    fontFamily: "Inter-Bold",
   },
 });

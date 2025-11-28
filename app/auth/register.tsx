@@ -1,26 +1,25 @@
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   Alert,
   Platform,
-  ScrollView,
+  Animated,
   Text,
   TouchableOpacity,
   View,
   KeyboardAvoidingView,
+  StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
 
-import RegisterForm from "../../components/RegisterForm";
 import { useAuth } from "../../context/AuthContext";
-import { useTheme } from "../../context/ThemeContext";
 import { RegisterCredentials } from "../../types/user";
+import { RegisterForm, RegisterHeaderSection } from "../../features/register/components";
 
 export default function RegisterScreen() {
   const [error, setError] = useState<string | null>(null);
   const { register, isLoading } = useAuth();
-  const { colors } = useTheme();
+  const scrollY = useRef(new Animated.Value(0)).current;
 
   const handleRegister = async (credentials: RegisterCredentials) => {
     try {
@@ -36,78 +35,130 @@ export default function RegisterScreen() {
     }
   };
 
+  const handleBack = () => {
+    router.back();
+  };
+
+  const handleScroll = Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
+    useNativeDriver: true,
+  });
+
   return (
-    <SafeAreaView className="flex-1 bg-background">
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.select({ ios: "padding", android: "height" })}
-      >
-        <ScrollView keyboardShouldPersistTaps="handled" className="flex-grow px-4 py-3">
-          {/* Back arrow */}
-          <View className="flex-row items-center mb-4">
-            <TouchableOpacity
-              onPress={() => router.back()}
-              activeOpacity={0.7}
-              className="p-2"
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              accessibilityRole="button"
-              accessibilityLabel="Volver al login"
-            >
-              <Ionicons name="arrow-back" size={24} color={colors.foreground} />
-            </TouchableOpacity>
-          </View>
+    <View style={styles.container}>
+      <RegisterHeaderSection scrollY={scrollY} onBack={handleBack} />
+      <SafeAreaView style={styles.safeArea} edges={["top"]}>
+        <KeyboardAvoidingView
+          style={styles.keyboardView}
+          behavior={Platform.select({ ios: "padding", android: "height" })}
+        >
+          <Animated.ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+          >
+            <View style={styles.contentContainer}>
+              {/* Error */}
+              {error ? (
+                <View style={styles.errorContainer}>
+                  <Text style={styles.errorText}>{error}</Text>
+                </View>
+              ) : null}
 
-          <View className="flex-1 items-center justify-center min-h-[560px]">
-            {/* Header */}
-            <View className="items-center mb-6">
-              <Text className="text-3xl font-conviven-bold text-foreground text-center">
-                Crear cuenta
-              </Text>
+              {/* Form */}
+              <RegisterForm onSubmit={handleRegister} isLoading={isLoading} />
 
-              <View className="mt-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
-                <Text className="text-xs font-conviven-semibold text-primary">
-                  Simple • Seguro • Conviven
-                </Text>
+              {/* Divider sutil */}
+              <View style={styles.dividerContainer}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>o</Text>
+                <View style={styles.dividerLine} />
               </View>
 
-              <Text className="mt-3 text-center text-muted-foreground font-conviven">
-                Completá tus datos para comenzar
-              </Text>
-            </View>
-
-            {/* Error */}
-            {error ? (
-              <View className="bg-destructive/10 border border-destructive/40 p-3 rounded-xl mb-4">
-                <Text className="text-sm font-conviven text-destructive">{error}</Text>
+              {/* Link a login */}
+              <View style={styles.loginLinkContainer}>
+                <Text style={styles.loginLinkText}>¿Ya tenés cuenta? </Text>
+                <TouchableOpacity
+                  onPress={() => router.push("/auth/login")}
+                  activeOpacity={0.7}
+                  hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Ir a iniciar sesión"
+                >
+                  <Text style={styles.loginLinkButton}>Iniciar sesión</Text>
+                </TouchableOpacity>
               </View>
-            ) : null}
-
-            {/* Form */}
-            <RegisterForm onSubmit={handleRegister} isLoading={isLoading} />
-
-            {/* Divider sutil */}
-            <View className="flex-row items-center my-5">
-              <View className="flex-1 h-[1px] bg-border/60" />
-              <Text className="mx-3 text-xs text-muted-foreground font-conviven">o</Text>
-              <View className="flex-1 h-[1px] bg-border/60" />
             </View>
-
-            {/* Link a login */}
-            <View className="flex-row justify-center">
-              <Text className="font-conviven text-muted-foreground">¿Ya tenés cuenta? </Text>
-              <TouchableOpacity
-                onPress={() => router.push("/auth/login")}
-                activeOpacity={0.7}
-                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-                accessibilityRole="button"
-                accessibilityLabel="Ir a iniciar sesión"
-              >
-                <Text className="font-conviven-semibold text-primary">Iniciar sesión</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+          </Animated.ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  safeArea: {
+    flex: 1,
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingTop: 90,
+    paddingBottom: 20,
+  },
+  contentContainer: {
+    backgroundColor: "#F8F9FA",
+    marginTop: 20,
+    paddingHorizontal: 20,
+  },
+  errorContainer: {
+    backgroundColor: "rgba(239, 68, 68, 0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(239, 68, 68, 0.4)",
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  errorText: {
+    fontSize: 14,
+    color: "#DC2626",
+    fontFamily: "Inter",
+  },
+  dividerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 20,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.1)",
+  },
+  dividerText: {
+    marginHorizontal: 12,
+    fontSize: 12,
+    color: "#6B7280",
+    fontFamily: "Inter",
+  },
+  loginLinkContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginBottom: 20,
+  },
+  loginLinkText: {
+    fontSize: 14,
+    color: "#6B7280",
+    fontFamily: "Inter",
+  },
+  loginLinkButton: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#007BFF",
+    fontFamily: "Inter-SemiBold",
+  },
+});

@@ -123,7 +123,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
   };
 
   return (
-    <View className="w-full p-5 bg-card rounded-2xl border border-border">
+    <View className="w-full p-5rounded-2xl">
       {/* Sección: Datos personales */}
       <Text className="text-foreground font-conviven-semibold mb-3">Datos personales</Text>
 
@@ -164,8 +164,9 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
         options={GENDER_OPTIONS}
         selectedValue={gender}
         onValueChange={setGender}
-        placeholder="Seleccioná tu género (opcional)"
+        placeholder="Seleccioná tu género"
         error={!!errors.gender}
+        errorMessage={errors.gender}
       />
 
       {/* Sección: Seguridad */}
@@ -253,12 +254,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
         helperText={loading.neighborhoods ? TEXTS.LOADING_NEIGHBORHOODS : undefined}
       />
 
-      <SubmitButton
-        label="Registrarse"
-        loadingLabel="Creando cuenta..."
-        onPress={handleSubmit}
-        isLoading={isLoading}
-      />
+      <SubmitButton label="Registrarse" onPress={handleSubmit} isLoading={isLoading} />
     </View>
   );
 }

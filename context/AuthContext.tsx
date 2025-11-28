@@ -5,6 +5,7 @@ import React, {
   useEffect,
   ReactNode,
   useCallback,
+  useRef,
 } from "react";
 import { Alert } from "react-native";
 
@@ -13,6 +14,7 @@ import { AuthState, LoginCredentials, RegisterCredentials, User } from "../types
 import { NetworkError } from "../services/http";
 import { authSession } from "../services/auth/sessionManager";
 import Toast from "react-native-toast-message";
+import { useFeedPrefetch } from "@/features/feed/hooks";
 
 interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>;
@@ -23,6 +25,7 @@ interface AuthContextType extends AuthState {
   updateUser: (updates: Partial<User>) => Promise<void>;
   setUser: (user: User | null) => Promise<void>;
   isManualLogin: boolean; // Flag para indicar si fue login manual
+  isLogoutInProgress: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -31,6 +34,7 @@ const AuthContext = createContext<AuthContextType>({
   isLoading: true,
   error: null,
   isManualLogin: false,
+  isLogoutInProgress: false,
   login: async () => {},
   register: async () => {},
   logout: async () => {},
@@ -52,7 +56,56 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     error: null,
   });
   const [isManualLogin, setIsManualLogin] = useState(false);
+  const [isLogoutInProgress, setIsLogoutInProgress] = useState(false);
+  const logoutSuppressUntilRef = useRef<number>(0);
+  const { prefetchFeed, clearPrefetch } = useFeedPrefetch();
 
+  useAuthBootstrap({ setState, logoutSuppressUntilRef });
+
+  const { login, register, logout, clearError, refreshUser, setUserValue, updateUser } =
+    useAuthActions({
+      setState,
+      setIsManualLogin,
+      prefetchFeed,
+      clearPrefetch,
+      logoutSuppressUntilRef,
+      setIsLogoutInProgress,
+    });
+
+  const contextValue: AuthContextType = {
+    ...state,
+    login,
+    register,
+    logout,
+    clearError,
+    refreshUser,
+    updateUser,
+    setUser: setUserValue,
+    isManualLogin,
+    isLogoutInProgress,
+  };
+
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+
+  return context;
+};
+
+export default AuthContext;
+
+type AuthBootstrapDeps = {
+  setState: React.Dispatch<React.SetStateAction<AuthState>>;
+  logoutSuppressUntilRef: React.MutableRefObject<number>;
+};
+
+function useAuthBootstrap({ setState, logoutSuppressUntilRef }: AuthBootstrapDeps) {
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
@@ -93,11 +146,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     checkAuthStatus();
-  }, []);
+  }, [setState]);
 
   useEffect(() => {
     const unsubscribe = authSession.subscribe(event => {
       if (event.type === "sessionExpired") {
+        if (logoutSuppressUntilRef.current > Date.now()) {
+          return;
+        }
+
         setState({
           user: null,
           isAuthenticated: false,
@@ -105,70 +162,106 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           error: "Sesión vencida, iniciá sesión de nuevo.",
         });
         AuthService.saveUser(null).catch(() => undefined);
-        Toast.show({ type: "info", text1: "Sesión vencida, iniciá sesión de nuevo." });
+        Toast.show({
+          type: "info",
+          text1: "Sesión vencida, iniciá sesión de nuevo.",
+          position: "bottom",
+        });
       }
     });
 
     return unsubscribe;
-  }, []);
+  }, [logoutSuppressUntilRef, setState]);
+}
 
-  const login = async (credentials: LoginCredentials) => {
-    setIsManualLogin(true); // Marcar que es un login manual
+type AuthActionsDeps = {
+  setState: React.Dispatch<React.SetStateAction<AuthState>>;
+  setIsManualLogin: React.Dispatch<React.SetStateAction<boolean>>;
+  prefetchFeed: () => Promise<unknown>;
+  clearPrefetch: () => void;
+  logoutSuppressUntilRef: React.MutableRefObject<number>;
+  setIsLogoutInProgress: React.Dispatch<React.SetStateAction<boolean>>;
+};
+
+function useAuthActions({
+  setState,
+  setIsManualLogin,
+  prefetchFeed,
+  clearPrefetch,
+  logoutSuppressUntilRef,
+  setIsLogoutInProgress,
+}: AuthActionsDeps) {
+  const login = useCallback(
+    async (credentials: LoginCredentials) => {
+      setIsManualLogin(true);
+      setState(prev => ({ ...prev, isLoading: true, error: null }));
+
+      try {
+        const user = await AuthService.login(credentials);
+
+        try {
+          await prefetchFeed();
+        } catch (prefetchError) {
+          console.warn("[AuthContext] Error precargando feed tras login:", prefetchError);
+        }
+
+        setState({
+          user,
+          isAuthenticated: true,
+          isLoading: false,
+          error: null,
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "El Login ha fallado.";
+
+        setState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: message,
+        }));
+
+        throw error;
+      }
+    },
+    [prefetchFeed, setIsManualLogin, setState],
+  );
+
+  const register = useCallback(
+    async (credentials: RegisterCredentials) => {
+      setState(prev => ({ ...prev, isLoading: true, error: null }));
+
+      try {
+        const user = await AuthService.register(credentials);
+
+        setState({
+          user,
+          isAuthenticated: true,
+          isLoading: false,
+          error: null,
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Registration failed";
+
+        setState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: message,
+        }));
+
+        throw error;
+      }
+    },
+    [setState],
+  );
+
+  const logout = useCallback(async () => {
+    setIsLogoutInProgress(true);
     setState(prev => ({ ...prev, isLoading: true, error: null }));
-
-    try {
-      const user = await AuthService.login(credentials);
-
-      setState({
-        user,
-        isAuthenticated: true,
-        isLoading: false,
-        error: null,
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "El Login ha fallado.";
-
-      setState(prev => ({
-        ...prev,
-        isLoading: false,
-        error: message,
-      }));
-
-      throw error;
-    }
-  };
-
-  const register = async (credentials: RegisterCredentials) => {
-    setState(prev => ({ ...prev, isLoading: true, error: null }));
-
-    try {
-      const user = await AuthService.register(credentials);
-
-      setState({
-        user,
-        isAuthenticated: true,
-        isLoading: false,
-        error: null,
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Registration failed";
-
-      setState(prev => ({
-        ...prev,
-        isLoading: false,
-        error: message,
-      }));
-
-      throw error;
-    }
-  };
-
-  const logout = async () => {
-    setState(prev => ({ ...prev, isLoading: true, error: null }));
+    logoutSuppressUntilRef.current = Date.now() + 4000;
 
     try {
       await AuthService.logout();
-      setIsManualLogin(false); // Reset flag al desloguear
+      setIsManualLogin(false);
 
       setState({
         user: null,
@@ -176,6 +269,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         isLoading: false,
         error: null,
       });
+      Toast.show({ type: "success", text1: "Sesión cerrada con éxito", position: "bottom" });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Logout failed";
 
@@ -186,12 +280,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }));
 
       Alert.alert("Logout Error", "Failed to log out. Please try again.");
+    } finally {
+      clearPrefetch();
+      logoutSuppressUntilRef.current = Date.now() + 4000;
+      setIsLogoutInProgress(false);
     }
-  };
+  }, [clearPrefetch, logoutSuppressUntilRef, setIsLogoutInProgress, setIsManualLogin, setState]);
 
-  const clearError = () => {
+  const clearError = useCallback(() => {
     setState(prev => ({ ...prev, error: null }));
-  };
+  }, [setState]);
 
   const refreshUser = useCallback(async () => {
     setState(prev => ({ ...prev, isLoading: true }));
@@ -219,62 +317,52 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       return null;
     }
-  }, []);
+  }, [setState]);
 
-  const setUserValue = useCallback(async (nextUser: User | null) => {
-    setState(prev => ({
-      ...prev,
-      user: nextUser,
-      isAuthenticated: !!nextUser,
-    }));
-
-    await AuthService.saveUser(nextUser);
-  }, []);
-
-  const updateUser = useCallback(async (updates: Partial<User>) => {
-    let mergedUser: User | null = null;
-
-    setState(prev => {
-      if (!prev.user) {
-        mergedUser = null;
-        return prev;
-      }
-
-      mergedUser = { ...prev.user, ...updates };
-
-      return {
+  const setUserValue = useCallback(
+    async (nextUser: User | null) => {
+      setState(prev => ({
         ...prev,
-        user: mergedUser,
-        isAuthenticated: prev.isAuthenticated || !!mergedUser,
-      };
-    });
+        user: nextUser,
+        isAuthenticated: !!nextUser,
+      }));
 
-    await AuthService.saveUser(mergedUser);
-  }, []);
+      await AuthService.saveUser(nextUser);
+    },
+    [setState],
+  );
 
-  const contextValue: AuthContextType = {
-    ...state,
+  const updateUser = useCallback(
+    async (updates: Partial<User>) => {
+      let mergedUser: User | null = null;
+
+      setState(prev => {
+        if (!prev.user) {
+          mergedUser = null;
+          return prev;
+        }
+
+        mergedUser = { ...prev.user, ...updates };
+
+        return {
+          ...prev,
+          user: mergedUser,
+          isAuthenticated: prev.isAuthenticated || !!mergedUser,
+        };
+      });
+
+      await AuthService.saveUser(mergedUser);
+    },
+    [setState],
+  );
+
+  return {
     login,
     register,
     logout,
     clearError,
     refreshUser,
+    setUserValue,
     updateUser,
-    setUser: setUserValue,
-    isManualLogin,
   };
-
-  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-
-  return context;
-};
-
-export default AuthContext;
+}

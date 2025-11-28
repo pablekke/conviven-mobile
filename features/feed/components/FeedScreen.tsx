@@ -9,6 +9,7 @@ import {
 } from "../mocks/incomingProfile";
 import { FEED_CONSTANTS } from "../constants/feed.constants";
 import { useProfileDeck } from "../hooks/useProfileDeck";
+import { useFeedPrefetchHydrator } from "../hooks/useFeedPrefetchHydrator";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { feedService } from "../services";
 import { mapBackendItemToMockedUser } from "../adapters/backendToMockedUser";
@@ -23,9 +24,23 @@ function FeedScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [noMoreProfiles, setNoMoreProfiles] = useState(false);
   const mainRef = useRef<ScrollView | null>(null);
+  const { hydratePrefetchedFeed } = useFeedPrefetchHydrator();
 
   useEffect(() => {
     let isMounted = true;
+
+    const prefetched = hydratePrefetchedFeed({ invalidate: true });
+    if (prefetched) {
+      if (isMounted) {
+        setProfiles(prefetched.profiles);
+        setNoMoreProfiles(prefetched.profiles.length === 0);
+        setIsLoading(false);
+      }
+
+      return () => {
+        isMounted = false;
+      };
+    }
 
     const loadProfiles = async () => {
       if (FEED_USE_MOCK) {
@@ -70,7 +85,7 @@ function FeedScreen() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [hydratePrefetchedFeed]);
 
   const deck = useProfileDeck(profiles);
   const { primaryCard, secondaryCard, primaryBackend, advance, total } = deck;

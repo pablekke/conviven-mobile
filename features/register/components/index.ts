@@ -14,3 +14,7 @@ export type { FormDatePickerProps } from "./FormDatePicker";
 
 export { default as SubmitButton } from "./SubmitButton";
 export type { SubmitButtonProps } from "./SubmitButton";
+
+export { RegisterHeader } from "./RegisterHeader";
+export { RegisterHeaderSection } from "./RegisterHeaderSection";
+export { RegisterSubtitle } from "./RegisterSubtitle";

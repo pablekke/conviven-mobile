@@ -1,30 +1,31 @@
-import React, { useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useState, useRef } from "react";
+import { Animated, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
 
-import { useTheme } from "../../../context/ThemeContext";
-import Spinner from "../../../components/Spinner";
+import TabTransition from "../../../components/TabTransition";
 import {
   SelectionModal,
   DataTab,
   AboutTab,
   RoommateTab,
+  ExpandableTab,
+  EditProfileHeaderSection,
 } from "../../../features/profile/components";
+import type { TabType } from "../../../features/profile/components";
 import { QUESTION_TITLES, QUESTION_OPTIONS } from "../../../features/profile/constants";
 import { useEditProfileLogic } from "../../../features/profile/hooks";
 
-type TabType = "data" | "about" | "roommate";
-
 export default function EditProfileScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
   const [activeTab, setActiveTab] = useState<TabType>("about");
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState("");
   const [selectedValue, setSelectedValue] = useState("");
+  const scrollViewRef = useRef<any>(null);
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const currentScrollYRef = useRef(0);
 
   const {
     aboutText,
@@ -153,161 +154,129 @@ export default function EditProfileScreen() {
 
   const isSaving = saving || searchPrefsSaving || searchFiltersSaving;
 
+  const handleScroll = Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
+    useNativeDriver: true,
+    listener: (event: any) => {
+      currentScrollYRef.current = event.nativeEvent.contentOffset.y;
+    },
+  });
+
+  const handleExpandHeader = () => {
+    const currentScrollY = currentScrollYRef.current;
+
+    if (currentScrollY === 0) return;
+
+    // Animación más lenta y suave usando requestAnimationFrame
+    const duration = 800; // Duración más larga para animación más lenta
+    let startTime: number | null = null;
+
+    const animate = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      // Easing suave (ease-out cubic)
+      const easedProgress = 1 - Math.pow(1 - progress, 3);
+      const targetY = currentScrollY * (1 - easedProgress);
+
+      scrollViewRef.current?.scrollTo({ y: targetY, animated: false });
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+      }
+    };
+
+    requestAnimationFrame(animate);
+  };
+
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      edges={["top"]}
-    >
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-          <Feather name="arrow-left" size={24} color="#222222" />
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>Editar Perfil</Text>
-          <Text style={styles.headerSubtitle}>Actualiza tu información personal</Text>
-        </View>
-        <TouchableOpacity onPress={handleSave} style={styles.saveButton} disabled={isSaving}>
-          {isSaving ? (
-            <Spinner size={20} color="#007BFF" thickness={2} />
-          ) : (
-            <Text style={styles.saveButtonText}>Guardar</Text>
-          )}
-        </TouchableOpacity>
-      </View>
-
-      {/* Tabs */}
-      <View style={styles.tabsContainer}>
-        {[
-          { id: "data", icon: "user", label: "Datos" },
-          { id: "about", icon: "star", label: "Sobre mí" },
-          { id: "roommate", icon: "heart", label: "Roomie" },
-        ].map(tab => (
-          <TouchableOpacity
-            key={tab.id}
-            style={[styles.tab, activeTab === tab.id && styles.activeTab]}
-            onPress={() => setActiveTab(tab.id as TabType)}
+    <TabTransition>
+      <View style={styles.container}>
+        <EditProfileHeaderSection
+          scrollY={scrollY}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          onBack={handleBack}
+          onSave={handleSave}
+          isSaving={isSaving}
+        />
+        <SafeAreaView style={styles.safeArea} edges={["top"]}>
+          {/* Tab Content */}
+          <Animated.ScrollView
+            ref={scrollViewRef}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
           >
-            <Feather
-              name={tab.icon as any}
-              size={16}
-              color={activeTab === tab.id ? "#FFFFFF" : "#666"}
-            />
-            <Text style={[styles.tabText, activeTab === tab.id && styles.activeTabText]}>
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
+            <View style={styles.contentContainer}>
+              {activeTab === "data" && (
+                <DataTab
+                  getSelectedLabel={getSelectedLabel}
+                  openSelectionModal={openSelectionModal}
+                  minAge={minAge}
+                  setMinAge={setMinAge}
+                  maxAge={maxAge}
+                  setMaxAge={setMaxAge}
+                  budgetMin={budgetMin}
+                  setBudgetMin={setBudgetMin}
+                  budgetMax={budgetMax}
+                  setBudgetMax={setBudgetMax}
+                  updateSearchFilters={updateSearchFilters}
+                />
+              )}
+              {activeTab === "about" && (
+                <AboutTab
+                  aboutText={aboutText}
+                  setAboutText={setAboutText}
+                  getSelectedLabel={getSelectedLabel}
+                  openSelectionModal={openSelectionModal}
+                />
+              )}
+              {activeTab === "roommate" && (
+                <RoommateTab
+                  getSelectedLabel={getSelectedLabel}
+                  openSelectionModal={openSelectionModal}
+                />
+              )}
+            </View>
+          </Animated.ScrollView>
+
+          {/* Modal */}
+          <SelectionModal
+            visible={modalVisible}
+            title={QUESTION_TITLES[selectedQuestion] ?? ""}
+            options={QUESTION_OPTIONS[selectedQuestion as keyof typeof QUESTION_OPTIONS] ?? []}
+            selectedValue={selectedValue}
+            onSelect={setSelectedValue}
+            onClose={closeModal}
+            onConfirm={confirmSelection}
+          />
+        </SafeAreaView>
       </View>
-
-      {/* Tab Content */}
-      {activeTab === "data" && (
-        <DataTab
-          getSelectedLabel={getSelectedLabel}
-          openSelectionModal={openSelectionModal}
-          minAge={minAge}
-          setMinAge={setMinAge}
-          maxAge={maxAge}
-          setMaxAge={setMaxAge}
-          budgetMin={budgetMin}
-          setBudgetMin={setBudgetMin}
-          budgetMax={budgetMax}
-          setBudgetMax={setBudgetMax}
-          updateSearchFilters={updateSearchFilters}
-        />
-      )}
-      {activeTab === "about" && (
-        <AboutTab
-          aboutText={aboutText}
-          setAboutText={setAboutText}
-          getSelectedLabel={getSelectedLabel}
-          openSelectionModal={openSelectionModal}
-        />
-      )}
-      {activeTab === "roommate" && (
-        <RoommateTab getSelectedLabel={getSelectedLabel} openSelectionModal={openSelectionModal} />
-      )}
-
-      {/* Modal */}
-      <SelectionModal
-        visible={modalVisible}
-        title={QUESTION_TITLES[selectedQuestion] ?? ""}
-        options={QUESTION_OPTIONS[selectedQuestion as keyof typeof QUESTION_OPTIONS] ?? []}
-        selectedValue={selectedValue}
-        onSelect={setSelectedValue}
-        onClose={closeModal}
-        onConfirm={confirmSelection}
-      />
-    </SafeAreaView>
+      {/* Solapa desplegable independiente - fuera del container para estar por encima */}
+      <ExpandableTab scrollY={scrollY} onExpand={handleExpandHeader} />
+    </TabTransition>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#F8F9FA",
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: "#FFFFFF",
-  },
-  backButton: {
-    padding: 8,
-  },
-  headerCenter: {
+  safeArea: {
     flex: 1,
-    alignItems: "center",
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#222222",
+  scrollContent: {
+    paddingTop: 150,
+    paddingBottom: 20,
   },
-  headerSubtitle: {
-    fontSize: 14,
-    color: "#666666",
-    marginTop: 2,
-  },
-  saveButton: {
-    padding: 8,
-  },
-  saveButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#007BFF",
-  },
-  tabsContainer: {
-    flexDirection: "row",
-    backgroundColor: "#F8F8F8",
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 12,
-    padding: 4,
-  },
-  tab: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    gap: 6,
-  },
-  activeTab: {
-    backgroundColor: "#007BFF",
-  },
-  tabText: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#666666",
-  },
-  activeTabText: {
-    color: "#FFFFFF",
-    fontWeight: "600",
+  contentContainer: {
+    backgroundColor: "#F8F9FA",
+    marginTop: 20,
+    paddingHorizontal: 20,
   },
 });

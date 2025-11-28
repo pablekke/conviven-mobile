@@ -1,4 +1,5 @@
 import { useRouter } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
 
 import React from "react";
 import { StyleSheet, View } from "react-native";
@@ -72,10 +73,14 @@ export default function ChatScreen() {
 
   return (
     <TabTransition>
-      <SafeAreaView
-        style={[styles.safeArea, { backgroundColor: colors.conviven.blue }]}
-        edges={["top"]}
-      >
+      <View style={styles.container}>
+        <LinearGradient
+          colors={["#0052D4", "#007BFF"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.headerGradient}
+        />
+        <SafeAreaView style={styles.safeArea} edges={["top"]}>
         {loading ? (
           <View className="flex-1 items-center justify-center bg-background">
             <Spinner
@@ -99,11 +104,22 @@ export default function ChatScreen() {
           </>
         )}
       </SafeAreaView>
+      </View>
     </TabTransition>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  headerGradient: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: "50%",
+  },
   safeArea: {
     flex: 1,
   },

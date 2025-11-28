@@ -15,7 +15,7 @@ export const QuestionRow: React.FC<QuestionRowProps> = ({ question, selectedValu
         <Text style={[styles.selectText, selectedValue !== "Seleccionar" && styles.selectedText]}>
           {selectedValue}
         </Text>
-        <Feather name="chevron-right" size={16} color="#999" />
+        <Feather name="chevron-right" size={18} color="#999" />
       </View>
     </TouchableOpacity>
   );
@@ -31,14 +31,24 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
     marginBottom: 8,
-    borderWidth: 1,
-    borderColor: "#F0F0F0",
+    borderWidth: 1.5,
+    borderColor: "#E5E5E5",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
   questionText: {
     fontSize: 16,
-    color: "#222222",
+    color: "#1A1A1A",
     flex: 1,
     marginRight: 16,
+    fontWeight: "500",
+    fontFamily: "Inter-Medium",
   },
   questionRight: {
     flexDirection: "row",
@@ -48,9 +58,11 @@ const styles = StyleSheet.create({
   selectText: {
     fontSize: 14,
     color: "#666666",
+    fontFamily: "Inter-Regular",
   },
   selectedText: {
     color: "#007BFF",
     fontWeight: "600",
+    fontFamily: "Inter-SemiBold",
   },
 });
