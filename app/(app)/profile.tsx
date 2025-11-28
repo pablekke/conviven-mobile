@@ -1,8 +1,17 @@
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import TabTransition from "../../components/TabTransition";
+import { useAuth } from "../../context/AuthContext";
 import { ProfileCard } from "../../features/profile/components";
 import { useProfileScreen } from "../../features/profile/hooks";
 import { useAuth } from "../../context/AuthContext";
@@ -15,29 +24,39 @@ export default function ProfileScreen() {
 
   if (!user) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#007BFF" />
-        </View>
-      </SafeAreaView>
+      <View className="flex-1 items-center justify-center bg-background">
+        <ActivityIndicator color="#007BFF" />
+      </View>
     );
   }
 
   return (
     <TabTransition>
-      <SafeAreaView style={styles.safeArea} edges={["top"]}>
-        <View style={styles.container}>
-          <ProfileCard
-            avatar={user.avatar}
-            userName={userName}
-            userAge={userAge}
-            progressPercentage={progressPercentage}
-            onEditPress={() => router.push("./edit-profile")}
-          />
+      <View style={styles.container}>
+        <LinearGradient
+          colors={["#007BFF", "#00C6FF"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.headerGradient}
+        />
+        <SafeAreaView style={styles.safeArea} edges={["top"]}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.headerSpacer} />
+            <ProfileCard
+              avatar={user.avatar}
+              userName={userName}
+              userAge={userAge}
+              progressPercentage={progressPercentage}
+              onEditPress={() => router.push("./edit-profile")}
+            />
 
-          <TouchableOpacity style={styles.primaryButton} onPress={() => router.push("/(app)")}>
-            <Text style={styles.primaryButtonText}>Buscar compañero</Text>
-          </TouchableOpacity>
+            <View style={styles.actionsContainer}>
+              <TouchableOpacity style={styles.primaryButton} onPress={() => router.push("/(app)")}>
+                <Text style={styles.primaryButtonText}>Buscar compañero</Text>
+              </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.logoutButton, isLogoutInProgress && styles.logoutButtonDisabled]}
@@ -60,35 +79,60 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#FAFAFA",
-  },
   container: {
     flex: 1,
+    backgroundColor: "#F8F9FA",
+  },
+  headerGradient: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 280,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+  },
+  safeArea: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+  },
+  headerSpacer: {
+    height: 60,
+  },
+  actionsContainer: {
+    marginTop: 24,
     alignItems: "center",
-    paddingTop: 40,
-    paddingHorizontal: "5%",
+    width: "100%",
   },
   primaryButton: {
-    width: "85%",
-    height: 52,
+    width: "100%",
+    height: 56,
     backgroundColor: "#007BFF",
-    borderRadius: 12,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 24,
+    shadowColor: "#007BFF",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   primaryButtonText: {
     color: "#ffffff",
     fontSize: 16,
-    fontWeight: "bold",
+    fontFamily: "Inter-Bold",
   },
   logoutButton: {
-    width: "85%",
-    height: 52,
-    backgroundColor: "#FF3B30",
-    borderRadius: 12,
+    width: "100%",
+    height: 56,
+    backgroundColor: "#FFF",
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
     marginTop: 16,
@@ -102,8 +146,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   logoutButtonText: {
-    color: "#ffffff",
+    color: "#FF3B30",
     fontSize: 16,
-    fontWeight: "bold",
+    fontFamily: "Inter-SemiBold",
   },
 });

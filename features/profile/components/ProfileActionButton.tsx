@@ -1,5 +1,5 @@
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export interface ProfileActionButtonProps {
   icon: React.ComponentProps<typeof Feather>["name"];
@@ -25,8 +25,8 @@ export const ProfileActionButton: React.FC<ProfileActionButtonProps> = ({
       activeOpacity={0.7}
       disabled={!onPress}
     >
-      <View style={isPrimary ? styles.primaryButtonIcon : styles.defaultButtonIcon}>
-        <Feather name={icon} size={isPrimary ? 28 : 24} color={isPrimary ? "#ffffff" : "#666666"} />
+      <View style={[styles.iconContainer, isPrimary ? styles.primaryIcon : styles.defaultIcon]}>
+        <Feather name={icon} size={24} color={isPrimary ? "#ffffff" : "#64748B"} />
         {showPlusBadge && (
           <View style={styles.plusIcon}>
             <Text style={styles.plusText}>+</Text>
@@ -42,38 +42,39 @@ const styles = StyleSheet.create({
   actionButton: {
     alignItems: "center",
     justifyContent: "center",
-    minWidth: 80,
+    minWidth: 70,
   },
-  defaultButtonIcon: {
+  iconContainer: {
     width: 56,
     height: 56,
-    borderRadius: 28,
-    backgroundColor: "#F5F5F5",
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 8,
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
   },
-  primaryButtonIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+  defaultIcon: {
+    backgroundColor: "#F1F5F9",
+  },
+  primaryIcon: {
     backgroundColor: "#007BFF",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 8,
+    shadowColor: "#007BFF",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   plusIcon: {
     position: "absolute",
-    top: -4,
-    right: -4,
-    width: 16,
-    height: 16,
-    borderRadius: 8,
+    top: -2,
+    right: -2,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
     backgroundColor: "#007BFF",
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
   },
   plusText: {
     color: "#ffffff",
@@ -81,13 +82,13 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   actionButtonText: {
-    fontSize: 12,
-    color: "#A0A0A0",
-    fontWeight: "500",
+    fontSize: 13,
+    color: "#64748B",
+    fontFamily: "Inter-Medium",
     textAlign: "center",
   },
   primaryButtonText: {
     color: "#007BFF",
-    fontWeight: "600",
+    fontFamily: "Inter-SemiBold",
   },
 });

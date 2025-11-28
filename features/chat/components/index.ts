@@ -1,6 +1,8 @@
 export { ChatHeader } from "./ChatHeader";
 export type { ChatHeaderProps } from "./ChatHeader";
 
+export { ChatSearchBar } from "./ChatSearchBar";
+
 export { ChatPreviewItem } from "./ChatPreviewItem";
 export type { ChatPreviewItemProps } from "./ChatPreviewItem";
 
