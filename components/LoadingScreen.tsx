@@ -1,21 +1,23 @@
-import { ActivityIndicator, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
+import Spinner from "./Spinner";
 import { useTheme } from "../context/ThemeContext";
 
-interface LoadingScreenProps {
-  message?: string;
-}
-
-export default function LoadingScreen({ message = "Loading..." }: LoadingScreenProps) {
+export default function LoadingScreen() {
   const { colors } = useTheme();
 
   return (
     <View
-      className="flex-1 items-center justify-center bg-background"
-      style={{ backgroundColor: colors.background }}
+      className="flex-1 items-center justify-center"
+      style={[styles.fullScreen, { backgroundColor: colors.conviven.blue }]}
     >
-      <ActivityIndicator size="large" color={colors.primary} />
-      <Text className="text-muted-foreground mt-4 font-conviven">{message}</Text>
+      <Spinner size={52} color="#FFFFFF" trackColor="rgba(255,255,255,0.15)" thickness={5} />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  fullScreen: {
+    flex: 1,
+  },
+});

@@ -22,6 +22,7 @@ interface AuthContextType extends AuthState {
   refreshUser: () => Promise<User | null>;
   updateUser: (updates: Partial<User>) => Promise<void>;
   setUser: (user: User | null) => Promise<void>;
+  isManualLogin: boolean; // Flag para indicar si fue login manual
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -29,6 +30,7 @@ const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   isLoading: true,
   error: null,
+  isManualLogin: false,
   login: async () => {},
   register: async () => {},
   logout: async () => {},
@@ -49,6 +51,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isLoading: true,
     error: null,
   });
+  const [isManualLogin, setIsManualLogin] = useState(false);
 
   useEffect(() => {
     const checkAuthStatus = async () => {
@@ -110,6 +113,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = async (credentials: LoginCredentials) => {
+    setIsManualLogin(true); // Marcar que es un login manual
     setState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
@@ -122,7 +126,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         error: null,
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Login failed";
+      const message = error instanceof Error ? error.message : "El Login ha fallado.";
 
       setState(prev => ({
         ...prev,
@@ -164,6 +168,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     try {
       await AuthService.logout();
+      setIsManualLogin(false); // Reset flag al desloguear
 
       setState({
         user: null,
@@ -256,6 +261,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     refreshUser,
     updateUser,
     setUser: setUserValue,
+    isManualLogin,
   };
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;

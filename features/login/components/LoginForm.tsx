@@ -1,12 +1,12 @@
-import React, { useMemo, useState } from "react";
-import { ActivityIndicator, Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Mail, Lock, Eye, EyeOff } from "lucide-react-native";
+import Spinner from "@/components/Spinner";
 
-import Button from "@/components/Button";
 import { useTheme } from "@/context/ThemeContext";
 import type { LoginCredentials } from "@/types/user";
 
-import { LOGIN_FORM_DEFAULTS, LOGIN_COPY } from "../constants";
-import type { LoginFormErrors } from "../types";
+import { LOGIN_COPY } from "../constants";
+import { useLoginForm } from "../hooks";
 
 interface LoginFormProps {
   onSubmit: (credentials: LoginCredentials) => Promise<void>;
@@ -15,105 +15,110 @@ interface LoginFormProps {
 }
 
 export default function LoginForm({ onSubmit, isLoading = false, onFocusField }: LoginFormProps) {
-  const defaults = useMemo(() => LOGIN_FORM_DEFAULTS, []);
-  const [email, setEmail] = useState<string>(defaults.email ?? "");
-  const [password, setPassword] = useState<string>(defaults.password ?? "");
-  const [errors, setErrors] = useState<LoginFormErrors>({});
   const { colors } = useTheme();
-  const inputStyle = {
-    backgroundColor: colors.card,
-    color: colors.foreground,
-  };
-
-  const validate = (): boolean => {
-    const newErrors: LoginFormErrors = {};
-
-    if (!email) {
-      newErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = "Email is invalid";
-    }
-
-    if (!password) {
-      newErrors.password = "Password is required";
-    } else if (password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async () => {
-    if (validate()) {
-      await onSubmit({ email, password });
-    }
-  };
+  const {
+    email,
+    setEmail,
+    password,
+    setPassword,
+    showPassword,
+    togglePasswordVisibility,
+    errors,
+    handleSubmit,
+    handleFocus,
+  } = useLoginForm({ onSubmit, onFocusField });
 
   return (
-    <View className="w-full p-5 bg-card rounded-2xl border border-border">
+    <View className="w-full">
       <View className="mb-4">
-        <Text className="mb-2 text-sm font-conviven text-foreground">Email</Text>
-        <TextInput
-          className={`p-4 border rounded-xl ${errors.email ? "border-destructive" : "border-input"} bg-card text-foreground`}
-          value={email}
-          onChangeText={setEmail}
-          placeholder="your@email.com"
-          placeholderTextColor={colors.mutedForeground}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          onFocus={() => {
-            setErrors({ ...errors, email: undefined });
-            onFocusField?.("email");
-          }}
-          style={inputStyle}
-        />
+        <Text className="mb-2 text-sm font-conviven-medium text-foreground ml-1">
+          Correo electrónico
+        </Text>
+        <View
+          className={`flex-row items-center px-4 h-14 border rounded-2xl bg-card ${
+            errors.email ? "border-destructive" : "border-border"
+          }`}
+        >
+          <Mail size={20} color={colors.mutedForeground} className="mr-3" />
+          <TextInput
+            className="flex-1 text-foreground font-conviven pl-1"
+            value={email}
+            onChangeText={setEmail}
+            placeholder="hola@ejemplo.com"
+            placeholderTextColor={colors.mutedForeground}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            style={{}}
+            onFocus={() => handleFocus("email")}
+          />
+        </View>
         {errors.email && (
-          <Text className="mt-1 text-sm font-conviven text-destructive">{errors.email}</Text>
+          <Text className="mt-1.5 ml-1 text-xs font-conviven text-destructive">{errors.email}</Text>
         )}
       </View>
 
-      <View className="mb-2">
-        <Text className="mb-2 text-sm font-conviven text-foreground">Password</Text>
-        <TextInput
-          className={`p-4 border rounded-xl ${
-            errors.password ? "border-destructive" : "border-input"
-          } bg-card text-foreground`}
-          value={password}
-          onChangeText={setPassword}
-          placeholder="Your password"
-          placeholderTextColor={colors.mutedForeground}
-          secureTextEntry
-          onFocus={() => {
-            setErrors({ ...errors, password: undefined });
-            onFocusField?.("password");
-          }}
-          style={inputStyle}
-        />
+      <View className="mb-6">
+        <Text className="mb-2 text-sm font-conviven-medium text-foreground ml-1">Contraseña</Text>
+        <View
+          className={`flex-row items-center px-4 h-14 border rounded-2xl bg-card ${
+            errors.password ? "border-destructive" : "border-border"
+          }`}
+        >
+          <Lock size={20} color={colors.mutedForeground} className="mr-3" />
+          <TextInput
+            className="flex-1 text-foreground font-conviven pl-1"
+            value={password}
+            onChangeText={setPassword}
+            placeholder="••••••••"
+            placeholderTextColor={colors.mutedForeground}
+            secureTextEntry={!showPassword}
+            style={{}}
+            onFocus={() => handleFocus("password")}
+          />
+          <TouchableOpacity onPress={togglePasswordVisibility} hitSlop={10}>
+            {showPassword ? (
+              <EyeOff size={20} color={colors.mutedForeground} />
+            ) : (
+              <Eye size={20} color={colors.mutedForeground} />
+            )}
+          </TouchableOpacity>
+        </View>
         {errors.password && (
-          <Text className="mt-1 text-sm font-conviven text-destructive">{errors.password}</Text>
+          <Text className="mt-1.5 ml-1 text-xs font-conviven text-destructive">
+            {errors.password}
+          </Text>
         )}
       </View>
 
       <TouchableOpacity
-        className="mb-4 self-end"
-        onPress={() => Alert.alert("Reset Password", LOGIN_COPY.forgotPassword)}
+        className="mb-8 self-end"
+        onPress={() => Alert.alert("Restablecer Contraseña", LOGIN_COPY.forgotPassword)}
         activeOpacity={0.7}
       >
-        <Text className="font-conviven-semibold text-primary">Forgot password?</Text>
+        <Text className="font-conviven-medium text-primary text-sm">¿Olvidaste tu contraseña?</Text>
       </TouchableOpacity>
 
-      <Button
-        label={isLoading ? "Please wait..." : "Login"}
+      <TouchableOpacity
         onPress={handleSubmit}
         disabled={isLoading}
-      />
-
-      {isLoading && (
-        <View className="mt-4 items-center">
-          <ActivityIndicator size="small" color={colors.primary} />
-        </View>
-      )}
+        activeOpacity={0.8}
+        className={`w-full py-4 rounded-2xl items-center justify-center shadow-sm ${
+          isLoading ? "bg-primary/70" : "bg-primary"
+        }`}
+        style={{
+          shadowColor: colors.primary,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 8,
+          elevation: 4,
+        }}
+      >
+        {isLoading ? (
+          <Spinner size={24} color="#fff" />
+        ) : (
+          <Text className="text-white font-conviven-bold text-lg">Iniciar Sesión</Text>
+        )}
+      </TouchableOpacity>
     </View>
   );
 }

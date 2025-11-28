@@ -3,10 +3,10 @@ import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
 import { useCallback, useEffect, useState } from "react";
 import { View, Text as RNText, StyleSheet, LogBox } from "react-native";
-import Spinner from "../components/Spinner";
+import LoadingScreen from "../components/LoadingScreen";
+import CustomToast from "../components/CustomToast";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useFonts } from "expo-font";
-import Toast from "react-native-toast-message";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { AuthProvider, useAuth } from "../context/AuthContext";
@@ -23,7 +23,7 @@ LogBox.ignoreLogs(["SafeAreaView has been deprecated"]);
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 function AuthRoot() {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading, user, isManualLogin } = useAuth();
   const { isPreloading, preloadCompleted } = useDataPreload();
   const [showTransition, setShowTransition] = useState(true);
   const segments = useSegments();
@@ -60,7 +60,7 @@ function AuthRoot() {
     if (isAuthenticated && preloadCompleted && !isPreloading) {
       const timer = setTimeout(() => {
         setShowTransition(false);
-      }, 100); // Reducido de 300ms a 100ms
+      }, 100);
 
       return () => clearTimeout(timer);
     } else if (!isAuthenticated) {
@@ -68,18 +68,13 @@ function AuthRoot() {
     }
   }, [isAuthenticated, preloadCompleted, isPreloading]);
 
+  // Mostrar loader SOLO si NO fue un login manual
   const showLoading =
-    isLoading || (isAuthenticated && (isPreloading || !preloadCompleted || showTransition));
+    !isManualLogin &&
+    (isLoading || (isAuthenticated && (isPreloading || !preloadCompleted || showTransition)));
 
   if (showLoading) {
-    return (
-      <View
-        className="flex-1 items-center justify-center"
-        style={[styles.fullScreen, { backgroundColor: colors.conviven.blue }]}
-      >
-        <Spinner size={52} color="#FFFFFF" trackColor="rgba(255,255,255,0.15)" thickness={5} />
-      </View>
-    );
+    return <LoadingScreen />;
   }
 
   return (
@@ -169,7 +164,7 @@ export default function RootLayout() {
           </ResilienceProvider>
         </ThemeProvider>
       </SafeAreaProvider>
-      <Toast />
+      <CustomToast />
     </GestureHandlerRootView>
   );
 }
