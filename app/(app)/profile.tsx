@@ -11,7 +11,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import TabTransition from "../../components/TabTransition";
-import { useAuth } from "../../context/AuthContext";
 import { ProfileCard } from "../../features/profile/components";
 import { useProfileScreen } from "../../features/profile/hooks";
 import { useAuth } from "../../context/AuthContext";
@@ -25,8 +24,8 @@ export default function ProfileScreen() {
   if (!user) {
     return (
       <View className="flex-1 items-center justify-center bg-background">
-        <ActivityIndicator color="#007BFF" />
-      </View>
+          <ActivityIndicator color="#007BFF" />
+        </View>
     );
   }
 
@@ -34,46 +33,48 @@ export default function ProfileScreen() {
     <TabTransition>
       <View style={styles.container}>
         <LinearGradient
-          colors={["#007BFF", "#00C6FF"]}
+          colors={["#0052D4", "#007BFF"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.headerGradient}
         />
-        <SafeAreaView style={styles.safeArea} edges={["top"]}>
+      <SafeAreaView style={styles.safeArea} edges={["top"]}>
           <ScrollView
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
+            bounces
+            alwaysBounceVertical={false}
           >
             <View style={styles.headerSpacer} />
-            <ProfileCard
-              avatar={user.avatar}
-              userName={userName}
-              userAge={userAge}
-              progressPercentage={progressPercentage}
-              onEditPress={() => router.push("./edit-profile")}
-            />
+          <ProfileCard
+            avatar={user.avatar}
+            userName={userName}
+            userAge={userAge}
+            progressPercentage={progressPercentage}
+            onEditPress={() => router.push("./edit-profile")}
+          />
 
             <View style={styles.actionsContainer}>
-              <TouchableOpacity style={styles.primaryButton} onPress={() => router.push("/(app)")}>
-                <Text style={styles.primaryButtonText}>Buscar compañero</Text>
-              </TouchableOpacity>
+          <TouchableOpacity style={styles.primaryButton} onPress={() => router.push("/(app)")}>
+            <Text style={styles.primaryButtonText}>Buscar compañero</Text>
+          </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.logoutButton, isLogoutInProgress && styles.logoutButtonDisabled]}
-            onPress={isLogoutInProgress ? undefined : logout}
-            activeOpacity={isLogoutInProgress ? 1 : 0.7}
-            disabled={isLogoutInProgress}
-          >
-            <View style={styles.logoutButtonContent}>
-              {isLogoutInProgress ? (
-                <Spinner size={28} color="#ffffff" />
-              ) : (
-                <Text style={styles.logoutButtonText}>Cerrar sesión</Text>
-              )}
-            </View>
+              <TouchableOpacity
+                style={[styles.logoutButton, isLogoutInProgress && styles.logoutButtonLoading]}
+                onPress={isLogoutInProgress ? undefined : logout}
+                disabled={isLogoutInProgress}
+                activeOpacity={isLogoutInProgress ? 1 : 0.7}
+              >
+                {isLogoutInProgress ? (
+                  <Spinner size={24} color="#FFF" />
+                ) : (
+            <Text style={styles.logoutButtonText}>Cerrar sesión</Text>
+                )}
           </TouchableOpacity>
         </View>
+          </ScrollView>
       </SafeAreaView>
+      </View>
     </TabTransition>
   );
 }
@@ -96,6 +97,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 20,
     paddingBottom: 40,
   },
@@ -131,22 +133,25 @@ const styles = StyleSheet.create({
   logoutButton: {
     width: "100%",
     height: 56,
-    backgroundColor: "#FFF",
+    backgroundColor: "#FF3B30",
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
     marginTop: 16,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  logoutButtonDisabled: {
+  logoutButtonLoading: {
     opacity: 0.8,
   },
-  logoutButtonContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
   logoutButtonText: {
-    color: "#FF3B30",
+    color: "#FFF",
     fontSize: 16,
     fontFamily: "Inter-SemiBold",
   },

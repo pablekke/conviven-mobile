@@ -32,3 +32,8 @@ export { QuestionRow } from "./QuestionRow";
 export { SelectionModal } from "./SelectionModal";
 
 export { ProfileCard } from "./ProfileCard";
+export { ProfileTabs } from "./ProfileTabs";
+export type { TabType } from "./ProfileTabs";
+export { EditProfileHeader } from "./EditProfileHeader";
+export { ExpandableTab } from "./ExpandableTab";
+export { EditProfileHeaderSection } from "./EditProfileHeaderSection";

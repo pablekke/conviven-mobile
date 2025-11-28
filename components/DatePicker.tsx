@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { useState } from "react";
-import { Modal, Text, TouchableOpacity, View, Pressable, ScrollView } from "react-native";
+import { useState, useEffect, useRef } from "react";
+import { Modal, Text, TouchableOpacity, View, Pressable, ScrollView, Animated } from "react-native";
 import { Calendar, ChevronDown } from "lucide-react-native";
 import { useTheme } from "../context/ThemeContext";
 
@@ -115,13 +115,13 @@ export default function DatePicker({
 
             <TouchableOpacity
               onPress={() => setIsOpen(false)}
-              className="mt-4 p-3 rounded-lg"
-              style={{ backgroundColor: colors.muted }}
+              className="mt-4 p-4 rounded-lg"
+              style={{ backgroundColor: colors.destructive }}
             >
               <Text
                 style={{
                   textAlign: "center",
-                  color: colors.foreground,
+                  color: colors.background,
                   fontSize: 16,
                   fontWeight: "500",
                 }}
@@ -152,22 +152,29 @@ function CompactDatePicker({
   minimumDate,
 }: CompactDatePickerProps) {
   const currentYear = new Date().getFullYear();
-  const [selectedYear, setSelectedYear] = useState(selectedDate?.getFullYear() ?? currentYear);
+  const [selectedYear, setSelectedYear] = useState(selectedDate?.getFullYear() ?? 2000);
   const [selectedMonth, setSelectedMonth] = useState(selectedDate?.getMonth() ?? 0);
 
+  // Animaciones para mes y día - inicializadas como visibles
+  const monthOpacity = useRef(new Animated.Value(1)).current;
+  const monthTranslateY = useRef(new Animated.Value(0)).current;
+  const dayOpacity = useRef(new Animated.Value(1)).current;
+  const dayTranslateY = useRef(new Animated.Value(0)).current;
+  const yearScrollViewRef = useRef<ScrollView>(null);
+
   const months = [
-    "Ene",
-    "Feb",
-    "Mar",
-    "Abr",
-    "May",
-    "Jun",
-    "Jul",
-    "Ago",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dic",
+    "Enero",
+    "Febrero",
+    "Marzo",
+    "Abril",
+    "Mayo",
+    "Junio",
+    "Julio",
+    "Agosto",
+    "Septiembre",
+    "Octubre",
+    "Noviembre",
+    "Diciembre",
   ];
   const years = Array.from({ length: 80 }, (_, i) => currentYear - i).filter(year => {
     if (maximumDate && year > maximumDate.getFullYear()) return false;
@@ -180,12 +187,70 @@ function CompactDatePicker({
 
   const [selectedDay, setSelectedDay] = useState(selectedDate?.getDate() ?? 1);
 
+  // Scroll automático al año seleccionado
+  useEffect(() => {
+    const yearIndex = years.findIndex(year => year === selectedYear);
+    if (yearIndex !== -1 && yearScrollViewRef.current) {
+      const itemWidth = 68;
+      const scrollPosition = yearIndex * itemWidth;
+
+      // Delay pequeño para asegurar que el ScrollView esté renderizado
+      setTimeout(() => {
+        yearScrollViewRef.current?.scrollTo({
+          x: Math.max(0, scrollPosition - 100), // Centrar un poco el año seleccionado
+          animated: false,
+          
+        });
+      }, 100);
+    }
+  }, [selectedYear, years]);
+
   const isDateValid = (year: number, month: number, day: number) => {
     const date = new Date(year, month, day);
     if (maximumDate && date > maximumDate) return false;
     if (minimumDate && date < minimumDate) return false;
     return true;
   };
+
+  useEffect(() => {
+    monthOpacity.setValue(0);
+    monthTranslateY.setValue(-20);
+
+    Animated.parallel([
+      Animated.timing(monthOpacity, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.timing(monthTranslateY, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [selectedYear]);
+
+  useEffect(() => {
+    dayOpacity.setValue(0);
+    dayTranslateY.setValue(-20);
+
+    const delayTimer = setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(dayOpacity, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.timing(dayTranslateY, {
+          toValue: 0,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }, 200);
+
+    return () => clearTimeout(delayTimer);
+  }, [selectedMonth]);
 
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
@@ -196,7 +261,7 @@ function CompactDatePicker({
         >
           Año
         </Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <ScrollView ref={yearScrollViewRef} horizontal showsHorizontalScrollIndicator={false}>
           <View style={{ flexDirection: "row" }}>
             {years.map(year => (
               <TouchableOpacity
@@ -226,7 +291,13 @@ function CompactDatePicker({
       </View>
 
       {/* Mes */}
-      <View style={{ marginBottom: 16 }}>
+      <Animated.View
+        style={{
+          marginBottom: 16,
+          opacity: monthOpacity,
+          transform: [{ translateY: monthTranslateY }],
+        }}
+      >
         <Text
           style={{ color: colors.foreground, fontSize: 14, fontWeight: "500", marginBottom: 8 }}
         >
@@ -242,7 +313,7 @@ function CompactDatePicker({
                 key={index}
                 onPress={() => setSelectedMonth(index)}
                 style={{
-                  width: "14%",
+                  width: "31%",
                   paddingVertical: 8,
                   margin: "1%",
                   borderRadius: 6,
@@ -263,10 +334,16 @@ function CompactDatePicker({
             );
           })}
         </View>
-      </View>
+      </Animated.View>
 
       {/* Día */}
-      <View style={{ marginBottom: 16 }}>
+      <Animated.View
+        style={{
+          marginBottom: 16,
+          opacity: dayOpacity,
+          transform: [{ translateY: dayTranslateY }],
+        }}
+      >
         <Text
           style={{ color: colors.foreground, fontSize: 14, fontWeight: "500", marginBottom: 8 }}
         >
@@ -306,7 +383,7 @@ function CompactDatePicker({
             );
           })}
         </View>
-      </View>
+      </Animated.View>
     </ScrollView>
   );
 }

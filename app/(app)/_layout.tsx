@@ -1,12 +1,23 @@
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
-import { Tabs } from "expo-router";
+import { Tabs, useSegments } from "expo-router";
 import { BottomTabBar, BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { StyleSheet, View } from "react-native";
 
 import { useTheme } from "../../context/ThemeContext";
 
 function CustomTabBar(props: BottomTabBarProps) {
+  const segments = useSegments();
+  const currentRoute = segments.join("/");
+  const shouldHideTabBar =
+    currentRoute.includes("conversation") ||
+    currentRoute.includes("edit-profile") ||
+    currentRoute.includes("settings");
+
+  if (shouldHideTabBar) {
+    return null;
+  }
+
   return (
     <View style={tabBarStyles.wrapper}>
       <BottomTabBar {...props} />

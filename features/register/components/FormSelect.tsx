@@ -8,6 +8,7 @@ export interface FormSelectProps {
   onValueChange: (value: string) => void;
   placeholder: string;
   error?: boolean;
+  errorMessage?: string;
   disabled?: boolean;
   helperText?: string;
 }
@@ -19,11 +20,13 @@ export default function FormSelect({
   onValueChange,
   placeholder,
   error = false,
+  errorMessage,
   disabled = false,
   helperText,
 }: FormSelectProps) {
   const labelClass = "mb-3 text-base font-conviven-semibold text-foreground";
   const helperClass = "mt-1 text-sm font-conviven text-muted-foreground";
+  const errorClass = "mt-1 text-sm font-conviven text-destructive";
 
   return (
     <View className="mb-4">
@@ -36,6 +39,7 @@ export default function FormSelect({
         error={error}
         disabled={disabled}
       />
+      {error && errorMessage && <Text className={errorClass}>{errorMessage}</Text>}
       {helperText && !error && <Text className={helperClass}>{helperText}</Text>}
     </View>
   );

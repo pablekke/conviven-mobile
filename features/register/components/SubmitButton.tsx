@@ -1,11 +1,11 @@
 /* eslint-disable react-native/no-inline-styles */
 
-import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity } from "react-native";
 import { useTheme } from "../../../context/ThemeContext";
+import Spinner from "../../../components/Spinner";
 
 export interface SubmitButtonProps {
   label: string;
-  loadingLabel: string;
   onPress: () => void;
   isLoading: boolean;
   disabled?: boolean;
@@ -13,7 +13,6 @@ export interface SubmitButtonProps {
 
 export default function SubmitButton({
   label,
-  loadingLabel,
   onPress,
   isLoading,
   disabled = false,
@@ -39,22 +38,20 @@ export default function SubmitButton({
         disabled={isDisabled}
         activeOpacity={0.8}
       >
-        <Text
-          style={{
-            color: colors.primaryForeground,
-            fontSize: 16,
-            fontWeight: "600",
-          }}
-        >
-          {isLoading ? loadingLabel : label}
-        </Text>
+        {isLoading ? (
+          <Spinner size={20} color={colors.primaryForeground} />
+        ) : (
+          <Text
+            style={{
+              color: colors.primaryForeground,
+              fontSize: 16,
+              fontWeight: "600",
+            }}
+          >
+            {label}
+          </Text>
+        )}
       </TouchableOpacity>
-
-      {isLoading && (
-        <View className="mt-4 items-center">
-          <ActivityIndicator size="small" color={colors.primary} />
-        </View>
-      )}
     </>
   );
 }
