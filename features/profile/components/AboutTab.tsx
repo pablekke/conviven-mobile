@@ -19,6 +19,11 @@ export const AboutTab: React.FC<AboutTabProps> = ({
     <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Sobre mí</Text>
+        <QuestionRow
+          question="Género"
+          selectedValue={getSelectedLabel("gender")}
+          onPress={() => openSelectionModal("gender")}
+        />
         <TextInput
           style={styles.aboutTextInput}
           multiline

@@ -11,6 +11,7 @@ import { ChatPreview } from "../features/chat/types";
 import { chatService } from "../features/chat/services";
 import UserProfileService from "../services/userProfileService";
 import { useAuth } from "./AuthContext";
+import { getCachedValue } from "../services/resilience/cache";
 
 interface DataPreloadState {
   // Chat data
@@ -89,40 +90,69 @@ export const DataPreloadProvider: React.FC<DataPreloadProviderProps> = ({ childr
   );
 
   // Load chats
-  const loadChats = useCallback(async () => {
-    if (!user || !isAuthenticated) return;
+  const loadChats = useCallback(
+    async (forceRefresh: boolean = false) => {
+      if (!user || !isAuthenticated) return;
 
-    setState(prev => ({ ...prev, chatsLoading: true, chatsError: null }));
+      try {
+        if (!forceRefresh) {
+          const cachedChats = await getCachedValue<ChatPreview[]>("/messages/me/conversations");
+          if (cachedChats && Array.isArray(cachedChats)) {
+            setState(prev => ({
+              ...prev,
+              chats: cachedChats,
+              chatsLoading: false,
+              chatsError: null,
+              chatsLastUpdated: Date.now(),
+            }));
+            chatService
+              .getConversations()
+              .then(conversations => {
+                setState(prev => ({
+                  ...prev,
+                  chats: conversations,
+                  chatsLastUpdated: Date.now(),
+                }));
+              })
+              .catch(error => {
+                console.error("Error refreshing chats in background:", error);
+              });
+            return;
+          }
+        }
+        // Solo mostrar loading si no hay cache disponible
+        setState(prev => ({ ...prev, chatsLoading: true, chatsError: null }));
 
-    try {
-      // Timeout para evitar bloqueos
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error("Chats timeout")), 5000);
-      });
+        // Timeout para evitar bloqueos
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error("Chats timeout")), 5000);
+        });
 
-      const conversations = (await Promise.race([
-        chatService.getConversations(),
-        timeoutPromise,
-      ])) as ChatPreview[];
+        const conversations = (await Promise.race([
+          chatService.getConversations(),
+          timeoutPromise,
+        ])) as ChatPreview[];
 
-      setState(prev => ({
-        ...prev,
-        chats: conversations,
-        chatsLoading: false,
-        chatsError: null,
-        chatsLastUpdated: Date.now(),
-      }));
-    } catch (error) {
-      console.error("Error precargando chats:", error);
-      setState(prev => ({
-        ...prev,
-        chats: [],
-        chatsLoading: false,
-        chatsError: error instanceof Error ? error : new Error("Error desconocido"),
-        chatsLastUpdated: null,
-      }));
-    }
-  }, [user, isAuthenticated]);
+        setState(prev => ({
+          ...prev,
+          chats: conversations,
+          chatsLoading: false,
+          chatsError: null,
+          chatsLastUpdated: Date.now(),
+        }));
+      } catch (error) {
+        console.error("Error precargando chats:", error);
+        setState(prev => ({
+          ...prev,
+          chats: [],
+          chatsLoading: false,
+          chatsError: error instanceof Error ? error : new Error("Error desconocido"),
+          chatsLastUpdated: null,
+        }));
+      }
+    },
+    [user, isAuthenticated],
+  );
 
   // Load full profile
   const loadProfile = useCallback(async () => {
@@ -184,7 +214,7 @@ export const DataPreloadProvider: React.FC<DataPreloadProviderProps> = ({ childr
 
     try {
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error("Preload timeout")), 1000);
+        setTimeout(() => reject(new Error("Preload timeout")), 10000);
       });
 
       const results = await Promise.race([
@@ -212,7 +242,7 @@ export const DataPreloadProvider: React.FC<DataPreloadProviderProps> = ({ childr
 
   // Refresh functions
   const refreshChats = useCallback(async () => {
-    await loadChats();
+    await loadChats(true); // Force refresh
   }, [loadChats]);
 
   const refreshProfile = useCallback(async () => {

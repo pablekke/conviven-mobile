@@ -157,6 +157,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
           return new Date(today.getFullYear() - 16, today.getMonth(), today.getDate());
         })()}
         minimumDate={new Date(new Date().getFullYear() - 100, 0, 1)}
+        initialDate={new Date(2000, 0, 1)}
       />
 
       <FormSelect

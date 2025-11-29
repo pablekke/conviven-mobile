@@ -28,4 +28,12 @@ export const API = {
   USERS: "/users",
   USER_BY_ID: (id: string) => `/users/${id}`,
   USER_REGISTER: (role: string) => `/users/register/${role}`,
+
+  // Profile Photos
+  PROFILE_PHOTOS: "/profile-photos",
+  PROFILE_PHOTO_UPLOAD_PRIMARY: "/profile-photos/upload/primary",
+  PROFILE_PHOTO_UPLOAD_ADDITIONAL: "/profile-photos/upload/additional",
+  PROFILE_PHOTO_BY_ID: (id: string) => `/profile-photos/${id}`,
+  PROFILE_PHOTO_SET_PRIMARY: (id: string) => `/profile-photos/${id}/primary`,
 } as const;
+0

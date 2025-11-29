@@ -1,19 +1,34 @@
+import React, { useMemo } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { QUESTION_OPTIONS } from "../constants/questionOptions";
 
-interface QuestionRowProps {
-  question: string;
-  selectedValue: string;
+interface GendersRowProps {
+  selectedGenders: string[];
   onPress: () => void;
 }
 
-export const QuestionRow: React.FC<QuestionRowProps> = ({ question, selectedValue, onPress }) => {
+export const GendersRow: React.FC<GendersRowProps> = ({ selectedGenders, onPress }) => {
+  const genderOptions = QUESTION_OPTIONS.genders || [];
+
+  const getGendersLabel = (): string => {
+    if (selectedGenders.length === 0) return "Seleccionar";
+    if (selectedGenders.length === 1) {
+      const option = genderOptions.find(opt => opt.value === selectedGenders[0]);
+      return option?.label || selectedGenders[0];
+    }
+    return `${selectedGenders.length} seleccionados`;
+  };
+
+  const selectedLabel = useMemo(() => getGendersLabel(), [selectedGenders, genderOptions]);
+  const hasSelection = selectedGenders.length > 0;
+
   return (
     <TouchableOpacity style={styles.questionRow} onPress={onPress}>
-      <Text style={styles.questionText}>{question}</Text>
+      <Text style={styles.questionText}>Géneros que busco</Text>
       <View style={styles.questionRight}>
-        <Text style={[styles.selectText, selectedValue !== "Seleccionar" && styles.selectedText]}>
-          {selectedValue}
+        <Text style={[styles.selectText, hasSelection && styles.selectedText]}>
+          {selectedLabel}
         </Text>
         <Feather name="chevron-right" size={18} color="#999" />
       </View>
@@ -43,7 +58,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   questionText: {
-    fontSize: 14,
+    fontSize: 16,
     color: "#1A1A1A",
     flex: 1,
     marginRight: 16,
@@ -56,7 +71,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   selectText: {
-    fontSize: 13,
+    fontSize: 14,
     color: "#666666",
     fontFamily: "Inter-Regular",
   },

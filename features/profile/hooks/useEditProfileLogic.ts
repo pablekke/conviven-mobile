@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
+import { useAuth } from "../../../context/AuthContext";
 import { useUserProfileData } from "./useUserProfileData";
 import { useSearchPreferencesForm } from "./useSearchPreferencesForm";
 import { useSearchFilters } from "./useSearchFilters";
 import { useCachedProfile } from "./useCachedProfile";
 import type { UserProfileData } from "../interfaces";
 import { QUESTION_OPTIONS } from "../constants/questionOptions";
+import ProfileService from "../services/profileService";
 
 export const findOptionLabel = (
   value: string,
@@ -21,6 +23,7 @@ export const useEditProfileLogic = () => {
   const [maxAge, setMaxAge] = useState("");
   const [budgetMin, setBudgetMin] = useState("");
   const [budgetMax, setBudgetMax] = useState("");
+  const [genders, setGenders] = useState<string[]>([]);
 
   const { fullProfile } = useCachedProfile();
   const {
@@ -57,6 +60,8 @@ export const useEditProfileLogic = () => {
     }
   }, [aboutText, profileData.bio, updateProfileData]);
 
+  const { user, updateUser } = useAuth();
+
   // Cargar datos del perfil
   useEffect(() => {
     if (fullProfile?.profile) {
@@ -64,6 +69,11 @@ export const useEditProfileLogic = () => {
       if (profile.bio) setAboutText(profile.bio);
 
       const mapped: Record<string, string> = {};
+
+      // Cargar género del usuario (viene directamente en user.gender)
+      if (user?.gender) {
+        mapped.gender = findOptionLabel(user.gender, QUESTION_OPTIONS.gender) || "Seleccionar";
+      }
 
       if (profile.smokesCigarettes) {
         mapped.smoking = findOptionLabel(profile.smokesCigarettes, QUESTION_OPTIONS.smoking);
@@ -94,7 +104,7 @@ export const useEditProfileLogic = () => {
 
       setSelectedAnswers(prev => ({ ...prev, ...mapped }));
     }
-  }, [fullProfile]);
+  }, [fullProfile, user]);
 
   // Cargar search preferences
   useEffect(() => {
@@ -142,6 +152,7 @@ export const useEditProfileLogic = () => {
   // Cargar search filters
   useEffect(() => {
     if (searchFiltersData) {
+      console.log("🔍 searchFiltersData recibida:", JSON.stringify(searchFiltersData, null, 2));
       const mapped: Record<string, string> = {};
 
       if (searchFiltersData.genderPref?.length > 0) {
@@ -160,6 +171,7 @@ export const useEditProfileLogic = () => {
       setMaxAge(searchFiltersData.maxAge.toString());
       setBudgetMin(searchFiltersData.budgetMin.toString());
       setBudgetMax(searchFiltersData.budgetMax.toString());
+      setGenders(searchFiltersData.genders || []);
 
       setSelectedAnswers(prev => ({ ...prev, ...mapped }));
     }
@@ -194,9 +206,27 @@ export const useEditProfileLogic = () => {
         updateSearchFilters("genderPref", [value]);
       } else if (question === "onlyWithPhoto") {
         updateSearchFilters("onlyWithPhoto", value === "true");
+      } else if (question === "genders") {
+        updateSearchFilters("genders", value.split(","));
+      } else if (question === "gender") {
+        // Actualizar género del usuario directamente
+        if (user) {
+          ProfileService.update(user.id, { gender: value as any })
+            .then(updatedUser => {
+              updateUser(updatedUser);
+              // Actualizar el label en selectedAnswers
+              setSelectedAnswers(prev => ({
+                ...prev,
+                gender: findOptionLabel(value, QUESTION_OPTIONS.gender) || "Seleccionar",
+              }));
+            })
+            .catch(error => {
+              console.error("Error actualizando género:", error);
+            });
+        }
       }
     },
-    [updateProfileData, updateSearchPrefs, updateSearchFilters],
+    [updateProfileData, updateSearchPrefs, updateSearchFilters, user, updateUser],
   );
 
   return {
@@ -212,6 +242,8 @@ export const useEditProfileLogic = () => {
     setBudgetMin,
     budgetMax,
     setBudgetMax,
+    genders,
+    setGenders,
     profileData,
     profileHasChanges,
     saveProfileData,

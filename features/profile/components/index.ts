@@ -37,3 +37,5 @@ export type { TabType } from "./ProfileTabs";
 export { EditProfileHeader } from "./EditProfileHeader";
 export { ExpandableTab } from "./ExpandableTab";
 export { EditProfileHeaderSection } from "./EditProfileHeaderSection";
+export { UnsavedChangesModal } from "./UnsavedChangesModal";
+export { PhotoUploadScreen } from "./photos";

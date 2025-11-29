@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
   saveButton: {
     minWidth: 90,
     height: 44,
-    borderRadius: 22,
+    borderRadius: 12,
     backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",

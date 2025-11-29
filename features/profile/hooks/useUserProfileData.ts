@@ -1,6 +1,8 @@
+import { UserProfileData, UseUserProfileDataReturn } from "../interfaces";
+import { setCachedValue } from "../../../services/resilience/cache";
+import { useDataPreload } from "../../../context/DataPreloadContext";
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../../../context/AuthContext";
-import { UserProfileData, UseUserProfileDataReturn } from "../interfaces";
 import { userProfileUpdateService } from "../services";
 import { useCachedProfile } from "./useCachedProfile";
 
@@ -20,6 +22,7 @@ const DEFAULT_PROFILE_DATA: UserProfileData = {
 export const useUserProfileData = (): UseUserProfileDataReturn => {
   const { user, updateUser } = useAuth() as any;
   const { profileData: cachedProfileData, fullProfile, loading: cacheLoading } = useCachedProfile();
+  const { refreshProfile: refreshDataPreloadProfile } = useDataPreload();
   const [profileData, setProfileData] = useState<UserProfileData>(
     cachedProfileData || DEFAULT_PROFILE_DATA,
   );
@@ -52,6 +55,12 @@ export const useUserProfileData = (): UseUserProfileDataReturn => {
         const newData = { ...prev, [field]: value };
         const changed = JSON.stringify(newData) !== JSON.stringify(originalData);
         setHasChanges(changed);
+
+        if (changed) {
+          setCachedValue("@profile/draft", newData).catch(error => {
+            console.warn("Error guardando draft en cache:", error);
+          });
+        }
 
         return newData;
       });
@@ -87,6 +96,7 @@ export const useUserProfileData = (): UseUserProfileDataReturn => {
       updateUser(updatedUser);
       setOriginalData(profileData);
       setHasChanges(false);
+      await refreshDataPreloadProfile();
     } catch (error) {
       console.error("❌ Error al guardar perfil:", error);
       throw error;

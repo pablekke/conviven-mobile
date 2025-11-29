@@ -87,7 +87,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    maxHeight: "75%",
+    maxHeight: "95%",
+    minHeight: "70%",
     paddingBottom: 34,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -4 },
@@ -129,7 +130,8 @@ const styles = StyleSheet.create({
   },
   optionsContainer: {
     paddingHorizontal: 20,
-    maxHeight: 350,
+    maxHeight: 500,
+    flexGrow: 1,
   },
   optionButton: {
     backgroundColor: "#FAFAFA",

@@ -24,8 +24,8 @@ export default function ProfileScreen() {
   if (!user) {
     return (
       <View className="flex-1 items-center justify-center bg-background">
-          <ActivityIndicator color="#007BFF" />
-        </View>
+        <ActivityIndicator color="#007BFF" />
+      </View>
     );
   }
 
@@ -38,7 +38,7 @@ export default function ProfileScreen() {
           end={{ x: 1, y: 1 }}
           style={styles.headerGradient}
         />
-      <SafeAreaView style={styles.safeArea} edges={["top"]}>
+        <SafeAreaView style={styles.safeArea} edges={["top"]}>
           <ScrollView
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
@@ -46,18 +46,19 @@ export default function ProfileScreen() {
             alwaysBounceVertical={false}
           >
             <View style={styles.headerSpacer} />
-          <ProfileCard
-            avatar={user.avatar}
-            userName={userName}
-            userAge={userAge}
-            progressPercentage={progressPercentage}
-            onEditPress={() => router.push("./edit-profile")}
-          />
+            <ProfileCard
+              avatar={user.avatar}
+              userName={userName}
+              userAge={userAge}
+              progressPercentage={progressPercentage}
+              onEditPress={() => router.push("./edit-profile")}
+              onPhotosPress={() => router.push("./edit-profile/photos")}
+            />
 
             <View style={styles.actionsContainer}>
-          <TouchableOpacity style={styles.primaryButton} onPress={() => router.push("/(app)")}>
-            <Text style={styles.primaryButtonText}>Buscar compañero</Text>
-          </TouchableOpacity>
+              <TouchableOpacity style={styles.primaryButton} onPress={() => router.push("/(app)")}>
+                <Text style={styles.primaryButtonText}>Buscar compañero</Text>
+              </TouchableOpacity>
 
               <TouchableOpacity
                 style={[styles.logoutButton, isLogoutInProgress && styles.logoutButtonLoading]}
@@ -68,12 +69,12 @@ export default function ProfileScreen() {
                 {isLogoutInProgress ? (
                   <Spinner size={24} color="#FFF" />
                 ) : (
-            <Text style={styles.logoutButtonText}>Cerrar sesión</Text>
+                  <Text style={styles.logoutButtonText}>Cerrar sesión</Text>
                 )}
-          </TouchableOpacity>
-        </View>
+              </TouchableOpacity>
+            </View>
           </ScrollView>
-      </SafeAreaView>
+        </SafeAreaView>
       </View>
     </TabTransition>
   );

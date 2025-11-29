@@ -5,7 +5,7 @@ import { Calendar, ChevronDown } from "lucide-react-native";
 import { useTheme } from "../context/ThemeContext";
 
 interface DatePickerProps {
-  value: string; // Formato YYYY-MM-DD
+  value: string;
   onValueChange: (value: string) => void;
   placeholder?: string;
   disabled?: boolean;
@@ -13,6 +13,7 @@ interface DatePickerProps {
   className?: string;
   maximumDate?: Date;
   minimumDate?: Date;
+  initialDate?: Date;
 }
 
 export default function DatePicker({
@@ -24,6 +25,7 @@ export default function DatePicker({
   className = "",
   maximumDate,
   minimumDate,
+  initialDate,
 }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { colors } = useTheme();
@@ -111,6 +113,7 @@ export default function DatePicker({
               colors={colors}
               maximumDate={maximumDate}
               minimumDate={minimumDate}
+              initialDate={initialDate}
             />
 
             <TouchableOpacity
@@ -142,6 +145,7 @@ interface CompactDatePickerProps {
   colors: any;
   maximumDate?: Date;
   minimumDate?: Date;
+  initialDate?: Date;
 }
 
 function CompactDatePicker({
@@ -150,17 +154,38 @@ function CompactDatePicker({
   colors,
   maximumDate,
   minimumDate,
+  initialDate: propInitialDate,
 }: CompactDatePickerProps) {
   const currentYear = new Date().getFullYear();
-  const [selectedYear, setSelectedYear] = useState(selectedDate?.getFullYear() ?? 2000);
-  const [selectedMonth, setSelectedMonth] = useState(selectedDate?.getMonth() ?? 0);
+  const getToday = () => new Date();
 
-  // Animaciones para mes y día - inicializadas como visibles
+  const getInitialDate = () => {
+    const today = getToday();
+    if (selectedDate) return selectedDate;
+    if (propInitialDate) {
+      if (maximumDate && propInitialDate > maximumDate) return maximumDate;
+      if (minimumDate && propInitialDate < minimumDate) return minimumDate;
+      return propInitialDate;
+    }
+    if (maximumDate && today > maximumDate) return maximumDate;
+    if (minimumDate && today < minimumDate) return minimumDate;
+    return today;
+  };
+
+  const initialDate = getInitialDate();
+  const initialMonth = initialDate.getMonth();
+  const initialYear = initialDate.getFullYear();
+  const initialDayValue = initialDate.getDate();
+
+  const [selectedYear, setSelectedYear] = useState(initialYear);
+  const [selectedMonth, setSelectedMonth] = useState(initialMonth);
+
   const monthOpacity = useRef(new Animated.Value(1)).current;
   const monthTranslateY = useRef(new Animated.Value(0)).current;
   const dayOpacity = useRef(new Animated.Value(1)).current;
   const dayTranslateY = useRef(new Animated.Value(0)).current;
   const yearScrollViewRef = useRef<ScrollView>(null);
+  const scrollViewWidthRef = useRef<number>(0);
 
   const months = [
     "Enero",
@@ -176,39 +201,108 @@ function CompactDatePicker({
     "Noviembre",
     "Diciembre",
   ];
-  const years = Array.from({ length: 80 }, (_, i) => currentYear - i).filter(year => {
-    if (maximumDate && year > maximumDate.getFullYear()) return false;
-    if (minimumDate && year < minimumDate.getFullYear()) return false;
-    return true;
-  });
+  const minYear = minimumDate ? minimumDate.getFullYear() : currentYear;
+  const maxYear = maximumDate ? maximumDate.getFullYear() : currentYear + 1;
+  const years = Array.from({ length: maxYear - minYear + 1 }, (_, i) => minYear + i);
 
   const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
-  const [selectedDay, setSelectedDay] = useState(selectedDate?.getDate() ?? 1);
+  const daysInMonthForInitial = new Date(initialYear, initialMonth + 1, 0).getDate();
+  const initialDay = selectedDate
+    ? Math.min(initialDate.getDate(), daysInMonthForInitial)
+    : Math.min(initialDayValue, daysInMonthForInitial);
 
-  // Scroll automático al año seleccionado
+  const [selectedDay, setSelectedDay] = useState(initialDay);
+
+  useEffect(() => {
+    if (!selectedDate) {
+      const dateToUse = propInitialDate || getToday();
+      const currentYear = dateToUse.getFullYear();
+      const currentMonth = dateToUse.getMonth();
+      const currentDay = dateToUse.getDate();
+
+      setSelectedYear(currentYear);
+      setSelectedMonth(currentMonth);
+
+      const maxDaysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+      const dayToSelect = Math.min(currentDay, maxDaysInMonth);
+      setSelectedDay(dayToSelect);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (selectedDate) {
+      setSelectedYear(selectedDate.getFullYear());
+      setSelectedMonth(selectedDate.getMonth());
+      const day = selectedDate.getDate();
+      const maxDays = new Date(
+        selectedDate.getFullYear(),
+        selectedDate.getMonth() + 1,
+        0,
+      ).getDate();
+      setSelectedDay(day > maxDays ? maxDays : day);
+    } else {
+      const dateToUse = propInitialDate || getToday();
+      const currentYear = dateToUse.getFullYear();
+      const currentMonth = dateToUse.getMonth();
+      const currentDay = dateToUse.getDate();
+      setSelectedYear(currentYear);
+      setSelectedMonth(currentMonth);
+      const maxDaysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+      setSelectedDay(Math.min(currentDay, maxDaysInMonth));
+    }
+  }, [selectedDate, propInitialDate]);
+
   useEffect(() => {
     const yearIndex = years.findIndex(year => year === selectedYear);
-    if (yearIndex !== -1 && yearScrollViewRef.current) {
-      const itemWidth = 68;
-      const scrollPosition = yearIndex * itemWidth;
+    if (yearIndex !== -1 && yearScrollViewRef.current && scrollViewWidthRef.current > 0) {
+      const itemWidth = 72;
 
-      // Delay pequeño para asegurar que el ScrollView esté renderizado
+      const itemPosition = yearIndex * itemWidth;
+      const centerPosition = itemPosition - scrollViewWidthRef.current / 2 + itemWidth / 2;
+
       setTimeout(() => {
         yearScrollViewRef.current?.scrollTo({
-          x: Math.max(0, scrollPosition - 100), // Centrar un poco el año seleccionado
-          animated: false,
-          
+          x: Math.max(0, centerPosition),
+          animated: true,
         });
       }, 100);
     }
   }, [selectedYear, years]);
 
   const isDateValid = (year: number, month: number, day: number) => {
-    const date = new Date(year, month, day);
-    if (maximumDate && date > maximumDate) return false;
-    if (minimumDate && date < minimumDate) return false;
+    const dateStart = new Date(year, month, day);
+
+    // Validar contra minimumDate y maximumDate si están definidos
+    if (maximumDate) {
+      const maxDateStart = new Date(
+        maximumDate.getFullYear(),
+        maximumDate.getMonth(),
+        maximumDate.getDate(),
+      );
+      if (dateStart > maxDateStart) return false;
+    }
+    if (minimumDate) {
+      const minDateStart = new Date(
+        minimumDate.getFullYear(),
+        minimumDate.getMonth(),
+        minimumDate.getDate(),
+      );
+      if (dateStart < minDateStart) return false;
+    }
+
+    // Solo aplicar validación de "no fechas pasadas" si NO hay minimumDate definido
+    // (esto es para el caso de fecha preferida que debe ser hoy o futura)
+    // Si hay minimumDate, confiar en esa validación (para cumpleaños, etc.)
+    if (!minimumDate) {
+      const today = getToday();
+      const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      // No permitir fechas pasadas (antes de hoy), pero permitir hoy
+      if (dateStart < todayStart) return false;
+    }
+
     return true;
   };
 
@@ -252,6 +346,21 @@ function CompactDatePicker({
     return () => clearTimeout(delayTimer);
   }, [selectedMonth]);
 
+  useEffect(() => {
+    if (!selectedDate) {
+      const dateToUse = propInitialDate || getToday();
+      const currentYear = dateToUse.getFullYear();
+      const currentMonth = dateToUse.getMonth();
+      const currentDay = dateToUse.getDate();
+
+      if (selectedYear === currentYear && selectedMonth === currentMonth) {
+        const maxDaysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        const dayToSelect = Math.min(currentDay, maxDaysInMonth);
+        setSelectedDay(dayToSelect);
+      }
+    }
+  }, [selectedYear, selectedMonth, selectedDate, propInitialDate]);
+
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
       {/* Año */}
@@ -261,7 +370,14 @@ function CompactDatePicker({
         >
           Año
         </Text>
-        <ScrollView ref={yearScrollViewRef} horizontal showsHorizontalScrollIndicator={false}>
+        <ScrollView
+          ref={yearScrollViewRef}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          onLayout={event => {
+            scrollViewWidthRef.current = event.nativeEvent.layout.width;
+          }}
+        >
           <View style={{ flexDirection: "row" }}>
             {years.map(year => (
               <TouchableOpacity
@@ -305,7 +421,38 @@ function CompactDatePicker({
         </Text>
         <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
           {months.map((month, index) => {
-            const isMonthValid = isDateValid(selectedYear, index, 1);
+            const monthStart = new Date(selectedYear, index, 1);
+            const monthEnd = new Date(selectedYear, index + 1, 0);
+
+            // Validar mes basándose en minimumDate y maximumDate si están definidos
+            let isMonthValid = true;
+
+            // Si hay minimumDate, el mes debe terminar después o en minimumDate
+            if (minimumDate) {
+              const minDateStart = new Date(
+                minimumDate.getFullYear(),
+                minimumDate.getMonth(),
+                minimumDate.getDate(),
+              );
+              isMonthValid = isMonthValid && monthEnd >= minDateStart;
+            } else {
+              // Si NO hay minimumDate, aplicar validación de "no fechas pasadas"
+              // (para fecha preferida que debe ser hoy o futura)
+              const today = getToday();
+              const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+              isMonthValid = isMonthValid && monthEnd >= todayStart;
+            }
+
+            // Si hay maximumDate, el mes debe empezar antes o en maximumDate
+            if (maximumDate) {
+              const maxDateStart = new Date(
+                maximumDate.getFullYear(),
+                maximumDate.getMonth(),
+                maximumDate.getDate(),
+              );
+              isMonthValid = isMonthValid && monthStart <= maxDateStart;
+            }
+
             if (!isMonthValid) return null;
 
             return (

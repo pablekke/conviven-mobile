@@ -1,30 +1,45 @@
 import React from "react";
-import { View, Text } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import Toast from "react-native-toast-message";
 
 export default function CustomToast() {
   return (
     <Toast
+      position="bottom"
       config={{
+        success: props => (
+          <View style={[styles.toastContainer, styles.successBackground]}>
+            <View style={styles.contentContainer}>
+              {props.text1 && <Text style={styles.titleText}>{props.text1}</Text>}
+              {props.text2 && (
+                <Text style={styles.bodyText} numberOfLines={0}>
+                  {props.text2}
+                </Text>
+              )}
+            </View>
+          </View>
+        ),
         error: props => (
-          <View
-            style={{
-              width: "90%",
-              backgroundColor: "#ef4444",
-              paddingHorizontal: 16,
-              paddingVertical: 12,
-              borderRadius: 12,
-              flexDirection: "row",
-              alignItems: "flex-start",
-            }}
-          >
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: "white", fontWeight: "600", fontSize: 14, marginBottom: 4 }}>
-                {props.text1}
+          <View style={[styles.toastContainer, styles.errorBackground]}>
+            <View style={styles.contentContainer}>
+              {props.text1 && <Text style={styles.titleText}>{props.text1}</Text>}
+              {props.text2 && (
+                <Text style={styles.bodyText} numberOfLines={0}>
+                  {props.text2}
               </Text>
-              <Text style={{ color: "white", fontSize: 13, lineHeight: 18 }} numberOfLines={0}>
+              )}
+            </View>
+          </View>
+        ),
+        info: props => (
+          <View style={[styles.toastContainer, styles.infoBackground]}>
+            <View style={styles.contentContainer}>
+              {props.text1 && <Text style={styles.titleText}>{props.text1}</Text>}
+              {props.text2 && (
+                <Text style={styles.bodyText} numberOfLines={0}>
                 {props.text2}
               </Text>
+              )}
             </View>
           </View>
         ),
@@ -32,3 +47,37 @@ export default function CustomToast() {
     />
   );
 }
+
+const styles = StyleSheet.create({
+  toastContainer: {
+    width: "90%",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
+  successBackground: {
+    backgroundColor: "#10b981",
+  },
+  errorBackground: {
+    backgroundColor: "#ef4444",
+  },
+  infoBackground: {
+    backgroundColor: "#3b82f6",
+  },
+  contentContainer: {
+    flex: 1,
+  },
+  titleText: {
+    color: "#FFFFFF",
+    fontWeight: "600",
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  bodyText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    lineHeight: 18,
+  },
+});

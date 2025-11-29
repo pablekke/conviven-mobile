@@ -12,6 +12,7 @@ import {
   RoommateTab,
   ExpandableTab,
   EditProfileHeaderSection,
+  UnsavedChangesModal,
 } from "../../../features/profile/components";
 import type { TabType } from "../../../features/profile/components";
 import { QUESTION_TITLES, QUESTION_OPTIONS } from "../../../features/profile/constants";
@@ -21,6 +22,7 @@ export default function EditProfileScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabType>("about");
   const [modalVisible, setModalVisible] = useState(false);
+  const [unsavedChangesModalVisible, setUnsavedChangesModalVisible] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState("");
   const [selectedValue, setSelectedValue] = useState("");
   const scrollViewRef = useRef<any>(null);
@@ -83,22 +85,78 @@ export default function EditProfileScreen() {
 
   const getSelectedLabel = (questionKey: string) => selectedAnswers[questionKey] || "Seleccionar";
 
+  const hasAnyUnsavedChanges =
+    profileHasChanges || searchPrefsHasChanges || searchFiltersHasChanges;
+
   const handleBack = () => {
+    if (hasAnyUnsavedChanges) {
+      setUnsavedChangesModalVisible(true);
+    } else {
+      router.replace("/(app)/profile");
+    }
+  };
+
+  const handleDiscardChanges = () => {
     const resetMap = {
       about: resetToUserData,
       roommate: resetSearchPrefs,
       data: resetSearchFilters,
     };
-    const hasChangesMap = {
-      about: profileHasChanges,
-      roommate: searchPrefsHasChanges,
-      data: searchFiltersHasChanges,
-    };
+    if (profileHasChanges) resetMap.about();
+    if (searchPrefsHasChanges) resetMap.roommate();
+    if (searchFiltersHasChanges) resetMap.data();
 
-    if (hasChangesMap[activeTab]) {
-      resetMap[activeTab]();
-    }
+    setUnsavedChangesModalVisible(false);
     router.replace("/(app)/profile");
+  };
+
+  const handleSaveAndExit = async () => {
+    try {
+      const savePromises: Promise<void>[] = [];
+      if (profileHasChanges) savePromises.push(saveProfileData());
+      if (searchPrefsHasChanges) savePromises.push(saveSearchPrefs());
+      if (searchFiltersHasChanges) {
+        const overrideValues: Partial<any> = {};
+        if (minAge && !isNaN(parseInt(minAge, 10))) {
+          overrideValues.minAge = parseInt(minAge, 10);
+        }
+        if (maxAge && !isNaN(parseInt(maxAge, 10))) {
+          overrideValues.maxAge = parseInt(maxAge, 10);
+        }
+        if (budgetMin && !isNaN(parseInt(budgetMin, 10))) {
+          overrideValues.budgetMin = parseInt(budgetMin, 10);
+        }
+        if (budgetMax && !isNaN(parseInt(budgetMax, 10))) {
+          overrideValues.budgetMax = parseInt(budgetMax, 10);
+        }
+
+        savePromises.push(
+          saveSearchFilters(Object.keys(overrideValues).length > 0 ? overrideValues : undefined),
+        );
+      }
+
+      await Promise.all(savePromises);
+
+      Toast.show({
+        type: "success",
+        text1: "¡Listo!",
+        text2: "Tu perfil se actualizó correctamente",
+        position: "bottom",
+        visibilityTime: 3000,
+      });
+
+      setUnsavedChangesModalVisible(false);
+      router.replace("/(app)/profile");
+    } catch (error) {
+      console.error("❌ Error:", error);
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: error instanceof Error ? error.message : "No se pudo guardar",
+        position: "bottom",
+        visibilityTime: 4000,
+      });
+    }
   };
 
   const handleSave = async () => {
@@ -115,10 +173,19 @@ export default function EditProfileScreen() {
       };
 
       if (activeTab === "data" && searchFiltersHasChanges) {
-        updateSearchFilters("minAge", parseInt(minAge, 10) || 18);
-        updateSearchFilters("maxAge", parseInt(maxAge, 10) || 50);
-        updateSearchFilters("budgetMin", parseInt(budgetMin, 10) || 10000);
-        updateSearchFilters("budgetMax", parseInt(budgetMax, 10) || 50000);
+        const minAgeValue =
+          minAge && !isNaN(parseInt(minAge, 10)) ? parseInt(minAge, 10) : undefined;
+        const maxAgeValue =
+          maxAge && !isNaN(parseInt(maxAge, 10)) ? parseInt(maxAge, 10) : undefined;
+        const budgetMinValue =
+          budgetMin && !isNaN(parseInt(budgetMin, 10)) ? parseInt(budgetMin, 10) : undefined;
+        const budgetMaxValue =
+          budgetMax && !isNaN(parseInt(budgetMax, 10)) ? parseInt(budgetMax, 10) : undefined;
+
+        if (minAgeValue !== undefined) updateSearchFilters("minAge", minAgeValue);
+        if (maxAgeValue !== undefined) updateSearchFilters("maxAge", maxAgeValue);
+        if (budgetMinValue !== undefined) updateSearchFilters("budgetMin", budgetMinValue);
+        if (budgetMaxValue !== undefined) updateSearchFilters("budgetMax", budgetMaxValue);
       }
 
       if (hasChangesMap[activeTab]) {
@@ -256,8 +323,14 @@ export default function EditProfileScreen() {
           />
         </SafeAreaView>
       </View>
-      {/* Solapa desplegable independiente - fuera del container para estar por encima */}
       <ExpandableTab scrollY={scrollY} onExpand={handleExpandHeader} />
+      <UnsavedChangesModal
+        visible={unsavedChangesModalVisible}
+        onDiscard={handleDiscardChanges}
+        onSaveAndExit={handleSaveAndExit}
+        onCancel={() => setUnsavedChangesModalVisible(false)}
+        isSaving={isSaving}
+      />
     </TabTransition>
   );
 }
@@ -277,6 +350,5 @@ const styles = StyleSheet.create({
   contentContainer: {
     backgroundColor: "#F8F9FA",
     marginTop: 20,
-    paddingHorizontal: 20,
   },
 });

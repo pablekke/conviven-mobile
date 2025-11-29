@@ -10,6 +10,7 @@ export interface FormDatePickerProps {
   errorMessage?: string;
   maximumDate?: Date;
   minimumDate?: Date;
+  initialDate?: Date;
 }
 
 export default function FormDatePicker({
@@ -21,6 +22,7 @@ export default function FormDatePicker({
   errorMessage,
   maximumDate,
   minimumDate,
+  initialDate,
 }: FormDatePickerProps) {
   const labelClass = "mb-3 text-base font-conviven-semibold text-foreground";
   const errorClass = "mt-1 text-sm font-conviven-semibold text-destructive";
@@ -35,6 +37,7 @@ export default function FormDatePicker({
         error={error}
         maximumDate={maximumDate}
         minimumDate={minimumDate}
+        initialDate={initialDate}
       />
       {errorMessage && <Text className={errorClass}>{errorMessage}</Text>}
     </View>

@@ -102,8 +102,22 @@ export const QUESTION_OPTIONS = {
     { value: GenderPreference.MOSTLY_MEN, label: "Mayormente hombres" },
     { value: GenderPreference.MOSTLY_WOMEN, label: "Mayormente mujeres" },
   ],
+  genders: [
+    { value: "MALE", label: "Hombres" },
+    { value: "FEMALE", label: "Mujeres" },
+    { value: "NON_BINARY", label: "No binario" },
+    { value: "OTHER", label: "Otro" },
+    { value: "MOSTLY_MEN", label: "Mayormente hombres" },
+    { value: "MOSTLY_WOMEN", label: "Mayormente mujeres" },
+  ],
   onlyWithPhoto: [
     { value: "true", label: "Solo con foto" },
     { value: "false", label: "Con o sin foto" },
+  ],
+  gender: [
+    { value: "MALE", label: "Hombre" },
+    { value: "FEMALE", label: "Mujer" },
+    { value: "NON_BINARY", label: "No binario" },
+    { value: "UNSPECIFIED", label: "Prefiero no decir" },
   ],
 };

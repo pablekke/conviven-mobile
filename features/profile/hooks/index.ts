@@ -21,3 +21,7 @@ export type { UseCachedProfileReturn } from "./useCachedProfile";
 export { useEditProfileLogic } from "./useEditProfileLogic";
 
 export { useProfileScreen } from "./useProfileScreen";
+
+export { useProfilePhotos } from "./useProfilePhotos";
+export type { UseProfilePhotosReturn } from "./useProfilePhotos";
+export { useDraggablePhoto } from "./useDraggablePhoto";

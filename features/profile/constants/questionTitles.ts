@@ -16,5 +16,7 @@ export const QUESTION_TITLES: Record<string, string> = {
   guestsMax: "Frecuencia máxima de invitados",
   musicMax: "Uso máximo de música/ruido",
   genderPref: "Preferencia de género",
-  onlyWithPhoto: "¿Solo perfiles con foto?",
+  genders: "Géneros",
+  gender: "Género",
+  onlyWithPhoto: "¿Perfiles con foto?",
 };

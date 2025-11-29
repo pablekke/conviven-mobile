@@ -1,6 +1,7 @@
-import { StyleSheet, Text, TextInput, View, ScrollView } from "react-native";
+import { StyleSheet, Text, View, ScrollView } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { QuestionRow } from "./QuestionRow";
+import RangeSlider from "../../../components/RangeSlider";
 
 interface DataTabProps {
   getSelectedLabel: (key: string) => string;
@@ -29,89 +30,88 @@ export const DataTab: React.FC<DataTabProps> = ({
   setBudgetMax,
   updateSearchFilters,
 }) => {
+  // Formateador de moneda para presupuesto
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("es-UY", {
+      style: "currency",
+      currency: "UYU",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+
+  // Formateador simple para edad
+  const formatAge = (value: number) => {
+    return `${value} años`;
+  };
+
   return (
-    <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Feather name="filter" size={16} color="#007BFF" />
-          <Text style={styles.sectionTitle}>Filtros de Búsqueda</Text>
+    <>
+      <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Feather name="filter" size={16} color="#007BFF" />
+            <Text style={styles.sectionTitle}>Filtros de Búsqueda</Text>
+          </View>
+
+          <QuestionRow
+            question="Preferencia de género"
+            selectedValue={getSelectedLabel("genderPref")}
+            onPress={() => openSelectionModal("genderPref")}
+          />
+
+          <RangeSlider
+            min={18}
+            max={100}
+            minValue={(() => {
+              const val = parseInt(minAge, 10);
+              return isNaN(val) ? 18 : val;
+            })()}
+            maxValue={(() => {
+              const val = parseInt(maxAge, 10);
+              return isNaN(val) ? 100 : val;
+            })()}
+            onValueChange={(min, max) => {
+              setMinAge(min.toString());
+              setMaxAge(max.toString());
+              updateSearchFilters("minAge", min);
+              updateSearchFilters("maxAge", max);
+            }}
+            step={1}
+            label="Edad"
+            valueFormatter={formatAge}
+          />
+
+          <RangeSlider
+            min={0}
+            max={100000}
+            minValue={(() => {
+              const val = parseInt(budgetMin, 10);
+              return isNaN(val) ? 0 : val;
+            })()}
+            maxValue={(() => {
+              const val = parseInt(budgetMax, 10);
+              return isNaN(val) ? 100000 : val;
+            })()}
+            onValueChange={(min, max) => {
+              setBudgetMin(min.toString());
+              setBudgetMax(max.toString());
+              updateSearchFilters("budgetMin", min);
+              updateSearchFilters("budgetMax", max);
+            }}
+            step={1000}
+            label="Presupuesto"
+            valueFormatter={formatCurrency}
+          />
+
+          <QuestionRow
+            question="¿Solo perfiles con foto?"
+            selectedValue={getSelectedLabel("onlyWithPhoto")}
+            onPress={() => openSelectionModal("onlyWithPhoto")}
+          />
         </View>
-
-        <QuestionRow
-          question="Preferencia de género"
-          selectedValue={getSelectedLabel("genderPref")}
-          onPress={() => openSelectionModal("genderPref")}
-        />
-
-        <View style={styles.rangeRow}>
-          <View style={styles.rangeField}>
-            <Text style={styles.rangeLabel}>Edad mínima</Text>
-            <TextInput
-              style={styles.rangeInput}
-              value={minAge}
-              onChangeText={text => {
-                setMinAge(text);
-                updateSearchFilters("minAge", parseInt(text, 10) || 18);
-              }}
-              keyboardType="numeric"
-              placeholder="18"
-              placeholderTextColor="#999"
-            />
-          </View>
-          <View style={styles.rangeField}>
-            <Text style={styles.rangeLabel}>Edad máxima</Text>
-            <TextInput
-              style={styles.rangeInput}
-              value={maxAge}
-              onChangeText={text => {
-                setMaxAge(text);
-                updateSearchFilters("maxAge", parseInt(text, 10) || 50);
-              }}
-              keyboardType="numeric"
-              placeholder="50"
-              placeholderTextColor="#999"
-            />
-          </View>
-        </View>
-
-        <View style={styles.rangeRow}>
-          <View style={styles.rangeField}>
-            <Text style={styles.rangeLabel}>Presupuesto mín</Text>
-            <TextInput
-              style={styles.rangeInput}
-              value={budgetMin}
-              onChangeText={text => {
-                setBudgetMin(text);
-                updateSearchFilters("budgetMin", parseInt(text, 10) || 10000);
-              }}
-              keyboardType="numeric"
-              placeholder="10000"
-              placeholderTextColor="#999"
-            />
-          </View>
-          <View style={styles.rangeField}>
-            <Text style={styles.rangeLabel}>Presupuesto máx</Text>
-            <TextInput
-              style={styles.rangeInput}
-              value={budgetMax}
-              onChangeText={text => {
-                setBudgetMax(text);
-                updateSearchFilters("budgetMax", parseInt(text, 10) || 50000);
-              }}
-              keyboardType="numeric"
-              placeholder="50000"
-              placeholderTextColor="#999"
-            />
-          </View>
-        </View>
-
-        <QuestionRow
-          question="¿Solo perfiles con foto?"
-          selectedValue={getSelectedLabel("onlyWithPhoto")}
-          onPress={() => openSelectionModal("onlyWithPhoto")}
-        />
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </>
   );
 };
 
@@ -137,37 +137,11 @@ const styles = StyleSheet.create({
     color: "#1A1A1A",
     fontFamily: "Inter-Bold",
   },
-  rangeRow: {
-    flexDirection: "row",
-    gap: 12,
-    marginBottom: 16,
-  },
-  rangeField: {
-    flex: 1,
-  },
   rangeLabel: {
     fontSize: 14,
     color: "#333333",
     marginBottom: 8,
     fontWeight: "600",
     fontFamily: "Inter-SemiBold",
-  },
-  rangeInput: {
-    borderWidth: 1.5,
-    borderColor: "#E5E5E5",
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 16,
-    color: "#1A1A1A",
-    backgroundColor: "#FFFFFF",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-    fontFamily: "Inter-Regular",
   },
 });

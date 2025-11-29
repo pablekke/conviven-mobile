@@ -3,33 +3,58 @@ import { BaseApiService } from "../../../services/apiHelper";
 export interface SearchFilters {
   id: string;
   userId: string;
+  // Filtros de Ubicación
   mainPreferredNeighborhoodId: string | null;
+  preferredNeighborhoods?:
+    | string[]
+    | { id: string; neighborhoodId: string; neighborhood?: any }[]
+    | null;
+  includeAdjacentNeighborhoods?: boolean | null;
+  // Filtros Demográficos
   genderPref: string[] | null;
+  genders?: string[] | null;
   minAge: number | null;
   maxAge: number | null;
+  // Filtros Económicos
   budgetMin: string | null;
   budgetMax: string | null;
+  // Filtros de Calidad
   onlyWithPhoto: boolean | null;
-  preferredNeighborhoods?: { id: string; neighborhoodId: string; neighborhood?: any }[];
   createdAt: string;
   updatedAt: string;
 }
 
 export interface UpdateSearchFiltersRequest {
+  // Filtros de Ubicación
+  mainPreferredNeighborhoodId?: string;
+  preferredNeighborhoods?: string[];
+  includeAdjacentNeighborhoods?: boolean;
+  // Filtros Demográficos
   genderPref?: string[];
+  genders?: string[];
   minAge?: number;
   maxAge?: number;
+  // Filtros Económicos
   budgetMin?: number;
   budgetMax?: number;
+  // Filtros de Calidad
   onlyWithPhoto?: boolean;
 }
 
 export interface SearchFiltersFormData {
+  // Filtros de Ubicación
+  mainPreferredNeighborhoodId: string;
+  preferredNeighborhoods: string[];
+  includeAdjacentNeighborhoods: boolean;
+  // Filtros Demográficos
   genderPref: string[];
+  genders: string[];
   minAge: number;
   maxAge: number;
+  // Filtros Económicos
   budgetMin: number;
   budgetMax: number;
+  // Filtros de Calidad
   onlyWithPhoto: boolean;
 }
 

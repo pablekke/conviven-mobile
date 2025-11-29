@@ -1,11 +1,15 @@
+import { getCachedValue, setCachedValue } from "../../../services/resilience/cache";
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../../../context/AuthContext";
+import { searchPreferencesService } from "../services";
+import { searchPreferencesAdapter } from "../adapters";
+import { useCachedProfile } from "./useCachedProfile";
+import { useDataPreload } from "../../../context/DataPreloadContext";
 import {
   SearchPreferencesFormData,
   createDefaultSearchPreferences,
   SearchPreferences,
 } from "../interfaces";
-import { searchPreferencesService } from "../services";
 
 export interface UseSearchPreferencesFormReturn {
   formData: SearchPreferencesFormData;
@@ -19,80 +23,129 @@ export interface UseSearchPreferencesFormReturn {
 
 export const useSearchPreferencesForm = (): UseSearchPreferencesFormReturn => {
   const { user } = useAuth();
+  const { fullProfile } = useCachedProfile();
+  const { refreshProfile } = useDataPreload();
   const defaultPrefs = createDefaultSearchPreferences();
   const [formData, setFormData] = useState<SearchPreferencesFormData>(defaultPrefs);
   const [initialData, setInitialData] = useState<SearchPreferencesFormData>(defaultPrefs);
+  // Inicializar loading en false para evitar spinners si hay datos en cache
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [initialized, setInitialized] = useState(false);
 
-  // Mapear datos de la API a formato de formulario
-  const mapApiToFormData = useCallback((apiData: SearchPreferences): SearchPreferencesFormData => {
+  const mapCachedToApiData = useCallback((cachedData: any): SearchPreferences | null => {
+    if (!cachedData) return null;
+
     return {
-      // Filtros de Ubicación
-      mainPreferredNeighborhoodId: apiData.mainPreferredNeighborhoodId ?? "",
-      preferredNeighborhoods: apiData.preferredNeighborhoods ?? [],
-      includeAdjacentNeighborhoods: apiData.includeAdjacentNeighborhoods ?? false,
-
-      // Filtros Demográficos
-      genderPref: apiData.genderPref ?? [],
-      minAge: apiData.minAge ?? 18,
-      maxAge: apiData.maxAge ?? 50,
-
-      // Filtros Económicos
-      budgetMin: apiData.budgetMin ?? 10000,
-      budgetMax: apiData.budgetMax ?? 50000,
-
-      // Filtros de Calidad
-      onlyWithPhoto: apiData.onlyWithPhoto ?? true,
-      lastActiveWithinDays: apiData.lastActiveWithinDays ?? 30,
-
-      // Dealbreakers
-      noCigarettes: apiData.noCigarettes ?? false,
-      noWeed: apiData.noWeed ?? false,
-      noPets: apiData.noPets ?? false,
-      petsRequired: apiData.petsRequired ?? false,
-      requireQuietHoursOverlap: apiData.requireQuietHoursOverlap ?? false,
-
-      // Preferencias de compatibilidad
-      tidinessMin: apiData.tidinessMin ?? "",
-      schedulePref: apiData.schedulePref ?? "",
-      guestsMax: apiData.guestsMax ?? "",
-      musicMax: apiData.musicMax ?? "",
-
-      // Arrays
-      languagesPref: apiData.languagesPref ?? [],
-      interestsPref: apiData.interestsPref ?? [],
-      zodiacPref: apiData.zodiacPref ?? [],
+      id: cachedData.id ?? "",
+      userId: cachedData.userId ?? "",
+      mainPreferredNeighborhoodId: cachedData.mainPreferredNeighborhoodId ?? null,
+      preferredNeighborhoods: cachedData.preferredNeighborhoods ?? null,
+      includeAdjacentNeighborhoods: cachedData.includeAdjacentNeighborhoods ?? null,
+      genderPref: cachedData.genderPref ?? null,
+      minAge: cachedData.minAge ?? null,
+      maxAge: cachedData.maxAge ?? null,
+      budgetMin: cachedData.budgetMin ?? null,
+      budgetMax: cachedData.budgetMax ?? null,
+      onlyWithPhoto: cachedData.onlyWithPhoto ?? null,
+      lastActiveWithinDays: cachedData.lastActiveWithinDays ?? null,
+      noCigarettes: cachedData.noCigarettes ?? null,
+      noWeed: cachedData.noWeed ?? null,
+      noPets: cachedData.noPets ?? null,
+      petsRequired: cachedData.petsRequired ?? null,
+      requireQuietHoursOverlap: cachedData.requireQuietHoursOverlap ?? null,
+      tidinessMin: (cachedData.tidinessMin as any) ?? null,
+      schedulePref: (cachedData.schedulePref as any) ?? null,
+      guestsMax: (cachedData.guestsMax as any) ?? null,
+      musicMax: (cachedData.musicMax as any) ?? null,
+      languagesPref: cachedData.languagesPref ?? null,
+      interestsPref: cachedData.interestsPref ?? null,
+      zodiacPref: cachedData.zodiacPref ?? null,
+      createdAt: cachedData.createdAt ?? new Date().toISOString(),
+      updatedAt: cachedData.updatedAt ?? new Date().toISOString(),
     };
   }, []);
 
-  // Cargar datos iniciales desde la API
+  // Cargar datos iniciales desde cache o API
   useEffect(() => {
-    const loadPreferences = async () => {
+    const loadPreferences = async (forceRefresh: boolean = false) => {
       if (!user) {
         setLoading(false);
+        setInitialized(true);
         return;
       }
 
       try {
+        // Primero intentar usar datos del fullProfile cache (ya precargados)
+        if (!forceRefresh && fullProfile?.searchPreferences) {
+          const apiData = mapCachedToApiData(fullProfile.searchPreferences);
+          if (apiData) {
+            const formattedData = searchPreferencesAdapter.mapApiToFormData(apiData);
+            setFormData(formattedData);
+            setInitialData(formattedData);
+            setLoading(false);
+            setInitialized(true);
+            // Hacer refresh en background para mantener datos actualizados
+            searchPreferencesService
+              .getSearchPreferences()
+              .then(data => {
+                const updatedFormattedData = searchPreferencesAdapter.mapApiToFormData(data);
+                setFormData(updatedFormattedData);
+                setInitialData(updatedFormattedData);
+              })
+              .catch(error => {
+                console.error("Error refreshing search preferences in background:", error);
+              });
+            return;
+          }
+        }
+
+        // Segundo intentar usar cache de API
+        if (!forceRefresh) {
+          const cachedData = await getCachedValue<SearchPreferences>("/search-preferences/me");
+          if (cachedData) {
+            const formattedData = searchPreferencesAdapter.mapApiToFormData(cachedData);
+            setFormData(formattedData);
+            setInitialData(formattedData);
+            setLoading(false);
+            setInitialized(true);
+            // Hacer refresh en background
+            searchPreferencesService
+              .getSearchPreferences()
+              .then(data => {
+                const updatedFormattedData = searchPreferencesAdapter.mapApiToFormData(data);
+                setFormData(updatedFormattedData);
+                setInitialData(updatedFormattedData);
+              })
+              .catch(error => {
+                console.error("Error refreshing search preferences in background:", error);
+              });
+            return;
+          }
+        }
+
+        // Solo mostrar loading si no hay cache disponible
         setLoading(true);
         const apiData = await searchPreferencesService.getSearchPreferences();
-
-        const formattedData = mapApiToFormData(apiData);
+        const formattedData = searchPreferencesAdapter.mapApiToFormData(apiData);
         setFormData(formattedData);
         setInitialData(formattedData);
+        setInitialized(true);
       } catch (error) {
         const defaultData = createDefaultSearchPreferences();
         setFormData(defaultData);
         setInitialData(defaultData);
+        setInitialized(true);
       } finally {
         setLoading(false);
       }
     };
 
-    loadPreferences();
-  }, [user, mapApiToFormData]);
+    if (!initialized) {
+      loadPreferences(false);
+    }
+  }, [user, mapCachedToApiData, fullProfile, initialized]);
 
   const updateFormData = useCallback(
     (field: keyof SearchPreferencesFormData, value: any) => {
@@ -100,6 +153,12 @@ export const useSearchPreferencesForm = (): UseSearchPreferencesFormReturn => {
         const newData = { ...prev, [field]: value };
         const changed = JSON.stringify(newData) !== JSON.stringify(initialData);
         setHasChanges(changed);
+
+        if (changed) {
+          setCachedValue("@searchPrefs/draft", newData).catch(error => {
+            console.warn("Error guardando draft en cache:", error);
+          });
+        }
 
         return newData;
       });
@@ -161,17 +220,18 @@ export const useSearchPreferencesForm = (): UseSearchPreferencesFormReturn => {
       const updatedData = await searchPreferencesService.upsertSearchPreferences(dataToSave);
 
       // Actualizar datos iniciales con los datos guardados
-      const formattedData = mapApiToFormData(updatedData);
+      const formattedData = searchPreferencesAdapter.mapApiToFormData(updatedData);
       setInitialData(formattedData);
       setFormData(formattedData);
       setHasChanges(false);
+      await refreshProfile();
     } catch (error) {
       console.error("❌ Error al guardar preferencias:", error);
       throw error;
     } finally {
       setSaving(false);
     }
-  }, [user, formData, mapApiToFormData]);
+  }, [user, formData]);
 
   return {
     formData,

@@ -25,7 +25,6 @@ export const TEXTS = {
   SUCCESS_AVATAR_UPDATE: "Foto actualizada correctamente.",
 
   // Buttons
-  SAVE: "Guardar",
   CANCEL: "Cancelar",
   EDIT_PROFILE: "Editar Perfil",
 } as const;
