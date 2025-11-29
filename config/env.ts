@@ -12,6 +12,8 @@ export const API_TIMEOUT = parseInt(process.env.EXPO_PUBLIC_API_TIMEOUT ?? "1500
 
 export const FEED_USE_MOCK = process.env.EXPO_PUBLIC_FEED_USE_MOCK === "true";
 
+export const MOCK_MODE = process.env.EXPO_PUBLIC_MOCK_MODE === "true";
+
 /**
  * Configuración para validar el entorno
  */

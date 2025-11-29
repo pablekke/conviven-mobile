@@ -1,5 +1,54 @@
-import { MessageStatus } from "../enums";
+export type MessageStatus = "sent" | "delivered" | "read";
 
+export interface UserShort {
+  id: string;
+  firstName: string;
+  lastName: string;
+  avatar?: string;
+}
+
+export interface ChatUser {
+  id: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  photoUrl?: string | null;
+  secondaryPhotoUrls?: string[] | null;
+  birthDate?: string | null;
+  gender?: string | null;
+}
+
+export interface LastMessage {
+  id: string;
+  content: string;
+  senderId: string;
+  status: MessageStatus;
+  createdAt: string;
+}
+
+export interface Conversation {
+  id: string;
+  otherUser: UserShort;
+  otherUserFull?: ChatUser;
+  lastMessage?: LastMessage;
+  unreadCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Message {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  status: MessageStatus;
+  deliveredAt: string | null;
+  readAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  liked: boolean;
+}
+
+// UI Types (kept for compatibility)
 export interface ChatPreview {
   id: string;
   name: string;
@@ -8,24 +57,15 @@ export interface ChatPreview {
   time: string;
   unread: number;
   avatar: string;
+  updatedAt?: string;
 }
 
-export interface ChatMessage {
-  id: string;
-  conversationId?: string;
-  senderId: string;
-  receiverId: string;
-  content: string;
-  status: MessageStatus;
-  deliveredAt?: Date;
-  readAt?: Date;
-  timestamp: Date;
-}
+export type ChatMessage = Message & { timestamp: Date }; // UI adds timestamp as Date object
 
-export interface ChatConversation {
+export interface Match {
   id: string;
-  participants: string[];
-  lastMessage?: ChatMessage;
-  unreadCount: number;
-  updatedAt: Date;
+  name: string;
+  avatar: string;
+  age?: number;
+  hasConversation?: boolean;
 }

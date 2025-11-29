@@ -50,7 +50,7 @@ export default function ConversationScreen() {
       style={[styles.container, { backgroundColor: colors.background }]}
       edges={["top"]}
     >
-      <ConversationHeader userName={displayName} userAvatar={displayAvatar} isOnline={false} />
+      <ConversationHeader userName={displayName} userAvatar={displayAvatar} />
 
       <KeyboardAvoidingView
         style={styles.keyboardView}

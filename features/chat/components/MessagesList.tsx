@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
 
+import { MessageStatus as MessageStatusEnum } from "../enums";
 import { ChatMessage } from "../types";
 import { MessageBubble } from "./MessageBubble";
 
@@ -32,7 +33,7 @@ export const MessagesList: React.FC<MessagesListProps> = ({ messages, currentUse
           content={item.content}
           timestamp={item.timestamp}
           isOwn={isOwn}
-          status={isOwn ? item.status : undefined}
+          status={isOwn ? (item.status as MessageStatusEnum) : undefined}
         />
       </>
     );

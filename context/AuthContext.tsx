@@ -60,7 +60,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logoutSuppressUntilRef = useRef<number>(0);
   const { prefetchFeed, clearPrefetch } = useFeedPrefetch();
 
-  useAuthBootstrap({ setState, logoutSuppressUntilRef });
+  useAuthBootstrap({ setState, logoutSuppressUntilRef, prefetchFeed });
 
   const { login, register, logout, clearError, refreshUser, setUserValue, updateUser } =
     useAuthActions({
@@ -103,9 +103,10 @@ export default AuthContext;
 type AuthBootstrapDeps = {
   setState: React.Dispatch<React.SetStateAction<AuthState>>;
   logoutSuppressUntilRef: React.MutableRefObject<number>;
+  prefetchFeed: () => Promise<unknown>;
 };
 
-function useAuthBootstrap({ setState, logoutSuppressUntilRef }: AuthBootstrapDeps) {
+function useAuthBootstrap({ setState, logoutSuppressUntilRef, prefetchFeed }: AuthBootstrapDeps) {
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
@@ -113,6 +114,16 @@ function useAuthBootstrap({ setState, logoutSuppressUntilRef }: AuthBootstrapDep
 
         if (isAuthenticated) {
           const user = await AuthService.getCurrentUser();
+
+          // Precargar el feed antes de establecer isLoading: false (similar al login)
+          if (user) {
+            try {
+              await prefetchFeed();
+            } catch (prefetchError) {
+              console.warn("[AuthBootstrap] Error precargando feed tras bootstrap:", prefetchError);
+            }
+          }
+
           setState({
             user,
             isAuthenticated: !!user,
@@ -146,7 +157,7 @@ function useAuthBootstrap({ setState, logoutSuppressUntilRef }: AuthBootstrapDep
     };
 
     checkAuthStatus();
-  }, [setState]);
+  }, [setState, prefetchFeed]);
 
   useEffect(() => {
     const unsubscribe = authSession.subscribe(event => {

@@ -20,7 +20,12 @@ export const MessageTicks: React.FC<MessageTicksProps> = ({ status, size = 14 })
     return (
       <View style={styles.doubleCheck}>
         <Feather name="check" size={size} color={colors.mutedForeground} />
-        <Feather name="check" size={size} color={colors.mutedForeground} />
+        <Feather
+          name="check"
+          size={size}
+          color={colors.mutedForeground}
+          style={styles.secondCheck}
+        />
       </View>
     );
   }
@@ -29,7 +34,7 @@ export const MessageTicks: React.FC<MessageTicksProps> = ({ status, size = 14 })
     return (
       <View style={styles.doubleCheck}>
         <Feather name="check" size={size} color={colors.conviven.blue} />
-        <Feather name="check" size={size} color={colors.conviven.blue} />
+        <Feather name="check" size={size} color={colors.conviven.blue} style={styles.secondCheck} />
       </View>
     );
   }
@@ -40,6 +45,9 @@ export const MessageTicks: React.FC<MessageTicksProps> = ({ status, size = 14 })
 const styles = StyleSheet.create({
   doubleCheck: {
     flexDirection: "row",
-    marginLeft: -4,
+    marginLeft: -6,
+  },
+  secondCheck: {
+    marginLeft: -8,
   },
 });

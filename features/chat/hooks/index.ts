@@ -6,3 +6,6 @@ export type { UseCachedChatsReturn } from "./useCachedChats";
 
 export { useChatConversation } from "./useChatConversation";
 export type { UseChatConversationReturn } from "./useChatConversation";
+
+export { useMatches } from "./useMatches";
+export type { UseMatchesReturn } from "./useMatches";

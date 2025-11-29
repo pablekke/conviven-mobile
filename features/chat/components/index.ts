@@ -17,6 +17,11 @@ export { EmptyChatState } from "./EmptyChatState";
 export { MatchesList } from "./MatchesList";
 export type { MatchesListProps, Match } from "./MatchesList";
 
+export { MatchCard } from "./MatchCard";
+export type { MatchCardProps } from "./MatchCard";
+
+export { PulseIndicator } from "./PulseIndicator";
+
 export { ConversationHeader } from "./ConversationHeader";
 export type { ConversationHeaderProps } from "./ConversationHeader";
 

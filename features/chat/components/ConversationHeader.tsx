@@ -6,14 +6,12 @@ import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 export interface ConversationHeaderProps {
   userName: string;
   userAvatar: string;
-  isOnline?: boolean;
   onBackPress?: () => void;
 }
 
 export const ConversationHeader: React.FC<ConversationHeaderProps> = ({
   userName,
   userAvatar,
-  isOnline = false,
   onBackPress,
 }) => {
   const router = useRouter();
@@ -34,14 +32,17 @@ export const ConversationHeader: React.FC<ConversationHeaderProps> = ({
 
       <View style={styles.userInfo}>
         <View style={styles.avatarContainer}>
-          <Image source={{ uri: userAvatar }} style={styles.avatar} />
-          {isOnline && <View style={styles.onlineBadge} />}
+          <Image
+            source={{ uri: userAvatar }}
+            style={styles.avatar}
+            resizeMode="cover"
+            defaultSource={require("../../../assets/logo.png")}
+          />
         </View>
         <View style={styles.textInfo}>
           <Text style={styles.userName} numberOfLines={1}>
             {userName}
           </Text>
-          <Text style={styles.status}>{isOnline ? "Activo ahora" : "Offline"}</Text>
         </View>
       </View>
 
@@ -81,17 +82,6 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     backgroundColor: "#E2E8F0",
   },
-  onlineBadge: {
-    position: "absolute",
-    bottom: 0,
-    right: 0,
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: "#10B981",
-    borderWidth: 2,
-    borderColor: "#fff",
-  },
   textInfo: {
     flex: 1,
   },
@@ -99,12 +89,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Inter-SemiBold",
     color: "#0F172A",
-  },
-  status: {
-    fontSize: 13,
-    fontFamily: "Inter-Regular",
-    color: "#64748B",
-    marginTop: 2,
   },
   moreButton: {
     padding: 4,

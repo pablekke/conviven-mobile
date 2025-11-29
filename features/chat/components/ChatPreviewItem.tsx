@@ -1,8 +1,10 @@
 import { useRouter } from "expo-router";
+import React, { useState } from "react";
 
 import { Image, Text, TouchableOpacity, View } from "react-native";
 
 import { useTheme } from "../../../context/ThemeContext";
+import { MessageStatus } from "../enums";
 import { ChatPreview } from "../types";
 import { MessageTicks } from "./MessageTicks";
 
@@ -14,6 +16,12 @@ export interface ChatPreviewItemProps {
 export const ChatPreviewItem: React.FC<ChatPreviewItemProps> = ({ chat, onPress }) => {
   const { colors } = useTheme();
   const router = useRouter();
+  const [imageError, setImageError] = useState(false);
+
+  const avatarUrl =
+    chat.avatar && chat.avatar.trim().length > 0
+      ? chat.avatar
+      : `https://ui-avatars.com/api/?name=${encodeURIComponent(chat.name)}&background=2563EB&color=fff&bold=true&size=128`;
 
   const handlePress = () => {
     if (onPress) {
@@ -24,10 +32,14 @@ export const ChatPreviewItem: React.FC<ChatPreviewItemProps> = ({ chat, onPress 
         params: {
           id: chat.id,
           name: chat.name,
-          avatar: chat.avatar,
+          avatar: avatarUrl,
         },
       });
     }
+  };
+
+  const handleImageError = () => {
+    setImageError(true);
   };
 
   return (
@@ -40,14 +52,31 @@ export const ChatPreviewItem: React.FC<ChatPreviewItemProps> = ({ chat, onPress 
         borderColor: chat.unread > 0 ? colors.conviven.blue : colors.border,
       }}
     >
-      <Image source={{ uri: chat.avatar }} className="w-14 h-14 rounded-full" />
+      <View
+        className="w-14 h-14 rounded-full overflow-hidden"
+        style={{ backgroundColor: colors.muted }}
+      >
+        <Image
+          source={{
+            uri: imageError
+              ? `https://ui-avatars.com/api/?name=${encodeURIComponent(chat.name)}&background=2563EB&color=fff&bold=true&size=128`
+              : avatarUrl,
+          }}
+          style={{ width: "100%", height: "100%" }}
+          
+          resizeMode="contain"
+          onError={handleImageError}
+        />
+      </View>
       <View className="flex-1">
         <View className="flex-row items-center justify-between">
           <Text className="text-base font-conviven-semibold text-foreground">{chat.name}</Text>
           <Text className="text-xs font-conviven text-muted-foreground">{chat.time}</Text>
         </View>
         <View className="flex-row items-center gap-1 mt-1">
-          {chat.lastMessageStatus && <MessageTicks status={chat.lastMessageStatus} size={14} />}
+          {chat.lastMessageStatus && (
+            <MessageTicks status={chat.lastMessageStatus as unknown as MessageStatus} size={14} />
+          )}
           <Text className="text-sm font-conviven text-muted-foreground flex-1" numberOfLines={1}>
             {chat.lastMessage}
           </Text>
