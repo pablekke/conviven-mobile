@@ -20,6 +20,7 @@ export const API = {
   NEIGHBORHOOD_BY_ID: (id: string) => `/locations/neighborhoods/${id}`,
   CITIES_BY_DEPT: (deptId: string) => `/locations/cities?departmentId=${deptId}`,
   NEIGHBORHOODS_BY_CITY: (cityId: string) => `/locations/neighborhoods?cityId=${cityId}`,
+  NEIGHBORHOOD_ADJACENTS: (id: string) => `/locations/neighborhoods/${id}/adjacents`,
 
   // Messages
   MESSAGES: "/messages",
@@ -36,4 +37,3 @@ export const API = {
   PROFILE_PHOTO_BY_ID: (id: string) => `/profile-photos/${id}`,
   PROFILE_PHOTO_SET_PRIMARY: (id: string) => `/profile-photos/${id}/primary`,
 } as const;
-0

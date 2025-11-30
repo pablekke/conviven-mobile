@@ -1,5 +1,6 @@
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
+import { StatusBar } from "expo-status-bar";
 
 import React from "react";
 import { StyleSheet, View } from "react-native";
@@ -43,6 +44,7 @@ export default function ChatScreen() {
   return (
     <TabTransition>
       <View style={styles.container}>
+        <StatusBar style="light" backgroundColor="#FFFFFF" />
         <LinearGradient
           colors={["#0052D4", "#007BFF"]}
           start={{ x: 0, y: 0 }}
@@ -66,9 +68,11 @@ export default function ChatScreen() {
                 <MatchesList matches={matches} onMatchPress={handleMatchPress} />
               </View>
 
-              <View className="flex-1 bg-background rounded-t-[32px] overflow-hidden">
+              <View className="flex-1 bg-background rounded-t-[32px]">
                 <ChatSearchBar value={searchQuery} onChangeText={setSearchQuery} />
-                <ChatList chats={filteredChats} />
+                <View className="flex-1 overflow-hidden">
+                  <ChatList chats={filteredChats} />
+                </View>
               </View>
             </>
           )}

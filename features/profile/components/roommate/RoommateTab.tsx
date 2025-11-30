@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View, ScrollView } from "react-native";
-import { QuestionRow } from "../components/QuestionRow";
+import { QuestionRow } from "../QuestionRow";
 import { Feather } from "@expo/vector-icons";
 
 interface RoommateTabProps {

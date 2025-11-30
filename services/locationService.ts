@@ -81,6 +81,9 @@ function mapNeighborhood(data: any): Neighborhood {
     id: String(data.id ?? data.uuid ?? ""),
     name: String(data.name ?? ""),
     cityId: String(data.cityId ?? data.city_id ?? cityRaw?.id ?? ""),
+    cityName: data.cityName ? String(data.cityName) : undefined,
+    departmentId: data.departmentId ? String(data.departmentId) : undefined,
+    departmentName: data.departmentName ? String(data.departmentName) : undefined,
     city: cityRaw ? mapCity(cityRaw) : undefined,
   };
 }
@@ -119,6 +122,17 @@ const LocationService = {
   async getNeighborhood(id: string): Promise<Neighborhood> {
     const data = await request(API.NEIGHBORHOOD_BY_ID(id));
     return mapNeighborhood(data?.neighborhood ?? data);
+  },
+
+  async getAdjacentNeighborhoods(neighborhoodId: string): Promise<Neighborhood[]> {
+    try {
+      const data = await request(API.NEIGHBORHOOD_ADJACENTS(neighborhoodId));
+      const neighborhoodsArray = Array.isArray(data) ? data : (data?.data ?? data?.adjacents ?? []);
+      return neighborhoodsArray.map(mapNeighborhood);
+    } catch (error) {
+      console.error("Error loading adjacent neighborhoods:", error);
+      return [];
+    }
   },
 };
 

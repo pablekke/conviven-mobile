@@ -155,9 +155,7 @@ export const useSearchPreferencesForm = (): UseSearchPreferencesFormReturn => {
         setHasChanges(changed);
 
         if (changed) {
-          setCachedValue("@searchPrefs/draft", newData).catch(error => {
-            console.warn("Error guardando draft en cache:", error);
-          });
+          setCachedValue("@searchPrefs/draft", newData).catch(() => {});
         }
 
         return newData;

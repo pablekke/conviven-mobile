@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Modal, Text, TouchableOpacity, View, Pressable, ScrollView, Animated } from "react-native";
 import { Calendar, ChevronDown } from "lucide-react-native";
 import { useTheme } from "../context/ThemeContext";
@@ -186,6 +186,8 @@ function CompactDatePicker({
   const dayTranslateY = useRef(new Animated.Value(0)).current;
   const yearScrollViewRef = useRef<ScrollView>(null);
   const scrollViewWidthRef = useRef<number>(0);
+  const yearItemWidthsRef = useRef<Map<number, number>>(new Map());
+  const centeringTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const months = [
     "Enero",
@@ -255,22 +257,53 @@ function CompactDatePicker({
     }
   }, [selectedDate, propInitialDate]);
 
-  useEffect(() => {
-    const yearIndex = years.findIndex(year => year === selectedYear);
-    if (yearIndex !== -1 && yearScrollViewRef.current && scrollViewWidthRef.current > 0) {
-      const itemWidth = 72;
-
-      const itemPosition = yearIndex * itemWidth;
-      const centerPosition = itemPosition - scrollViewWidthRef.current / 2 + itemWidth / 2;
-
-      setTimeout(() => {
-        yearScrollViewRef.current?.scrollTo({
-          x: Math.max(0, centerPosition),
-          animated: true,
-        });
-      }, 100);
+  const centerSelectedYear = useCallback(() => {
+    if (centeringTimeoutRef.current) {
+      clearTimeout(centeringTimeoutRef.current);
     }
+
+    centeringTimeoutRef.current = setTimeout(() => {
+      const yearIndex = years.findIndex(year => year === selectedYear);
+      if (yearIndex === -1 || !yearScrollViewRef.current || scrollViewWidthRef.current <= 0) {
+        return;
+      }
+
+      let accumulatedWidth = 0;
+      let allWidthsAvailable = true;
+
+      for (let i = 0; i < yearIndex; i++) {
+        const itemWidth = yearItemWidthsRef.current.get(years[i]);
+        if (!itemWidth) {
+          allWidthsAvailable = false;
+          break;
+        }
+        accumulatedWidth += itemWidth + 8;
+      }
+
+      const selectedItemWidth = yearItemWidthsRef.current.get(selectedYear);
+      if (!selectedItemWidth || !allWidthsAvailable) {
+        centeringTimeoutRef.current = setTimeout(centerSelectedYear, 50);
+        return;
+      }
+
+      const itemCenterPosition = accumulatedWidth + selectedItemWidth / 2;
+      const scrollPosition = itemCenterPosition - scrollViewWidthRef.current / 2;
+
+      yearScrollViewRef.current.scrollTo({
+        x: Math.max(0, scrollPosition),
+        animated: true,
+      });
+    }, 150);
   }, [selectedYear, years]);
+
+  useEffect(() => {
+    centerSelectedYear();
+    return () => {
+      if (centeringTimeoutRef.current) {
+        clearTimeout(centeringTimeoutRef.current);
+      }
+    };
+  }, [centerSelectedYear]);
 
   const isDateValid = (year: number, month: number, day: number) => {
     const dateStart = new Date(year, month, day);
@@ -382,7 +415,17 @@ function CompactDatePicker({
             {years.map(year => (
               <TouchableOpacity
                 key={year}
-                onPress={() => setSelectedYear(year)}
+                onPress={() => {
+                  setSelectedYear(year);
+                  setTimeout(() => centerSelectedYear(), 100);
+                }}
+                onLayout={event => {
+                  const { width } = event.nativeEvent.layout;
+                  yearItemWidthsRef.current.set(year, width);
+                  if (year === selectedYear) {
+                    setTimeout(() => centerSelectedYear(), 50);
+                  }
+                }}
                 style={{
                   paddingHorizontal: 16,
                   paddingVertical: 8,

@@ -1,9 +1,14 @@
-import { getCachedValue, setCachedValue } from "../../../services/resilience/cache";
+import {
+  getCachedValue,
+  setCachedValue,
+  clearCachedValue,
+} from "../../../services/resilience/cache";
 import { searchFiltersService } from "../services";
 import { searchFiltersAdapter } from "../adapters";
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import { useDataPreload } from "../../../context/DataPreloadContext";
+import { neighborhoodsService } from "../components/data/neighborhoods/services";
 import type {
   SearchFilters,
   SearchFiltersFormData,
@@ -109,11 +114,12 @@ export const useSearchFilters = (): UseSearchFiltersReturn => {
         const changed = JSON.stringify(newData) !== JSON.stringify(originalData);
         setHasChanges(changed);
 
-        // Guardar en cache local mientras se edita (sin enviar a API)
-        if (changed) {
-          setCachedValue("@searchFilters/draft", newData).catch(error => {
-            console.warn("Error guardando draft en cache:", error);
-          });
+        if (
+          changed ||
+          field === "preferredNeighborhoods" ||
+          field === "mainPreferredNeighborhoodId"
+        ) {
+          setCachedValue("@searchFilters/draft", newData).catch(() => {});
         }
 
         return newData;
@@ -121,6 +127,56 @@ export const useSearchFilters = (): UseSearchFiltersReturn => {
     },
     [originalData],
   );
+
+  useEffect(() => {
+    if (!initialized) return;
+
+    const filterNeighborhoodsByDepartment = async () => {
+      if (!formData.mainPreferredNeighborhoodId) {
+        return;
+      }
+
+      if (formData.preferredNeighborhoods.length === 0) {
+        return;
+      }
+
+      try {
+        const mainNeighborhood = await neighborhoodsService.getNeighborhoodById(
+          formData.mainPreferredNeighborhoodId,
+        );
+        const mainDepartmentId =
+          mainNeighborhood?.city?.departmentId || mainNeighborhood?.city?.department?.id;
+
+        if (!mainDepartmentId) {
+          setFormData(prev => ({ ...prev, preferredNeighborhoods: [] }));
+          return;
+        }
+
+        const neighborhoods = await neighborhoodsService.getNeighborhoodsByIds(
+          formData.preferredNeighborhoods,
+        );
+
+        const filteredIds = neighborhoods
+          .filter(neighborhood => {
+            const neighborhoodDepartmentId =
+              neighborhood?.city?.departmentId || neighborhood?.city?.department?.id;
+            return neighborhoodDepartmentId === mainDepartmentId;
+          })
+          .map(neighborhood => neighborhood.id);
+
+        if (filteredIds.length !== formData.preferredNeighborhoods.length) {
+          setFormData(prev => ({
+            ...prev,
+            preferredNeighborhoods: filteredIds,
+          }));
+        }
+      } catch (error) {
+        console.error("Error filtering neighborhoods by department:", error);
+      }
+    };
+
+    filterNeighborhoodsByDepartment();
+  }, [formData.mainPreferredNeighborhoodId, initialized]);
 
   const saveFormData = useCallback(
     async (overrideValues?: Partial<SearchFiltersFormData>) => {
@@ -157,21 +213,14 @@ export const useSearchFilters = (): UseSearchFiltersReturn => {
           onlyWithPhoto: dataToSave.onlyWithPhoto,
         };
 
-        console.log(
-          "💾 Guardando SearchFilters - dataToSave:",
-          JSON.stringify(dataToSave, null, 2),
-        );
-        console.log("📤 Payload a enviar al backend:", JSON.stringify(payload, null, 2));
-
         await searchFiltersService.upsertSearchFilters(payload);
-        // Recargar los datos desde la API para asegurar que se obtengan los valores guardados correctamente
         const reloadedData = await searchFiltersService.getSearchFilters();
         const formattedData = searchFiltersAdapter.mapApiToFormData(reloadedData);
         setFormData(formattedData);
         setOriginalData(formattedData);
         setHasChanges(false);
 
-        // Refrescar el perfil completo en el cache para que se actualice cuando vuelva a entrar
+        await clearCachedValue("@searchFilters/draft");
         await refreshProfile();
       } catch (error) {
         console.error("Error saving search filters:", error);

@@ -6,6 +6,7 @@ import React, {
   ReactNode,
   useCallback,
 } from "react";
+import { Image } from "react-native";
 
 import { ChatPreview } from "../features/chat/types";
 import { chatService } from "../features/chat/services";
@@ -14,31 +15,26 @@ import { useAuth } from "./AuthContext";
 import { getCachedValue } from "../services/resilience/cache";
 
 interface DataPreloadState {
-  // Chat data
   chats: ChatPreview[];
   chatsLoading: boolean;
   chatsError: Error | null;
   chatsLastUpdated: number | null;
 
-  // Profile data
   fullProfile: any | null;
   profileLoading: boolean;
   profileError: Error | null;
   profileLastUpdated: number | null;
 
-  // General preload state
   isPreloading: boolean;
   preloadCompleted: boolean;
   preloadError: Error | null;
 }
 
 interface DataPreloadContextType extends DataPreloadState {
-  // Refresh functions
   refreshChats: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   refreshAll: () => Promise<void>;
 
-  // Cache management
   clearCache: () => void;
   isDataFresh: (dataType: "chats" | "profile", maxAge?: number) => boolean;
 }
@@ -72,14 +68,12 @@ interface DataPreloadProviderProps {
   children: ReactNode;
 }
 
-// Cache duration in milliseconds (5 minutes)
 const CACHE_DURATION = 5 * 60 * 1000;
 
 export const DataPreloadProvider: React.FC<DataPreloadProviderProps> = ({ children }) => {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [state, setState] = useState<DataPreloadState>(defaultState);
 
-  // Check if data is fresh (within cache duration)
   const isDataFresh = useCallback(
     (dataType: "chats" | "profile", maxAge: number = CACHE_DURATION): boolean => {
       const lastUpdated = dataType === "chats" ? state.chatsLastUpdated : state.profileLastUpdated;
@@ -89,7 +83,18 @@ export const DataPreloadProvider: React.FC<DataPreloadProviderProps> = ({ childr
     [state.chatsLastUpdated, state.profileLastUpdated],
   );
 
-  // Load chats
+  const preloadChatAvatars = useCallback(async (chats: ChatPreview[]) => {
+    const avatarUrls = chats
+      .map(chat => chat.avatar)
+      .filter(
+        (url): url is string => !!url && url.trim().length > 0 && !url.includes("ui-avatars.com"),
+      );
+
+    const preloadPromises = avatarUrls.map(url => Image.prefetch(url).catch(() => {}));
+
+    await Promise.allSettled(preloadPromises);
+  }, []);
+
   const loadChats = useCallback(
     async (forceRefresh: boolean = false) => {
       if (!user || !isAuthenticated) return;
@@ -105,6 +110,7 @@ export const DataPreloadProvider: React.FC<DataPreloadProviderProps> = ({ childr
               chatsError: null,
               chatsLastUpdated: Date.now(),
             }));
+            preloadChatAvatars(cachedChats).catch(() => {});
             chatService
               .getConversations()
               .then(conversations => {
@@ -113,6 +119,7 @@ export const DataPreloadProvider: React.FC<DataPreloadProviderProps> = ({ childr
                   chats: conversations,
                   chatsLastUpdated: Date.now(),
                 }));
+                preloadChatAvatars(conversations).catch(() => {});
               })
               .catch(error => {
                 console.error("Error refreshing chats in background:", error);
@@ -120,10 +127,8 @@ export const DataPreloadProvider: React.FC<DataPreloadProviderProps> = ({ childr
             return;
           }
         }
-        // Solo mostrar loading si no hay cache disponible
         setState(prev => ({ ...prev, chatsLoading: true, chatsError: null }));
 
-        // Timeout para evitar bloqueos
         const timeoutPromise = new Promise((_, reject) => {
           setTimeout(() => reject(new Error("Chats timeout")), 5000);
         });
@@ -140,6 +145,8 @@ export const DataPreloadProvider: React.FC<DataPreloadProviderProps> = ({ childr
           chatsError: null,
           chatsLastUpdated: Date.now(),
         }));
+
+        preloadChatAvatars(conversations).catch(() => {});
       } catch (error) {
         console.error("Error precargando chats:", error);
         setState(prev => ({
@@ -151,17 +158,15 @@ export const DataPreloadProvider: React.FC<DataPreloadProviderProps> = ({ childr
         }));
       }
     },
-    [user, isAuthenticated],
+    [user, isAuthenticated, preloadChatAvatars],
   );
 
-  // Load full profile
   const loadProfile = useCallback(async () => {
     if (!user || !isAuthenticated) return;
 
     setState(prev => ({ ...prev, profileLoading: true, profileError: null }));
 
     try {
-      // Timeout para evitar bloqueos
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error("Profile timeout")), 5000);
       });
@@ -190,7 +195,6 @@ export const DataPreloadProvider: React.FC<DataPreloadProviderProps> = ({ childr
     }
   }, [user, isAuthenticated]);
 
-  // Preload all data
   const preloadAllData = useCallback(async () => {
     if (!user || !isAuthenticated || authLoading) {
       console.log(
@@ -240,9 +244,8 @@ export const DataPreloadProvider: React.FC<DataPreloadProviderProps> = ({ childr
     }
   }, [user, isAuthenticated, authLoading, loadChats, loadProfile]);
 
-  // Refresh functions
   const refreshChats = useCallback(async () => {
-    await loadChats(true); // Force refresh
+    await loadChats(true);
   }, [loadChats]);
 
   const refreshProfile = useCallback(async () => {
@@ -253,19 +256,16 @@ export const DataPreloadProvider: React.FC<DataPreloadProviderProps> = ({ childr
     await preloadAllData();
   }, [preloadAllData]);
 
-  // Clear cache
   const clearCache = useCallback(() => {
     setState(defaultState);
   }, []);
 
-  // Auto-preload when user becomes available
   useEffect(() => {
     if (user && isAuthenticated && !authLoading) {
       preloadAllData();
     }
   }, [user, isAuthenticated, authLoading, preloadAllData]);
 
-  // Clear cache on logout
   useEffect(() => {
     if (!isAuthenticated) {
       clearCache();

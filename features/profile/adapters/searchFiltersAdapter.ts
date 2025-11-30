@@ -8,13 +8,15 @@ class SearchFiltersAdapter {
    * Mapea datos de la API a formato de formulario
    */
   mapApiToFormData(apiData: SearchFilters): SearchFiltersFormData {
-    console.log("🔧 searchFiltersAdapter - API Data recibida:", JSON.stringify(apiData, null, 2));
-
-    // Normalizar preferredNeighborhoods a array de strings
     let preferredNeighborhoods: string[] = [];
-    if (apiData.preferredNeighborhoods) {
+    if ((apiData as any).preferredLocations && Array.isArray((apiData as any).preferredLocations)) {
+      preferredNeighborhoods = (apiData as any).preferredLocations
+        .map((location: any) => location?.neighborhood?.id)
+        .filter((id: string) => id);
+    }
+
+    if (preferredNeighborhoods.length === 0 && apiData.preferredNeighborhoods) {
       if (Array.isArray(apiData.preferredNeighborhoods)) {
-        // Si es array de objetos, extraer los IDs
         if (apiData.preferredNeighborhoods.length > 0) {
           const firstItem = apiData.preferredNeighborhoods[0];
           if (
@@ -58,8 +60,6 @@ class SearchFiltersAdapter {
       // Filtros de Calidad
       onlyWithPhoto: apiData.onlyWithPhoto ?? true,
     };
-
-    console.log("✅ searchFiltersAdapter - Resultado mapeado:", JSON.stringify(result, null, 2));
     return result;
   }
 }

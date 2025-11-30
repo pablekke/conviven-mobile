@@ -1,10 +1,11 @@
+import { useIsMontevideoNeighborhood } from "./neighborhoods/hooks/useIsMontevideoNeighborhood";
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Switch } from "react-native";
-import { Feather } from "@expo/vector-icons";
-import { QuestionRow } from "./QuestionRow";
-import RangeSlider from "../../../components/RangeSlider";
+import { useAdjacentNeighborhoods } from "./neighborhoods/hooks/useAdjacentNeighborhoods";
 import { NeighborhoodChips, MainNeighborhoodCard } from "./neighborhoods";
-import { useTheme } from "../../../context/ThemeContext";
-import { useAdjacentNeighborhoods } from "../hooks/useAdjacentNeighborhoods";
+import RangeSlider from "../../../../components/RangeSlider";
+import { useTheme } from "../../../../context/ThemeContext";
+import { Feather } from "@expo/vector-icons";
+import { QuestionRow } from "../QuestionRow";
 
 interface DataTabProps {
   getSelectedLabel: (key: string) => string;
@@ -21,6 +22,7 @@ interface DataTabProps {
   preferredNeighborhoods?: string[];
   mainPreferredNeighborhoodId?: string;
   includeAdjacentNeighborhoods?: boolean;
+  cachedFilters?: any | null;
 }
 
 export const DataTab: React.FC<DataTabProps> = ({
@@ -38,6 +40,7 @@ export const DataTab: React.FC<DataTabProps> = ({
   preferredNeighborhoods = [],
   mainPreferredNeighborhoodId = "",
   includeAdjacentNeighborhoods = false,
+  cachedFilters,
 }) => {
   const { colors } = useTheme();
 
@@ -49,7 +52,11 @@ export const DataTab: React.FC<DataTabProps> = ({
       updateSearchFilters("preferredNeighborhoods", newNeighborhoods);
     },
   });
-  // Formateador de moneda para presupuesto
+
+  const isMontevideo = useIsMontevideoNeighborhood({
+    neighborhoodId: mainPreferredNeighborhoodId || null,
+    cachedFilters,
+  });
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("es-UY", {
       style: "currency",
@@ -58,8 +65,6 @@ export const DataTab: React.FC<DataTabProps> = ({
       maximumFractionDigits: 0,
     }).format(value);
   };
-
-  // Formateador simple para edad
   const formatAge = (value: number) => {
     return `${value} años`;
   };
@@ -141,6 +146,7 @@ export const DataTab: React.FC<DataTabProps> = ({
             <MainNeighborhoodCard
               neighborhoodId={mainPreferredNeighborhoodId}
               onPress={() => openSelectionModal("mainPreferredNeighborhood")}
+              cachedFilters={cachedFilters}
             />
 
             {/* Barrios Preferidos Adicionales */}
@@ -165,45 +171,48 @@ export const DataTab: React.FC<DataTabProps> = ({
                   updateSearchFilters("preferredNeighborhoods", ids);
                 }}
                 editable
+                cachedFilters={cachedFilters}
               />
             </View>
 
-            {/* Toggle para incluir barrios adyacentes */}
-            <View
-              style={[
-                styles.toggleContainer,
-                {
-                  backgroundColor: colors.card,
-                  borderColor: colors.border,
-                  borderWidth: 1,
-                },
-              ]}
-            >
-              <View style={styles.toggleContent}>
-                <View style={styles.toggleTextContainer}>
-                  <Text style={[styles.toggleLabel, { color: colors.foreground }]}>
-                    Incluir barrios adyacentes
-                  </Text>
-                  <Text style={[styles.toggleDescription, { color: colors.mutedForeground }]}>
-                    Buscar también en barrios cercanos
-                  </Text>
+            {/* Toggle para incluir barrios adyacentes - Solo mostrar si es Montevideo */}
+            {isMontevideo && (
+              <View
+                style={[
+                  styles.toggleContainer,
+                  {
+                    backgroundColor: colors.card,
+                    borderColor: colors.border,
+                    borderWidth: 1,
+                  },
+                ]}
+              >
+                <View style={styles.toggleContent}>
+                  <View style={styles.toggleTextContainer}>
+                    <Text style={[styles.toggleLabel, { color: colors.foreground }]}>
+                      Incluir barrios adyacentes
+                    </Text>
+                    <Text style={[styles.toggleDescription, { color: colors.mutedForeground }]}>
+                      Buscar también en barrios cercanos
+                    </Text>
+                  </View>
+                  <Switch
+                    value={includeAdjacentNeighborhoods}
+                    onValueChange={value => {
+                      updateSearchFilters("includeAdjacentNeighborhoods", value);
+                    }}
+                    trackColor={{
+                      false: colors.muted,
+                      true: colors.primary + "80",
+                    }}
+                    thumbColor={
+                      includeAdjacentNeighborhoods ? colors.primary : colors.mutedForeground
+                    }
+                    disabled={loadingAdjacents || !mainPreferredNeighborhoodId}
+                  />
                 </View>
-                <Switch
-                  value={includeAdjacentNeighborhoods}
-                  onValueChange={value => {
-                    updateSearchFilters("includeAdjacentNeighborhoods", value);
-                  }}
-                  trackColor={{
-                    false: colors.muted,
-                    true: colors.primary + "80",
-                  }}
-                  thumbColor={
-                    includeAdjacentNeighborhoods ? colors.primary : colors.mutedForeground
-                  }
-                  disabled={loadingAdjacents || !mainPreferredNeighborhoodId}
-                />
               </View>
-            </View>
+            )}
           </View>
         </View>
       </ScrollView>

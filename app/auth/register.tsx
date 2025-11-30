@@ -11,6 +11,7 @@ import {
   StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
 
 import { useAuth } from "../../context/AuthContext";
 import { RegisterCredentials } from "../../types/user";
@@ -45,6 +46,7 @@ export default function RegisterScreen() {
 
   return (
     <View style={styles.container}>
+      <StatusBar style="light" backgroundColor="#FFFFFF" />
       <RegisterHeaderSection scrollY={scrollY} onBack={handleBack} />
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
         <KeyboardAvoidingView
@@ -100,6 +102,7 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#FFFFFF",
   },
   safeArea: {
     flex: 1,

@@ -39,20 +39,21 @@ class UserProfileService {
     });
   }
 
-  /**
-   * Obtener el perfil completo del usuario (con profile y searchPreferences)
-   */
   async getFullUserProfile(): Promise<{
+    user?: any;
     profile?: UserProfile;
     searchPreferences?: UserSearchPreferences;
+    filters?: any;
   }> {
     try {
       const data = await this.makeRequest<any>("/users/me");
       const userData = data.user || data.data || data;
 
       return {
+        user: userData,
         profile: userData.profile,
         searchPreferences: userData.searchPreferences,
+        filters: userData.filters,
       };
     } catch (error) {
       console.error("Error getting full user profile:", error);

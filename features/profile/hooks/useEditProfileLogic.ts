@@ -152,7 +152,6 @@ export const useEditProfileLogic = () => {
   // Cargar search filters
   useEffect(() => {
     if (searchFiltersData) {
-      console.log("🔍 searchFiltersData recibida:", JSON.stringify(searchFiltersData, null, 2));
       const mapped: Record<string, string> = {};
 
       if (searchFiltersData.genderPref?.length > 0) {
@@ -259,5 +258,13 @@ export const useEditProfileLogic = () => {
     searchPrefsSaving,
     searchFiltersSaving,
     handleUpdate,
+    preferredNeighborhoods: searchFiltersData.preferredNeighborhoods || [],
+    mainPreferredNeighborhoodId: searchFiltersData.mainPreferredNeighborhoodId || "",
+    includeAdjacentNeighborhoods: searchFiltersData.includeAdjacentNeighborhoods || false,
+    cachedFilters: (() => {
+      const userFromFullProfile = (fullProfile as any)?.user;
+      const userFilters = userFromFullProfile?.filters || (user as any)?.filters;
+      return userFilters || fullProfile?.filters || fullProfile?.searchFilters || null;
+    })(),
   };
 };

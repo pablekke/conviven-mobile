@@ -1,6 +1,6 @@
 import { StyleSheet, Text, TextInput, View, ScrollView } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { QuestionRow } from "./QuestionRow";
+import { QuestionRow } from "../QuestionRow";
 
 interface AboutTabProps {
   aboutText: string;

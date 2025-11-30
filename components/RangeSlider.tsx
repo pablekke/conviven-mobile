@@ -164,7 +164,11 @@ export default function RangeSlider({
             selectTextOnFocus
           />
         ) : (
-          <TouchableOpacity onPress={() => setEditingMin(true)} activeOpacity={0.7}>
+          <TouchableOpacity
+            onPress={() => setEditingMin(true)}
+            activeOpacity={1}
+            style={[styles.valueButton, { borderColor: colors.border }]}
+          >
             <Text style={[styles.valueText, { color: colors.foreground }]}>
               {formatValue(minValue)}
             </Text>
@@ -182,7 +186,11 @@ export default function RangeSlider({
             selectTextOnFocus
           />
         ) : (
-          <TouchableOpacity onPress={() => setEditingMax(true)} activeOpacity={0.7}>
+          <TouchableOpacity
+            onPress={() => setEditingMax(true)}
+            activeOpacity={0.7}
+            style={[styles.valueButton, { borderColor: colors.border }]}
+          >
             <Text style={[styles.valueText, { color: colors.foreground }]}>
               {formatValue(maxValue)}
             </Text>
@@ -246,6 +254,15 @@ const styles = StyleSheet.create({
   valueText: {
     fontSize: 14,
     fontFamily: "Inter-SemiBold",
+  },
+  valueButton: {
+    borderWidth: 2,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    minWidth: 60,
+    alignItems: "center",
+    justifyContent: "center",
   },
   valueInput: {
     fontSize: 14,

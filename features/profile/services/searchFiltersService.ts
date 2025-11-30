@@ -9,6 +9,23 @@ export interface SearchFilters {
     | string[]
     | { id: string; neighborhoodId: string; neighborhood?: any }[]
     | null;
+  preferredLocations?:
+    | {
+        neighborhood?: { id: string; name: string };
+        city?: { id: string; name: string };
+        department?: { id: string; name: string };
+      }[]
+    | null;
+  mainPreferredLocation?: {
+    neighborhood?: { id: string; name: string };
+    city?: { id: string; name: string };
+    department?: { id: string; name: string };
+  } | null;
+  mainPreferredNeighborhood?: {
+    id: string;
+    name: string;
+    cityId?: string;
+  } | null;
   includeAdjacentNeighborhoods?: boolean | null;
   // Filtros Demográficos
   genderPref: string[] | null;

@@ -57,9 +57,7 @@ export const useUserProfileData = (): UseUserProfileDataReturn => {
         setHasChanges(changed);
 
         if (changed) {
-          setCachedValue("@profile/draft", newData).catch(error => {
-            console.warn("Error guardando draft en cache:", error);
-          });
+          setCachedValue("@profile/draft", newData).catch(() => {});
         }
 
         return newData;

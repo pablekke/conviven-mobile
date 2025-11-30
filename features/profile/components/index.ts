@@ -25,9 +25,9 @@ export type { ProfileActionButtonProps } from "./ProfileActionButton";
 export { ChecklistItem } from "./ChecklistItem";
 export type { ChecklistItemProps } from "./ChecklistItem";
 
-export { AboutTab } from "./AboutTab";
-export { DataTab } from "./DataTab";
-export { RoommateTab } from "./RoommateTab";
+export { AboutTab } from "./about";
+export { DataTab, NeighborhoodSelectionModal } from "./data";
+export { RoommateTab } from "./roommate";
 export { QuestionRow } from "./QuestionRow";
 export { SelectionModal } from "./SelectionModal";
 

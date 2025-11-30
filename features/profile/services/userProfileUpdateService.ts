@@ -89,9 +89,7 @@ class UserProfileUpdateService {
    */
   async updateUserProfile(formData: UserProfileData): Promise<User> {
     try {
-      console.log("📥 FormData recibido:", formData);
       const apiData = this.mapFormDataToApiData(formData);
-      console.log("📤 Enviando a /profiles/me:", JSON.stringify(apiData, null, 2));
 
       const responseData = await apiPut<User>("/profiles/me", apiData);
 

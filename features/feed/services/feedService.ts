@@ -1,4 +1,6 @@
 import { apiGet, apiPost } from "../../../services/apiHelper";
+import { HttpError } from "../../../services/http";
+import { SessionExpiredError } from "../../../services/auth/sessionManager";
 import { FEED_CONSTANTS } from "../constants";
 import type { Roomie } from "../types";
 import { FeedAdapter } from "../adapters";
@@ -90,7 +92,14 @@ class FeedService {
         raw: backendData,
       };
     } catch (error) {
+      // No registrar como error si es una sesión vencida (caso esperado)
+      const isSessionExpired =
+        error instanceof SessionExpiredError ||
+        (error instanceof HttpError && error.status === 401);
+      
+      if (!isSessionExpired) {
       console.error("Error fetching matching feed:", error);
+      }
       throw error;
     }
   }
