@@ -71,10 +71,10 @@ export const useNeighborhood = ({
       if (!cachedNeighborhood.city?.department) {
         loadNeighborhood(false);
       } else {
-        setNeighborhood(cachedNeighborhood);
-        setLoading(false);
-        setError(null);
-      }
+      setNeighborhood(cachedNeighborhood);
+      setLoading(false);
+      setError(null);
+    }
     } else if (neighborhoodId) {
       loadNeighborhood(false);
     } else {

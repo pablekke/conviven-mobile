@@ -139,6 +139,8 @@ export default function AppLayout() {
       <Tabs.Screen name="conversation/[id]" options={{ href: null }} />
       <Tabs.Screen name="edit-profile/index" options={{ href: null }} />
       <Tabs.Screen name="edit-profile/photos" options={{ href: null }} />
+      <Tabs.Screen name="edit-profile/filters" options={{ href: null }} />
+      <Tabs.Screen name="edit-profile/settings" options={{ href: null }} />
     </Tabs>
   );
 }

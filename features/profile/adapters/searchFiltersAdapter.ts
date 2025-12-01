@@ -39,7 +39,11 @@ class SearchFiltersAdapter {
       // Filtros de Ubicación
       mainPreferredNeighborhoodId: apiData.mainPreferredNeighborhoodId ?? "",
       preferredNeighborhoods,
-      includeAdjacentNeighborhoods: apiData.includeAdjacentNeighborhoods ?? false,
+      includeAdjacentNeighborhoods:
+        apiData.includeAdjacentNeighborhoods !== undefined &&
+        apiData.includeAdjacentNeighborhoods !== null
+          ? apiData.includeAdjacentNeighborhoods
+          : false,
 
       // Filtros Demográficos
       genderPref: apiData.genderPref ?? [],
@@ -50,11 +54,11 @@ class SearchFiltersAdapter {
       // Filtros Económicos
       budgetMin:
         apiData.budgetMin !== null && apiData.budgetMin !== undefined && apiData.budgetMin !== ""
-          ? parseFloat(apiData.budgetMin)
+          ? parseFloat(apiData.budgetMin as any)
           : 0,
       budgetMax:
         apiData.budgetMax !== null && apiData.budgetMax !== undefined && apiData.budgetMax !== ""
-          ? parseFloat(apiData.budgetMax)
+          ? parseFloat(apiData.budgetMax as any)
           : 100000,
 
       // Filtros de Calidad

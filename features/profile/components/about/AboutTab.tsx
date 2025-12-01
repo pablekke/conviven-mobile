@@ -9,32 +9,9 @@ interface AboutTabProps {
   openSelectionModal: (key: string) => void;
 }
 
-export const AboutTab: React.FC<AboutTabProps> = ({
-  aboutText,
-  setAboutText,
-  getSelectedLabel,
-  openSelectionModal,
-}) => {
+export const AboutTab: React.FC<AboutTabProps> = ({ getSelectedLabel, openSelectionModal }) => {
   return (
     <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Sobre mí</Text>
-        <QuestionRow
-          question="Género"
-          selectedValue={getSelectedLabel("gender")}
-          onPress={() => openSelectionModal("gender")}
-        />
-        <TextInput
-          style={styles.aboutTextInput}
-          multiline
-          numberOfLines={6}
-          placeholder="Cuéntanos sobre ti, qué buscas en un compañero/a..."
-          placeholderTextColor="#999"
-          value={aboutText}
-          onChangeText={setAboutText}
-        />
-      </View>
-
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Feather name="home" size={16} color="#007BFF" />

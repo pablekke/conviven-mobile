@@ -44,7 +44,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
       <View style={styles.divider} />
 
       <View style={styles.actionButtons}>
-        <ProfileActionButton icon="settings" label="Ajustes" onPress={onSettingsPress} />
+        <ProfileActionButton icon="filter" label="Filtros" onPress={onSettingsPress} />
         <ProfileActionButton icon="edit-3" label="Editar" variant="primary" onPress={onEditPress} />
         <ProfileActionButton icon="camera" label="Fotos" showPlusBadge onPress={onPhotosPress} />
       </View>

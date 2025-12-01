@@ -11,7 +11,7 @@ interface ProfileTabsProps {
 
 export const ProfileTabs: React.FC<ProfileTabsProps> = ({ activeTab, onTabChange }) => {
   const tabs = [
-    { id: "data" as TabType, icon: "user", label: "Datos" },
+    { id: "data" as TabType, icon: "user", label: "Perfil" },
     { id: "about" as TabType, icon: "star", label: "Sobre mí" },
     { id: "roommate" as TabType, icon: "heart", label: "Roomie" },
   ];

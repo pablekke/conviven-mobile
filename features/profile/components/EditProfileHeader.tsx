@@ -5,12 +5,14 @@ import { Feather } from "@expo/vector-icons";
 import Spinner from "../../../components/Spinner";
 
 interface EditProfileHeaderProps {
+  title?: string;
   onBack: () => void;
   onSave: () => void;
   isSaving: boolean;
 }
 
 export const EditProfileHeader: React.FC<EditProfileHeaderProps> = ({
+  title,
   onBack,
   onSave,
   isSaving,
@@ -21,7 +23,7 @@ export const EditProfileHeader: React.FC<EditProfileHeaderProps> = ({
         <Feather name="arrow-left" size={24} color="#FFFFFF" />
       </TouchableOpacity>
       <View style={styles.headerCenter}>
-        <Text style={styles.headerTitle}>Editar Perfil</Text>
+        <Text style={styles.headerTitle}>{title ?? "Editar Perfil"}</Text>
       </View>
       <TouchableOpacity
         onPress={onSave}

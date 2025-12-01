@@ -52,6 +52,7 @@ export default function ProfileScreen() {
               userAge={userAge}
               progressPercentage={progressPercentage}
               onEditPress={() => router.push("./edit-profile")}
+              onSettingsPress={() => router.push("./edit-profile/settings")}
               onPhotosPress={() => router.push("./edit-profile/photos")}
             />
 

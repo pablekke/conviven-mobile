@@ -39,7 +39,7 @@ export const DataTab: React.FC<DataTabProps> = ({
   updateSearchFilters,
   preferredNeighborhoods = [],
   mainPreferredNeighborhoodId = "",
-  includeAdjacentNeighborhoods = false,
+  includeAdjacentNeighborhoods = true,
   cachedFilters,
 }) => {
   const { colors } = useTheme();

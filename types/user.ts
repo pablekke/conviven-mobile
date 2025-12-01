@@ -199,10 +199,16 @@ export interface UpdateUserPayload {
   phone?: string;
   bio?: string;
   departmentId?: string;
+  cityId?: string;
   neighborhoodId?: string;
+  departmentName?: string;
+  cityName?: string;
+  neighborhoodName?: string;
   gender?: Gender;
   birthDate?: string;
   location?: string;
+  profession?: string;
+  hobby?: string;
 }
 
 export interface UserListQuery {

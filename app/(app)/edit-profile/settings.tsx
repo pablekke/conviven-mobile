@@ -1,31 +1,28 @@
-import React, { useState, useRef } from "react";
+import { QUESTION_TITLES, QUESTION_OPTIONS } from "../../../features/profile/constants";
 import { Animated, StyleSheet, View, ActivityIndicator } from "react-native";
+import { useEditProfileLogic } from "../../../features/profile/hooks";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
-import { StatusBar } from "expo-status-bar";
-import Toast from "react-native-toast-message";
-
 import TabTransition from "../../../components/TabTransition";
+import { useTheme } from "../../../context/ThemeContext";
+import Toast from "react-native-toast-message";
+import { StatusBar } from "expo-status-bar";
+import { useState, useRef } from "react";
+import { useRouter } from "expo-router"
 import {
   SelectionModal,
-  PersonalDataTab,
-  AboutTab,
-  RoommateTab,
+  DataTab,
   ExpandableTab,
   EditProfileHeaderSection,
   UnsavedChangesModal,
+  NeighborhoodSelectionModal,
 } from "../../../features/profile/components";
-import type { TabType } from "../../../features/profile/components";
-import { QUESTION_TITLES, QUESTION_OPTIONS } from "../../../features/profile/constants";
-import { useEditProfileLogic } from "../../../features/profile/hooks";
-import { useTheme } from "../../../context/ThemeContext";
 
-export default function EditProfileScreen() {
+export default function SettingsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const [activeTab, setActiveTab] = useState<TabType>("about");
   const [modalVisible, setModalVisible] = useState(false);
   const [unsavedChangesModalVisible, setUnsavedChangesModalVisible] = useState(false);
+  const [neighborhoodModalVisible, setNeighborhoodModalVisible] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState("");
   const [selectedValue, setSelectedValue] = useState("");
   const scrollViewRef = useRef<any>(null);
@@ -33,30 +30,36 @@ export default function EditProfileScreen() {
   const currentScrollYRef = useRef(0);
 
   const {
-    aboutText,
-    setAboutText,
     selectedAnswers,
     setSelectedAnswers,
-    profileHasChanges,
-    userFieldsChanged,
-    saveProfileData,
-    resetToUserData,
-    saveUserFields,
-    resetUserFields,
-    searchPrefsHasChanges,
-    saveSearchPrefs,
-    resetSearchPrefs,
+    minAge,
+    setMinAge,
+    maxAge,
+    setMaxAge,
+    budgetMin,
+    setBudgetMin,
+    budgetMax,
+    setBudgetMax,
     searchFiltersHasChanges,
     saveSearchFilters,
     resetSearchFilters,
-    saving,
-    searchPrefsSaving,
+    updateSearchFilters,
     searchFiltersSaving,
     handleUpdate,
+    preferredNeighborhoods,
+    mainPreferredNeighborhoodId,
+    includeAdjacentNeighborhoods,
+    cachedFilters,
   } = useEditProfileLogic();
 
   const openSelectionModal = (questionKey: string) => {
     if (isSaving) return;
+
+    if (questionKey === "preferredNeighborhoods" || questionKey === "mainPreferredNeighborhood") {
+      setNeighborhoodModalVisible(true);
+      setSelectedQuestion(questionKey);
+      return;
+    }
     setSelectedQuestion(questionKey);
     const selectedLabel = selectedAnswers[questionKey];
     const options = QUESTION_OPTIONS[questionKey as keyof typeof QUESTION_OPTIONS];
@@ -83,8 +86,7 @@ export default function EditProfileScreen() {
 
   const getSelectedLabel = (questionKey: string) => selectedAnswers[questionKey] || "Seleccionar";
 
-  const hasAnyUnsavedChanges =
-    profileHasChanges || searchPrefsHasChanges || searchFiltersHasChanges;
+  const hasAnyUnsavedChanges = searchFiltersHasChanges;
 
   const handleBack = () => {
     if (hasAnyUnsavedChanges) {
@@ -95,26 +97,32 @@ export default function EditProfileScreen() {
   };
 
   const handleDiscardChanges = () => {
-    if (profileHasChanges) resetToUserData();
-    if (searchPrefsHasChanges) resetSearchPrefs();
     if (searchFiltersHasChanges) resetSearchFilters();
-    resetUserFields();
-
     setUnsavedChangesModalVisible(false);
     router.replace("/(app)/profile");
   };
 
   const handleSaveAndExit = async () => {
     try {
-      const savePromises: Promise<void>[] = [];
-      if (profileHasChanges) savePromises.push(saveProfileData());
-      savePromises.push(saveUserFields());
-      if (searchPrefsHasChanges) savePromises.push(saveSearchPrefs());
       if (searchFiltersHasChanges) {
-        savePromises.push(saveSearchFilters());
-      }
+        const overrideValues: Partial<any> = {};
+        if (minAge && !isNaN(parseInt(minAge, 10))) {
+          overrideValues.minAge = parseInt(minAge, 10);
+        }
+        if (maxAge && !isNaN(parseInt(maxAge, 10))) {
+          overrideValues.maxAge = parseInt(maxAge, 10);
+        }
+        if (budgetMin && !isNaN(parseInt(budgetMin, 10))) {
+          overrideValues.budgetMin = parseInt(budgetMin, 10);
+        }
+        if (budgetMax && !isNaN(parseInt(budgetMax, 10))) {
+          overrideValues.budgetMax = parseInt(budgetMax, 10);
+        }
 
-      await Promise.all(savePromises);
+        await saveSearchFilters(
+          Object.keys(overrideValues).length > 0 ? overrideValues : undefined,
+        );
+      }
 
       Toast.show({
         type: "success",
@@ -140,26 +148,7 @@ export default function EditProfileScreen() {
 
   const handleSave = async () => {
     try {
-      const savePromises: Promise<void>[] = [];
-
-      if (profileHasChanges) {
-        savePromises.push(saveProfileData());
-      }
-
-      if (userFieldsChanged) {
-        savePromises.push(saveUserFields());
-      }
-
-      if (searchPrefsHasChanges) {
-        savePromises.push(saveSearchPrefs());
-      }
-
-      if (searchFiltersHasChanges) {
-        savePromises.push(saveSearchFilters());
-      }
-
-      // Si no hay cambios en ninguna tab, mostrar mensaje
-      if (savePromises.length === 0) {
+      if (!searchFiltersHasChanges) {
         Toast.show({
           type: "info",
           text1: "Sin cambios",
@@ -170,8 +159,22 @@ export default function EditProfileScreen() {
         return;
       }
 
-      // Guardar todos los cambios
-      await Promise.all(savePromises);
+      const overrideValues: Partial<any> = {};
+      if (minAge && !isNaN(parseInt(minAge, 10))) {
+        overrideValues.minAge = parseInt(minAge, 10);
+      }
+      if (maxAge && !isNaN(parseInt(maxAge, 10))) {
+        overrideValues.maxAge = parseInt(maxAge, 10);
+      }
+      if (budgetMin && !isNaN(parseInt(budgetMin, 10))) {
+        overrideValues.budgetMin = parseInt(budgetMin, 10);
+      }
+      if (budgetMax && !isNaN(parseInt(budgetMax, 10))) {
+        overrideValues.budgetMax = parseInt(budgetMax, 10);
+      }
+
+      await saveSearchFilters(Object.keys(overrideValues).length > 0 ? overrideValues : undefined);
+
       Toast.show({
         type: "success",
         text1: "¡Listo!",
@@ -192,7 +195,7 @@ export default function EditProfileScreen() {
     }
   };
 
-  const isSaving = saving || searchPrefsSaving || searchFiltersSaving;
+  const isSaving = searchFiltersSaving;
 
   const handleScroll = Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
     useNativeDriver: true,
@@ -206,8 +209,7 @@ export default function EditProfileScreen() {
 
     if (currentScrollY === 0) return;
 
-    // Animación más lenta y suave usando requestAnimationFrame
-    const duration = 800; // Duración más larga para animación más lenta
+    const duration = 800;
     let startTime: number | null = null;
 
     const animate = (timestamp: number) => {
@@ -215,7 +217,6 @@ export default function EditProfileScreen() {
       const elapsed = timestamp - startTime;
       const progress = Math.min(elapsed / duration, 1);
 
-      // Easing suave (ease-out cubic)
       const easedProgress = 1 - Math.pow(1 - progress, 3);
       const targetY = currentScrollY * (1 - easedProgress);
 
@@ -242,14 +243,16 @@ export default function EditProfileScreen() {
         )}
         <EditProfileHeaderSection
           scrollY={scrollY}
-          activeTab={activeTab}
-          onTabChange={isSaving ? () => {} : setActiveTab}
+          activeTab="data"
+          onTabChange={() => {}}
           onBack={isSaving ? () => {} : handleBack}
           onSave={handleSave}
           isSaving={isSaving}
+          title="Ajustes"
+          showTabs={false}
+          headerHeight={120}
         />
         <SafeAreaView style={styles.safeArea} edges={["top"]}>
-          {/* Tab Content */}
           <Animated.ScrollView
             ref={scrollViewRef}
             contentContainerStyle={styles.scrollContent}
@@ -259,30 +262,26 @@ export default function EditProfileScreen() {
             scrollEnabled={!isSaving}
           >
             <View style={styles.contentContainer}>
-              {activeTab === "data" && (
-                <PersonalDataTab
-                  getSelectedLabel={getSelectedLabel}
-                  openSelectionModal={openSelectionModal}
-                />
-              )}
-              {activeTab === "about" && (
-                <AboutTab
-                  aboutText={aboutText}
-                  setAboutText={setAboutText}
-                  getSelectedLabel={getSelectedLabel}
-                  openSelectionModal={openSelectionModal}
-                />
-              )}
-              {activeTab === "roommate" && (
-                <RoommateTab
-                  getSelectedLabel={getSelectedLabel}
-                  openSelectionModal={openSelectionModal}
-                />
-              )}
+              <DataTab
+                getSelectedLabel={getSelectedLabel}
+                openSelectionModal={openSelectionModal}
+                minAge={minAge}
+                setMinAge={setMinAge}
+                maxAge={maxAge}
+                setMaxAge={setMaxAge}
+                budgetMin={budgetMin}
+                setBudgetMin={setBudgetMin}
+                budgetMax={budgetMax}
+                setBudgetMax={setBudgetMax}
+                updateSearchFilters={updateSearchFilters}
+                preferredNeighborhoods={preferredNeighborhoods}
+                mainPreferredNeighborhoodId={mainPreferredNeighborhoodId}
+                includeAdjacentNeighborhoods={includeAdjacentNeighborhoods}
+                cachedFilters={cachedFilters}
+              />
             </View>
           </Animated.ScrollView>
 
-          {/* Modal */}
           <SelectionModal
             visible={modalVisible && !isSaving}
             title={QUESTION_TITLES[selectedQuestion] ?? ""}
@@ -301,6 +300,28 @@ export default function EditProfileScreen() {
         onSaveAndExit={handleSaveAndExit}
         onCancel={() => setUnsavedChangesModalVisible(false)}
         isSaving={isSaving}
+      />
+      <NeighborhoodSelectionModal
+        visible={neighborhoodModalVisible && !isSaving}
+        selectedNeighborhoodIds={preferredNeighborhoods}
+        mainNeighborhoodId={mainPreferredNeighborhoodId}
+        mode={selectedQuestion === "mainPreferredNeighborhood" ? "main" : "multiple"}
+        excludeNeighborhoodIds={
+          selectedQuestion === "preferredNeighborhoods" && mainPreferredNeighborhoodId
+            ? [mainPreferredNeighborhoodId]
+            : []
+        }
+        onClose={() => {
+          setNeighborhoodModalVisible(false);
+          setSelectedQuestion("");
+        }}
+        onConfirm={(selectedIds, mainId) => {
+          if (selectedQuestion === "mainPreferredNeighborhood") {
+            updateSearchFilters("mainPreferredNeighborhoodId", mainId || "");
+          } else {
+            updateSearchFilters("preferredNeighborhoods", selectedIds);
+          }
+        }}
       />
     </TabTransition>
   );
@@ -326,7 +347,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingTop: 150,
+    paddingTop: 50,
     paddingBottom: 20,
   },
   contentContainer: {
