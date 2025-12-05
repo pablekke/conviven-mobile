@@ -12,14 +12,39 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import TabTransition from "../../components/TabTransition";
 import { ProfileCard } from "../../features/profile/components";
-import { useProfileScreen } from "../../features/profile/hooks";
+import { useProfileScreen, useProfilePhotos } from "../../features/profile/hooks";
 import { useAuth } from "../../context/AuthContext";
 import Spinner from "../../components/Spinner";
+import { useMemo } from "react";
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, userName, userAge, progressPercentage } = useProfileScreen();
   const { logout, isLogoutInProgress } = useAuth();
+  const { photos } = useProfilePhotos();
+
+  const allPhotoUrls = useMemo(() => {
+    if (photos && photos.length > 0) {
+      // Ordenar para que la foto principal esté primero
+      const sortedPhotos = [...photos].sort((a, b) => {
+        if (a.isPrimary) return -1;
+        if (b.isPrimary) return 1;
+        return 0;
+      });
+      const photoUrls = sortedPhotos.map(photo => photo.url);
+      
+      // Si el avatar del usuario no está en las fotos, agregarlo al inicio
+      if (user?.avatar && !photoUrls.includes(user.avatar)) {
+        return [user.avatar, ...photoUrls];
+      }
+      
+      return photoUrls;
+    }
+    if (user?.avatar) {
+      return [user.avatar];
+    }
+    return [];
+  }, [photos, user?.avatar]);
 
   if (!user) {
     return (
@@ -51,6 +76,7 @@ export default function ProfileScreen() {
               userName={userName}
               userAge={userAge}
               progressPercentage={progressPercentage}
+              photos={allPhotoUrls}
               onEditPress={() => router.push("./edit-profile")}
               onSettingsPress={() => router.push("./edit-profile/settings")}
               onPhotosPress={() => router.push("./edit-profile/photos")}

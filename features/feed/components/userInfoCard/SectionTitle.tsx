@@ -14,12 +14,12 @@ export const SectionTitle: React.FC<SectionTitleProps> = ({ children }) => (
 const styles = StyleSheet.create({
   sectionTitleWrap: {
     marginTop: 8,
-    marginBottom: 14,
+    marginBottom: 8,
   },
   sectionTitleText: {
     color: "#1E3A8A",
     fontWeight: "800",
-    fontSize: 18,
+    fontSize: 20,
     letterSpacing: -0.4,
   },
 });

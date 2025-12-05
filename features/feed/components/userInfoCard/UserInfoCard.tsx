@@ -7,7 +7,6 @@ import { HabitosSection } from "./HabitosSection";
 import type { UserInfoCardProps } from "./types";
 import { PerfilSection } from "./PerfilSection";
 import { BioSection } from "./BioSection";
-import { QuickChipsSection } from "./QuickChipsSection";
 import { Divider } from "./Divider";
 import { Header } from "./Header";
 
@@ -22,7 +21,6 @@ export function UserInfoCard({ profile, location, filters, budgetFull, style }: 
       >
         <Header budgetFull={budgetFull} />
         <BioSection bio={profile.bio} />
-        <QuickChipsSection profile={profile} />
         <Divider />
         <LocationSection location={location} filters={filters} />
         <ConvivenciaSection profile={profile} />

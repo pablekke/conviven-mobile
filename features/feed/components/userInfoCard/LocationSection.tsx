@@ -4,6 +4,10 @@ import { SectionTitle } from "./SectionTitle";
 import { MiniChip } from "./MiniChip";
 import { Row } from "./Row";
 import React from "react";
+import {
+  formatLocationForOtherZones,
+  formatLocationForPreferences,
+} from "../../../../utils/locationFormatters";
 
 interface LocationSectionProps {
   location: Location;
@@ -14,19 +18,17 @@ export const LocationSection: React.FC<LocationSectionProps> = ({ location, filt
   <>
     <SectionTitle>Ubicación</SectionTitle>
     <View style={styles.rowBlock}>
-      <Row label="Actual" value={`${location.neighborhood.name}, ${location.city.name}`} />
+      <Row label="Actual" value={formatLocationForOtherZones(location)} />
       <Row
         label="Preferencia"
-        value={`${filters.mainPreferredLocation.department.name} · ${filters.mainPreferredLocation.city.name} · ${filters.mainPreferredLocation.neighborhood.name}`}
+        value={formatLocationForPreferences(filters.mainPreferredLocation)}
       />
       {filters.preferredLocations?.length ? (
         <View style={styles.row}>
           <Text style={styles.rowLabel}>Otras zonas</Text>
           <View style={styles.wrapChips}>
             {filters.preferredLocations.map((loc, i) => (
-              <MiniChip key={String(i)}>
-                {loc.department.name} · {loc.city.name} · {loc.neighborhood.name}
-              </MiniChip>
+              <MiniChip key={String(i)}>{formatLocationForPreferences(loc)}</MiniChip>
             ))}
           </View>
         </View>

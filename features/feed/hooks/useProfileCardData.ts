@@ -8,6 +8,7 @@ import {
   PROFILE_OCCUPATION_LABELS,
   labelFromRecord,
 } from "../../profile/i18n/profileLabels";
+import { formatLocationForOtherZones } from "../../../utils/locationFormatters";
 
 type NamedLocation = {
   department: { name: string };
@@ -36,19 +37,8 @@ export type ProfileLike = {
   };
 };
 
-function formatLocationString(location: NamedLocation, isFirst: boolean = false) {
-  const departmentName = location.department.name?.trim() ?? "";
-  const isMontevideo = departmentName.toLowerCase() === "montevideo";
-  const neighborhoodName = location.neighborhood.name?.trim() ?? "";
-
-  if (isMontevideo) {
-    if (isFirst) {
-      return `Montevideo · ${neighborhoodName}`;
-    }
-    return neighborhoodName;
-  }
-
-  return `${location.department.name} · ${location.city.name} · ${location.neighborhood.name}`;
+function formatLocationString(location: NamedLocation) {
+  return formatLocationForOtherZones(location);
 }
 
 export function useProfileCardData(profile: ProfileLike | null | undefined) {
@@ -69,9 +59,9 @@ export function useProfileCardData(profile: ProfileLike | null | undefined) {
 
   const locationStrings = useMemo(() => {
     if (!profile?.filters?.mainPreferredLocation) return ["—"];
-    const mainLocation = formatLocationString(profile.filters.mainPreferredLocation, true);
+    const mainLocation = formatLocationString(profile.filters.mainPreferredLocation);
     const otherLocations =
-      profile.filters.preferredLocations?.map(loc => formatLocationString(loc, false)) ?? [];
+      profile.filters.preferredLocations?.map(loc => formatLocationString(loc)) ?? [];
     return [mainLocation, ...otherLocations];
   }, [profile?.filters]);
 

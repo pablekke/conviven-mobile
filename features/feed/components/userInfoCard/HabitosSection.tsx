@@ -29,6 +29,5 @@ export const HabitosSection: React.FC<HabitosSectionProps> = ({ profile }) => (
 const styles = StyleSheet.create({
   chipsContainer: {
     paddingVertical: 4,
-    marginTop: 6,
   },
 });

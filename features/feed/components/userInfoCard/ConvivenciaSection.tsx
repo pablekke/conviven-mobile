@@ -14,7 +14,7 @@ interface ConvivenciaSectionProps {
 export const ConvivenciaSection: React.FC<ConvivenciaSectionProps> = ({ profile }) => (
   <>
     <SectionTitle>Convivencia</SectionTitle>
-    <View style={styles.rowBlock}>
+    <View>
       <Row label="Visitas" value={t.guests(profile.guestsFreq)} />
       <Row label="Compartir" value={t.share(profile.sharePolicy)} />
       <Row label="Sonido" value={t.music(profile.musicUsage)} />
@@ -37,9 +37,7 @@ export const ConvivenciaSection: React.FC<ConvivenciaSectionProps> = ({ profile 
 );
 
 const styles = StyleSheet.create({
-  rowBlock: {
-    marginBottom: 16,
-  },
+
   chipsContainer: {
     paddingVertical: 4,
     marginTop: 6,

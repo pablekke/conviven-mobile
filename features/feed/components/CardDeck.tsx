@@ -1,6 +1,14 @@
-import { memo, useCallback, useEffect, useState } from "react";
+import { FEED_CONSTANTS, computeHeroImageHeight } from "../constants/feed.constants";
 import { StyleSheet, View, useWindowDimensions, Dimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import type { CardDeckCardProps, CardDeckProps } from "../types";
+import { memo, useCallback, useEffect, useState } from "react";
+import { FeedScrollContext } from "../context/ScrollContext";
+import { BackgroundCard } from "./BackgroundCard";
+import { EmptyFeedCard } from "./EmptyFeedCard";
+import { PrimaryCard } from "./PrimaryCard";
+import { SwipeLabel } from "./SwipeLabel";
+import { BlurView } from "expo-blur";
 import Animated, {
   Extrapolation,
   interpolate,
@@ -11,14 +19,6 @@ import Animated, {
   withTiming,
   useAnimatedProps,
 } from "react-native-reanimated";
-
-import { FeedScrollContext } from "../context/ScrollContext";
-import { FEED_CONSTANTS, computeHeroImageHeight } from "../constants/feed.constants";
-import { BackgroundCard } from "./BackgroundCard";
-import { PrimaryCard } from "./PrimaryCard";
-import { EmptyFeedCard } from "./EmptyFeedCard";
-import type { CardDeckCardProps, CardDeckProps } from "../types";
-import { BlurView } from "expo-blur";
 
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
@@ -115,6 +115,22 @@ function CardDeckComponent({
     return interpolate(translationX.value, [-SCREEN_WIDTH / 4, 0], [1, 0], Extrapolation.CLAMP);
   });
 
+  const likeLabelOpacity = useDerivedValue(() => {
+    return interpolate(translationX.value, [0, SCREEN_WIDTH / 6], [0, 1], Extrapolation.CLAMP);
+  });
+
+  const dislikeLabelOpacity = useDerivedValue(() => {
+    return interpolate(translationX.value, [-SCREEN_WIDTH / 6, 0], [1, 0], Extrapolation.CLAMP);
+  });
+
+  const likeLabelScale = useDerivedValue(() => {
+    return interpolate(translationX.value, [0, SCREEN_WIDTH / 4], [0.8, 1], Extrapolation.CLAMP);
+  });
+
+  const dislikeLabelScale = useDerivedValue(() => {
+    return interpolate(translationX.value, [-SCREEN_WIDTH / 4, 0], [1, 0.8], Extrapolation.CLAMP);
+  });
+
   const nextCardScale = useDerivedValue(() => {
     return interpolate(
       Math.abs(translationX.value),
@@ -154,6 +170,16 @@ function CardDeckComponent({
 
   const dislikeTintStyle = useAnimatedStyle(() => ({
     opacity: dislikeOpacity.value,
+  }));
+
+  const likeLabelStyle = useAnimatedStyle(() => ({
+    opacity: likeLabelOpacity.value,
+    transform: [{ scale: likeLabelScale.value }],
+  }));
+
+  const dislikeLabelStyle = useAnimatedStyle(() => ({
+    opacity: dislikeLabelOpacity.value,
+    transform: [{ scale: dislikeLabelScale.value }],
   }));
 
   const backCardStyle = useAnimatedStyle(() => ({
@@ -202,6 +228,24 @@ function CardDeckComponent({
                   pointerEvents="none"
                   style={[styles.tintLayer, styles.dislikeTint, dislikeTintStyle]}
                 />
+
+                {/* Like Label */}
+                <SwipeLabel
+                  text="LIKE"
+                  color="rgba(96, 165, 250, 1)"
+                  shadowColor="rgba(96, 165, 250, 0.5)"
+                  animatedStyle={likeLabelStyle}
+                  position="left"
+                />
+
+                {/* Dislike Label */}
+                <SwipeLabel
+                  text="NOPE"
+                  color="rgba(248, 113, 113, 1)"
+                  shadowColor="rgba(248, 113, 113, 0.5)"
+                  animatedStyle={dislikeLabelStyle}
+                  position="right"
+                />
               </>
             ) : (
               <EmptyFeedCard />
@@ -237,9 +281,9 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 24,
   },
   likeTint: {
-    backgroundColor: "rgba(64, 158, 255, 0.4)", // Blue-ish
+    backgroundColor: "rgba(96, 165, 250, 0.15)",
   },
   dislikeTint: {
-    backgroundColor: "rgba(255, 71, 87, 0.4)", // Red-ish
+    backgroundColor: "rgba(248, 113, 113, 0.1)", // More subtle red
   },
 });

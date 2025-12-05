@@ -26,7 +26,7 @@ export const ProfileActionButton: React.FC<ProfileActionButtonProps> = ({
       disabled={!onPress}
     >
       <View style={[styles.iconContainer, isPrimary ? styles.primaryIcon : styles.defaultIcon]}>
-        <Feather name={icon} size={24} color={isPrimary ? "#ffffff" : "#64748B"} />
+        <Feather name={icon} size={20} color={isPrimary ? "#ffffff" : "#64748B"} />
         {showPlusBadge && (
           <View style={styles.plusIcon}>
             <Text style={styles.plusText}>+</Text>
@@ -45,12 +45,12 @@ const styles = StyleSheet.create({
     minWidth: 70,
   },
   iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 20,
+    width: 48,
+    height: 48,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 8,
+    marginBottom: 6,
   },
   defaultIcon: {
     backgroundColor: "#F1F5F9",
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   actionButtonText: {
-    fontSize: 13,
+    fontSize: 12,
     color: "#64748B",
     fontFamily: "Inter-Medium",
     textAlign: "center",

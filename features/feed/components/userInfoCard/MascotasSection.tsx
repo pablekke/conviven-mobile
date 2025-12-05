@@ -35,7 +35,6 @@ export const MascotasSection: React.FC<MascotasSectionProps> = ({ profile }) => 
 
 const styles = StyleSheet.create({
   chipsContainer: {
-    paddingVertical: 4,
-    marginTop: 6,
+    paddingVertical: 4
   },
 });

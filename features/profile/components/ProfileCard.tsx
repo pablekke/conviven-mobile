@@ -1,13 +1,16 @@
 import { Feather } from "@expo/vector-icons";
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useState, useMemo } from "react";
 
 import { ProfileActionButton } from "./ProfileActionButton";
+import { ProfilePhotoGallery } from "./ProfilePhotoGallery";
 
 interface ProfileCardProps {
   avatar?: string;
   userName: string;
   userAge: number;
   progressPercentage: number;
+  photos?: string[];
   onEditPress: () => void;
   onSettingsPress?: () => void;
   onPhotosPress?: () => void;
@@ -18,24 +21,59 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
   userName,
   userAge,
   progressPercentage,
+  photos = [],
   onEditPress,
   onSettingsPress,
   onPhotosPress,
 }) => {
+  const [galleryVisible, setGalleryVisible] = useState(false);
+  const [initialPhotoIndex, setInitialPhotoIndex] = useState(0);
+
+  const allPhotos = useMemo(() => {
+    if (photos && photos.length > 0) {
+      return photos;
+    }
+    if (avatar) {
+      return [avatar];
+    }
+    return [];
+  }, [photos, avatar]);
+
+  const handleAvatarPress = () => {
+    if (allPhotos.length > 0) {
+      setInitialPhotoIndex(0);
+      setGalleryVisible(true);
+    }
+  };
+
   return (
     <View style={styles.profileCard}>
       <View style={styles.avatarContainer}>
-        <View style={styles.avatarWrapper}>
-          {avatar ? (
-            <Image source={{ uri: avatar }} style={styles.profileImage} resizeMode="cover" />
-          ) : (
-            <Feather name="user" size={40} color="#A0A0A0" />
-          )}
-        </View>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={handleAvatarPress}
+          disabled={allPhotos.length === 0}
+          style={styles.avatarTouchable}
+        >
+          <View style={styles.avatarWrapper}>
+            {avatar ? (
+              <Image source={{ uri: avatar }} style={styles.profileImage} resizeMode="cover" />
+            ) : (
+              <Feather name="user" size={60} color="#A0A0A0" />
+            )}
+          </View>
+        </TouchableOpacity>
         <View style={styles.progressBadge}>
           <Text style={styles.progressText}>{progressPercentage}% completado</Text>
         </View>
       </View>
+
+      <ProfilePhotoGallery
+        visible={galleryVisible}
+        photos={allPhotos}
+        initialIndex={initialPhotoIndex}
+        onClose={() => setGalleryVisible(false)}
+      />
 
       <Text style={styles.userName}>
         {userName}, {userAge}
@@ -58,7 +96,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderRadius: 24,
     alignItems: "center",
-    paddingVertical: 32,
+    paddingVertical: 24,
     paddingHorizontal: 24,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 10 },
@@ -68,12 +106,16 @@ const styles = StyleSheet.create({
   },
   avatarContainer: {
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 8,
+  },
+  avatarTouchable: {
+    alignItems: "center",
+    justifyContent: "center",
   },
   avatarWrapper: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#F0F0F0",
@@ -86,9 +128,9 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   profileImage: {
-    width: 102,
-    height: 102,
-    borderRadius: 51,
+    width: 132,
+    height: 132,
+    borderRadius: 66,
   },
   progressBadge: {
     position: "absolute",
@@ -106,23 +148,23 @@ const styles = StyleSheet.create({
     fontFamily: "Inter-SemiBold",
   },
   userName: {
-    fontSize: 24,
+    fontSize: 26,
     fontFamily: "Inter-Bold",
     color: "#1F2937",
-    marginTop: 16,
-    marginBottom: 24,
+    marginTop: 4,
+    marginBottom: 12,
   },
   divider: {
     width: "100%",
     height: 1,
     backgroundColor: "#F3F4F6",
-    marginBottom: 24,
+    marginBottom: 16,
   },
   actionButtons: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     width: "100%",
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
   },
 });
