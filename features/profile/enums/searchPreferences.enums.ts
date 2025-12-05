@@ -179,8 +179,8 @@ export const GUESTS_LABELS: Record<GuestsFreq, string> = {
 
 export const MUSIC_LABELS: Record<MusicUsage, string> = {
   [MusicUsage.HEADPHONES]: "Solo con audífonos",
-  [MusicUsage.SPEAKER_DAY]: "Bocinas durante el día",
-  [MusicUsage.SPEAKER_FLEX]: "Bocinas flexible",
+  [MusicUsage.SPEAKER_DAY]: "Parlantes durante el día",
+  [MusicUsage.SPEAKER_FLEX]: "Parlantes flexible",
 };
 
 export const SMOKING_LABELS: Record<SmokesCigarettes, string> = {

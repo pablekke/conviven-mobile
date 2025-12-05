@@ -1,10 +1,10 @@
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Switch } from "react-native";
+import { NeighborhoodChips, MainNeighborhoodCard } from "./data/neighborhoods";
+import { useAdjacentNeighborhoods } from "./data/neighborhoods/hooks";
+import RangeSlider from "../../../components/RangeSlider";
+import { useTheme } from "../../../context/ThemeContext";
 import { Feather } from "@expo/vector-icons";
 import { QuestionRow } from "./QuestionRow";
-import RangeSlider from "../../../components/RangeSlider";
-import { NeighborhoodChips, MainNeighborhoodCard } from "./neighborhoods";
-import { useTheme } from "../../../context/ThemeContext";
-import { useAdjacentNeighborhoods } from "../hooks/useAdjacentNeighborhoods";
 
 interface DataTabProps {
   getSelectedLabel: (key: string) => string;

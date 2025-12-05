@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import { calcAge, toInt } from "../utils/formatters";
+import { calcAge, formatBudgetToThousands } from "../utils/formatters";
 import {
   PROFILE_TIDINESS_LABELS,
   PROFILE_SCHEDULE_LABELS,
@@ -83,8 +83,8 @@ export function useProfileCardData(profile: ProfileLike | null | undefined) {
 
   const budgetLabel = useMemo(() => {
     if (!profile?.filters) return "$0–$0";
-    const min = toInt(profile.filters.budgetMin);
-    const max = toInt(profile.filters.budgetMax);
+    const min = formatBudgetToThousands(profile.filters.budgetMin);
+    const max = formatBudgetToThousands(profile.filters.budgetMax);
     return `$${min}–$${max}`;
   }, [profile?.filters]);
 

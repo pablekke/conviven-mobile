@@ -1,10 +1,10 @@
-import { useCallback } from "react";
-
-import { FEED_USE_MOCK } from "@/config/env";
-import { FEED_CONSTANTS } from "../constants/feed.constants";
-import { feedService } from "../services";
 import { incomingProfilesMock, MockedBackendUser } from "../mocks/incomingProfile";
 import { mapBackendItemToMockedUser } from "../adapters/backendToMockedUser";
+import { prefetchRoomiesImages } from "../utils/prefetchImages";
+import { FEED_CONSTANTS } from "../constants/feed.constants";
+import { FEED_USE_MOCK } from "@/config/env";
+import { feedService } from "../services";
+import { useCallback } from "react";
 
 export type PrefetchedFeedPayload = {
   profiles: MockedBackendUser[];
@@ -27,6 +27,11 @@ export function useFeedPrefetch() {
         hasMore: incomingProfilesMock.length > 0,
         timestamp: Date.now(),
       };
+
+      await prefetchRoomiesImages(incomingProfilesMock).catch(error => {
+        console.debug("[useFeedPrefetch] Error precargando imágenes (mock):", error);
+      });
+
       return feedPrefetchCache;
     }
 
@@ -45,6 +50,11 @@ export function useFeedPrefetch() {
         };
 
         feedPrefetchCache = payload;
+
+        await prefetchRoomiesImages(profiles).catch(error => {
+          console.debug("[useFeedPrefetch] Error precargando imágenes:", error);
+        });
+
         return payload;
       })().finally(() => {
         feedPrefetchPromise = null;

@@ -79,7 +79,7 @@ export interface BackendUserFilters {
 export interface BackendUserPreferences {
   userId: string;
   noCigarettes: boolean | null;
-  noWeed: boolean | null;
+  noWeed: boolean | false;
   noPets: boolean | null;
   petsRequired: boolean | null;
   requireQuietHoursOverlap: boolean | null;

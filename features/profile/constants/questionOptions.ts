@@ -90,8 +90,8 @@ export const QUESTION_OPTIONS = {
   ],
   musicMax: [
     { value: MusicUsage.HEADPHONES, label: "Solo con audífonos" },
-    { value: MusicUsage.SPEAKER_DAY, label: "Bocinas durante el día" },
-    { value: MusicUsage.SPEAKER_FLEX, label: "Bocinas flexible" },
+    { value: MusicUsage.SPEAKER_DAY, label: "Parlantes durante el día" },
+    { value: MusicUsage.SPEAKER_FLEX, label: "Parlantes flexible" },
   ],
   genderPref: [
     { value: GenderPreference.ANY, label: "Cualquier género" },

@@ -1,5 +1,13 @@
 import { View, ScrollView, useWindowDimensions, StatusBar, StyleSheet } from "react-native";
+import { mapBackendItemToMockedUser } from "../adapters/backendToMockedUser";
+import { useFeedPrefetchHydrator } from "../hooks/useFeedPrefetchHydrator";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { CardDeck, UserInfoCard, EmptyFeedCard } from "./index";
+import { prefetchRoomiesImages } from "../utils/prefetchImages";
+import { FEED_CONSTANTS } from "../constants/feed.constants";
+import { useProfileDeck } from "../hooks/useProfileDeck";
+import { FEED_USE_MOCK } from "../../../config/env";
+import { feedService } from "../services";
 import {
   incomingProfilesMock,
   MockedBackendUser,
@@ -7,16 +15,8 @@ import {
   mapBackendLocationToUi,
   mapBackendProfileToUiProfile,
 } from "../mocks/incomingProfile";
-import { FEED_CONSTANTS } from "../constants/feed.constants";
-import { useProfileDeck } from "../hooks/useProfileDeck";
-import { useFeedPrefetchHydrator } from "../hooks/useFeedPrefetchHydrator";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { feedService } from "../services";
-import { mapBackendItemToMockedUser } from "../adapters/backendToMockedUser";
-import { FEED_USE_MOCK } from "../../../config/env";
 // -------------------- Pantalla --------------------
 function FeedScreen() {
-  const TAB_BAR_HEIGHT = FEED_CONSTANTS.TAB_BAR_HEIGHT;
 
   const { width: screenWidth } = useWindowDimensions();
 
@@ -35,6 +35,10 @@ function FeedScreen() {
         setProfiles(prefetched.profiles);
         setNoMoreProfiles(prefetched.profiles.length === 0);
         setIsLoading(false);
+
+        prefetchRoomiesImages(prefetched.profiles).catch(error => {
+          console.debug("[FeedScreen] Error precargando imágenes:", error);
+        });
       }
 
       return () => {
@@ -48,6 +52,10 @@ function FeedScreen() {
           setProfiles(incomingProfilesMock);
           setNoMoreProfiles(incomingProfilesMock.length === 0);
           setIsLoading(false);
+
+          prefetchRoomiesImages(incomingProfilesMock).catch(error => {
+            console.debug("[FeedScreen] Error precargando imágenes (mock):", error);
+          });
         }
         return;
       }
@@ -63,6 +71,10 @@ function FeedScreen() {
         if (backendProfiles.length > 0) {
           setProfiles(backendProfiles);
           setNoMoreProfiles(false);
+
+          prefetchRoomiesImages(backendProfiles).catch(error => {
+            console.debug("[FeedScreen] Error precargando imágenes:", error);
+          });
         } else {
           setProfiles([]);
           setNoMoreProfiles(true);
@@ -124,7 +136,7 @@ function FeedScreen() {
         ref={mainRef}
         className="flex-1"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: TAB_BAR_HEIGHT + 60 }]}
+        contentContainerStyle={[styles.scrollContent]}
         bounces={false}
         alwaysBounceVertical={false}
         overScrollMode="never"

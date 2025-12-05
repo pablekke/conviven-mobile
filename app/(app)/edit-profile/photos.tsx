@@ -1,30 +1,27 @@
-import React, { useEffect, useState } from "react";
 import { PhotoUploadScreen } from "../../../features/profile/components";
-import { useRouter } from "expo-router";
-import { StatusBar } from "expo-status-bar";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
-import { useTheme } from "../../../context/ThemeContext";
 import { useProfilePhotos } from "../../../features/profile/hooks";
+import { useTheme } from "../../../context/ThemeContext";
+import { StatusBar } from "expo-status-bar";
+import { useRouter } from "expo-router";
+import { useEffect } from "react";
 
 export default function PhotosScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { loading, loadPhotos } = useProfilePhotos();
-  const [photosLoaded, setPhotosLoaded] = useState(false);
+  const { loading, initialized, loadPhotos } = useProfilePhotos();
 
   useEffect(() => {
-    const preloadPhotos = async () => {
-      await loadPhotos();
-      setPhotosLoaded(true);
-    };
-    preloadPhotos();
-  }, [loadPhotos]);
+    if (!initialized) {
+      loadPhotos();
+    }
+  }, [initialized, loadPhotos]);
 
   const handleBack = () => {
     router.push("/(app)/profile");
   };
 
-  if (!photosLoaded || loading) {
+  if (!initialized && loading) {
     return (
       <>
         <StatusBar style="light" />

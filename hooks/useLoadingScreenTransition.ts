@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
-import { useAuth } from "../context/AuthContext";
 import { useDataPreload } from "../context/DataPreloadContext";
+import { useCallback, useEffect, useState } from "react";
 import { useFeedPrefetch } from "@/features/feed/hooks";
 import { chatService } from "@/features/chat/services";
+import { useAuth } from "../context/AuthContext";
 
 export interface UseLoadingScreenTransitionReturn {
   showLoading: boolean;
@@ -45,7 +45,6 @@ export function useLoadingScreenTransition(): UseLoadingScreenTransitionReturn {
         }),
       ]).then(() => {
         setChatsAndMatchesPrefetched(true);
-        console.log("[useLoadingScreenTransition] Chats y matches precargados en segundo plano");
       });
     }
   }, [feedLoaded, chatsAndMatchesPrefetched, isAuthenticated, user, refreshChats]);

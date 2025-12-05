@@ -208,7 +208,6 @@ export const DataPreloadProvider: React.FC<DataPreloadProviderProps> = ({ childr
       return;
     }
 
-    console.log("[DataPreload] Starting preload...");
     setState(prev => ({
       ...prev,
       isPreloading: true,
@@ -221,11 +220,7 @@ export const DataPreloadProvider: React.FC<DataPreloadProviderProps> = ({ childr
         setTimeout(() => reject(new Error("Preload timeout")), 10000);
       });
 
-      const results = await Promise.race([
-        Promise.allSettled([loadChats(), loadProfile()]),
-        timeoutPromise,
-      ]);
-      console.log("[DataPreload] Preload completed successfully", results);
+      await Promise.race([Promise.allSettled([loadChats(), loadProfile()]), timeoutPromise]);
 
       setState(prev => ({
         ...prev,
