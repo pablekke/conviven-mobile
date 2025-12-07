@@ -3,7 +3,7 @@ import { useCallback } from "react";
 interface UseNeighborhoodsLogicProps {
   selectedQuestion: string | null;
   updateSearchFilters: (field: any, value: any) => void;
-  preferredNeighborhoods: string[];
+  preferredLocations: string[];
   mainPreferredNeighborhoodId: string;
   includeAdjacentNeighborhoods: boolean;
   cachedFilters: any;
@@ -12,7 +12,7 @@ interface UseNeighborhoodsLogicProps {
 export const useNeighborhoodsLogic = ({
   selectedQuestion,
   updateSearchFilters,
-  preferredNeighborhoods,
+  preferredLocations,
   mainPreferredNeighborhoodId,
   includeAdjacentNeighborhoods,
   cachedFilters,
@@ -24,7 +24,7 @@ export const useNeighborhoodsLogic = ({
           updateSearchFilters("mainPreferredNeighborhoodId", mainId);
         }
       } else {
-        updateSearchFilters("preferredNeighborhoods", selectedIds);
+        updateSearchFilters("preferredLocations", selectedIds);
       }
     },
     [selectedQuestion, updateSearchFilters],
@@ -32,7 +32,7 @@ export const useNeighborhoodsLogic = ({
 
   return {
     handleNeighborhoodConfirm,
-    preferredNeighborhoods,
+    preferredLocations,
     mainPreferredNeighborhoodId,
     includeAdjacentNeighborhoods,
     cachedFilters,

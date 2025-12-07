@@ -44,18 +44,14 @@ function CardDeckComponent({
   const heroBottomSpacing = tabBarHeight + FEED_CONSTANTS.HERO_BOTTOM_EXTRA;
   const heroImageHeight = computeHeroImageHeight(heroHeight, heroBottomSpacing);
 
-  // Shared Values
   const translationX = useSharedValue(0);
   const translationY = useSharedValue(0);
 
-  // State to track current card identity to reset animations
   const [currentPrimaryId, setCurrentPrimaryId] = useState(buildCardIdentity(primary));
 
-  // Reset position when primary card changes
   useEffect(() => {
     const newId = buildCardIdentity(primary);
     if (newId !== currentPrimaryId) {
-      // Reset instantly without animation
       translationX.value = 0;
       translationY.value = 0;
       setCurrentPrimaryId(newId);
@@ -79,7 +75,6 @@ function CardDeckComponent({
     .failOffsetY([-10, 10])
     .onUpdate(event => {
       translationX.value = event.translationX;
-      // translationY.value = event.translationY; // Disable vertical movement
     })
     .onEnd(event => {
       if (Math.abs(event.translationX) > SWIPE_THRESHOLD) {
@@ -93,7 +88,6 @@ function CardDeckComponent({
         });
       } else {
         translationX.value = withTiming(0, { duration: 220 });
-        // translationY.value = withSpring(0, { damping: 15, stiffness: 120 });
       }
     });
 

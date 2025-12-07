@@ -15,7 +15,7 @@ export interface SearchPreferences {
 
   // Filtros de Ubicación
   mainPreferredNeighborhoodId: string;
-  preferredNeighborhoods: string[];
+  preferredLocations: string[];
   includeAdjacentNeighborhoods: boolean;
 
   // Filtros Demográficos
@@ -57,7 +57,7 @@ export interface SearchPreferences {
 export interface CreateSearchPreferencesRequest {
   // Filtros de Ubicación
   mainPreferredNeighborhoodId?: string;
-  preferredNeighborhoods?: string[];
+  preferredLocations?: string[];
   includeAdjacentNeighborhoods?: boolean;
 
   // Filtros Demográficos
@@ -104,7 +104,7 @@ export interface SearchPreferencesValidation {
 export interface SearchPreferencesFormData {
   // Filtros de Ubicación
   mainPreferredNeighborhoodId: string;
-  preferredNeighborhoods: string[];
+  preferredLocations: string[];
   includeAdjacentNeighborhoods: boolean;
 
   // Filtros Demográficos
@@ -165,7 +165,7 @@ export const SEARCH_PREFERENCES_CONSTANTS = {
 export const createDefaultSearchPreferences = (): SearchPreferencesFormData => ({
   // Filtros de Ubicación
   mainPreferredNeighborhoodId: "",
-  preferredNeighborhoods: [],
+  preferredLocations: [],
   includeAdjacentNeighborhoods: false,
 
   // Filtros Demográficos

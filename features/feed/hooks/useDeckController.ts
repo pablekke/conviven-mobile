@@ -1,4 +1,3 @@
-// hooks/useDeckController.ts
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Animated, Easing } from "react-native";
 
@@ -34,19 +33,19 @@ export function useDeckController<T>(items: readonly T[]) {
       Animated.parallel([
         Animated.timing(nextScale, {
           toValue: 1,
-          duration: 260,
+          duration: 460,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
         Animated.timing(nextTranslateY, {
           toValue: 0,
-          duration: 260,
+          duration: 460,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
         Animated.timing(revealProgress, {
           toValue: 1,
-          duration: 260,
+          duration: 460,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: false, // usamos para opacidades y props no transform
         }),

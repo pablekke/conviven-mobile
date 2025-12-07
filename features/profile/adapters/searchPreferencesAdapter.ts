@@ -11,7 +11,7 @@ class SearchPreferencesAdapter {
     return {
       // Filtros de Ubicación
       mainPreferredNeighborhoodId: apiData.mainPreferredNeighborhoodId ?? "",
-      preferredNeighborhoods: apiData.preferredNeighborhoods ?? [],
+      preferredLocations: apiData.preferredLocations ?? [],
       includeAdjacentNeighborhoods: apiData.includeAdjacentNeighborhoods ?? false,
 
       // Filtros Demográficos

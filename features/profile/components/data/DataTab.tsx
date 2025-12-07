@@ -1,9 +1,7 @@
-import { useIsMontevideoNeighborhood } from "./neighborhoods/hooks/useIsMontevideoNeighborhood";
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Switch } from "react-native";
-import { useAdjacentNeighborhoods } from "./neighborhoods/hooks/useAdjacentNeighborhoods";
-import { NeighborhoodChips, MainNeighborhoodCard } from "./neighborhoods";
+import { SearchFiltersFormData } from "../../services/searchFiltersService";
+import { StyleSheet, Text, View, ScrollView } from "react-native";
 import RangeSlider from "../../../../components/RangeSlider";
-import { useTheme } from "../../../../context/ThemeContext";
+import NeighborhoodsSection from "./NeighborhoodsSection";
 import { Feather } from "@expo/vector-icons";
 import { QuestionRow } from "../QuestionRow";
 
@@ -19,10 +17,7 @@ interface DataTabProps {
   budgetMax: string;
   setBudgetMax: (value: string) => void;
   updateSearchFilters: (field: any, value: any) => void;
-  preferredNeighborhoods: string[];
-  mainPreferredNeighborhoodId: string;
-  includeAdjacentNeighborhoods: boolean;
-  cachedFilters?: any | null;
+  formData: SearchFiltersFormData;
 }
 
 export const DataTab: React.FC<DataTabProps> = ({
@@ -37,26 +32,8 @@ export const DataTab: React.FC<DataTabProps> = ({
   budgetMax,
   setBudgetMax,
   updateSearchFilters,
-  preferredNeighborhoods = [],
-  mainPreferredNeighborhoodId,
-  includeAdjacentNeighborhoods,
-  cachedFilters,
+  formData,
 }) => {
-  const { colors } = useTheme();
-
-  const { loadingAdjacents } = useAdjacentNeighborhoods({
-    includeAdjacentNeighborhoods,
-    mainPreferredNeighborhoodId,
-    preferredNeighborhoods,
-    onNeighborhoodsUpdate: newNeighborhoods => {
-      updateSearchFilters("preferredNeighborhoods", newNeighborhoods);
-    },
-  });
-
-  const isMontevideo = useIsMontevideoNeighborhood({
-    neighborhoodId: mainPreferredNeighborhoodId || null,
-    cachedFilters,
-  });
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("es-UY", {
       style: "currency",
@@ -68,7 +45,7 @@ export const DataTab: React.FC<DataTabProps> = ({
   const formatAge = (value: number) => {
     return `${value} años`;
   };
-  console.log("mainPreferredNeighborhoodId", mainPreferredNeighborhoodId?.toString());
+
   return (
     <>
       <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
@@ -133,86 +110,11 @@ export const DataTab: React.FC<DataTabProps> = ({
             valueFormatter={formatCurrency}
           />
 
-          {/* Barrios - Sección completa */}
-          <View style={styles.neighborhoodsSection}>
-            <View style={styles.neighborhoodsSectionHeader}>
-              <Feather name="map-pin" size={16} color={colors.primary} />
-              <Text style={[styles.neighborhoodsSectionTitle, { color: colors.foreground }]}>
-                Ubicación preferida
-              </Text>
-            </View>
-
-            {/* Barrio Principal */}
-            <MainNeighborhoodCard
-              neighborhoodId={mainPreferredNeighborhoodId}
-              onPress={() => openSelectionModal("mainPreferredNeighborhood")}
-              cachedFilters={cachedFilters}
-            />
-
-            {/* Barrios Preferidos Adicionales */}
-            <View style={styles.additionalNeighborhoods}>
-              <View style={styles.neighborhoodsHeader}>
-                <Text style={[styles.neighborhoodsTitle, { color: colors.foreground }]}>
-                  Barrios adicionales
-                </Text>
-                <TouchableOpacity
-                  onPress={() => openSelectionModal("preferredNeighborhoods")}
-                  style={[styles.addButton, { backgroundColor: colors.primary }]}
-                >
-                  <Feather name="plus" size={16} color={colors.primaryForeground} />
-                  <Text style={[styles.addButtonText, { color: colors.primaryForeground }]}>
-                    Agregar
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              <NeighborhoodChips
-                neighborhoodIds={preferredNeighborhoods}
-                onNeighborhoodsChange={ids => {
-                  updateSearchFilters("preferredNeighborhoods", ids);
-                }}
-                editable
-                cachedFilters={cachedFilters}
-              />
-            </View>
-
-            {/* Toggle para incluir barrios adyacentes - Solo mostrar si es Montevideo */}
-            {isMontevideo && (
-              <View
-                style={[
-                  styles.toggleContainer,
-                  {
-                    backgroundColor: colors.card,
-                    borderColor: colors.border,
-                  },
-                ]}
-              >
-                <View style={styles.toggleContent}>
-                  <View style={styles.toggleTextContainer}>
-                    <Text style={[styles.toggleLabel, { color: colors.foreground }]}>
-                      Incluir barrios adyacentes
-                    </Text>
-                    <Text style={[styles.toggleDescription, { color: colors.mutedForeground }]}>
-                      Buscar también en barrios cercanos
-                    </Text>
-                  </View>
-                  <Switch
-                    value={includeAdjacentNeighborhoods}
-                    onValueChange={value => {
-                      updateSearchFilters("includeAdjacentNeighborhoods", value);
-                    }}
-                    trackColor={{
-                      false: colors.muted,
-                      true: colors.primary + "80",
-                    }}
-                    thumbColor={
-                      includeAdjacentNeighborhoods ? colors.primary : colors.mutedForeground
-                    }
-                    disabled={loadingAdjacents || !mainPreferredNeighborhoodId}
-                  />
-                </View>
-              </View>
-            )}
-          </View>
+          <NeighborhoodsSection
+            openSelectionModal={openSelectionModal}
+            formData={formData}
+            updateFormData={updateSearchFilters}
+          />
         </View>
       </ScrollView>
     </>
@@ -291,7 +193,6 @@ const styles = StyleSheet.create({
     padding: 16,
     marginTop: 16,
     borderWidth: 1,
-    
   },
   toggleContent: {
     flexDirection: "row",

@@ -16,11 +16,6 @@ interface CachedLocation {
 }
 
 interface CachedFilters {
-  mainPreferredNeighborhood?: {
-    id: string;
-    name: string;
-    cityId?: string;
-  };
   mainPreferredLocation?: CachedLocation;
   preferredLocations?: CachedLocation[];
 }
@@ -35,14 +30,6 @@ export const neighborhoodsCacheService = {
   getMainNeighborhoodFromCache(filters: CachedFilters | null | undefined): Neighborhood | null {
     if (!filters) {
       return null;
-    }
-
-    if (filters.mainPreferredNeighborhood?.id && filters.mainPreferredNeighborhood?.name) {
-      return {
-        id: filters.mainPreferredNeighborhood.id,
-        name: filters.mainPreferredNeighborhood.name,
-        cityId: filters.mainPreferredNeighborhood.cityId || "",
-      };
     }
 
     if (
@@ -62,7 +49,7 @@ export const neighborhoodsCacheService = {
   /**
    * Extrae los barrios preferidos desde el cache
    */
-  getPreferredNeighborhoodsFromCache(filters: CachedFilters | null | undefined): Neighborhood[] {
+  getpreferredLocationsFromCache(filters: CachedFilters | null | undefined): Neighborhood[] {
     if (!filters?.preferredLocations) {
       return [];
     }
@@ -94,7 +81,7 @@ export const neighborhoodsCacheService = {
       map.set(main.id, main);
     }
 
-    const preferred = this.getPreferredNeighborhoodsFromCache(filters);
+    const preferred = this.getpreferredLocationsFromCache(filters);
     preferred.forEach(neighborhood => {
       map.set(neighborhood.id, neighborhood);
     });

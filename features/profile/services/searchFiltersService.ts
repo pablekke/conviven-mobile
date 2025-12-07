@@ -4,11 +4,11 @@ export interface SearchFilters {
   id: string;
   userId: string;
   // Filtros de Ubicación
-  mainPreferredNeighborhoodId: string | null;
-  preferredNeighborhoods?:
-    | string[]
-    | { id: string; neighborhoodId: string; neighborhood?: any }[]
-    | null;
+  mainPreferredLocation?: {
+    neighborhood?: { id: string; name: string };
+    city?: { id: string; name: string };
+    department?: { id: string; name: string };
+  } | null;
   preferredLocations?:
     | {
         neighborhood?: { id: string; name: string };
@@ -16,17 +16,7 @@ export interface SearchFilters {
         department?: { id: string; name: string };
       }[]
     | null;
-  mainPreferredLocation?: {
-    neighborhood?: { id: string; name: string };
-    city?: { id: string; name: string };
-    department?: { id: string; name: string };
-  } | null;
-  mainPreferredNeighborhood?: {
-    id: string;
-    name: string;
-    cityId?: string;
-  } | null;
-  includeAdjacentNeighborhoods?: boolean | null;
+  includeAdjacentNeighborhoods: boolean;
   // Filtros Demográficos
   genderPref: string[] | null;
   genders?: string[] | null;
@@ -43,25 +33,25 @@ export interface SearchFilters {
 
 export interface UpdateSearchFiltersRequest {
   // Filtros de Ubicación
-  mainPreferredNeighborhoodId?: string;
-  preferredNeighborhoods?: string[];
-  includeAdjacentNeighborhoods?: boolean;
+  mainPreferredLocation: string;
+  preferredLocations: string[];
+  includeAdjacentNeighborhoods: boolean;
   // Filtros Demográficos
-  genderPref?: string[];
-  genders?: string[];
-  minAge?: number;
-  maxAge?: number;
+  genderPref: string[];
+  genders: string[];
+  minAge: number;
+  maxAge: number;
   // Filtros Económicos
-  budgetMin?: number;
-  budgetMax?: number;
+  budgetMin: number;
+  budgetMax: number;
   // Filtros de Calidad
-  onlyWithPhoto?: boolean;
+  onlyWithPhoto: boolean;
 }
 
 export interface SearchFiltersFormData {
   // Filtros de Ubicación
   mainPreferredNeighborhoodId: string;
-  preferredNeighborhoods: string[];
+  preferredLocations: string[];
   includeAdjacentNeighborhoods: boolean;
   // Filtros Demográficos
   genderPref: string[];

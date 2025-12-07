@@ -41,7 +41,7 @@ export const useSearchPreferencesForm = (): UseSearchPreferencesFormReturn => {
       id: cachedData.id ?? "",
       userId: cachedData.userId ?? "",
       mainPreferredNeighborhoodId: cachedData.mainPreferredNeighborhoodId ?? null,
-      preferredNeighborhoods: cachedData.preferredNeighborhoods ?? null,
+      preferredLocations: cachedData.preferredLocations ?? null,
       includeAdjacentNeighborhoods: cachedData.includeAdjacentNeighborhoods ?? null,
       genderPref: cachedData.genderPref ?? null,
       minAge: cachedData.minAge ?? null,
@@ -179,8 +179,8 @@ export const useSearchPreferencesForm = (): UseSearchPreferencesFormReturn => {
       const dataToSave = {
         // Filtros de Ubicación
         mainPreferredNeighborhoodId: formData.mainPreferredNeighborhoodId,
-        preferredNeighborhoods:
-          formData.preferredNeighborhoods.length > 0 ? formData.preferredNeighborhoods : [],
+        preferredLocations:
+          formData.preferredLocations.length > 0 ? formData.preferredLocations : [],
         includeAdjacentNeighborhoods: formData.includeAdjacentNeighborhoods,
 
         // Filtros Demográficos

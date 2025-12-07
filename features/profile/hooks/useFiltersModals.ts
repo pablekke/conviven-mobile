@@ -23,7 +23,7 @@ export const useFiltersModals = ({
     (questionKey: string) => {
       if (isSaving) return;
 
-      if (questionKey === "preferredNeighborhoods" || questionKey === "mainPreferredNeighborhood") {
+      if (questionKey === "preferredLocations" || questionKey === "mainPreferredNeighborhood") {
         setNeighborhoodModalVisible(true);
         setSelectedQuestion(questionKey);
         return;

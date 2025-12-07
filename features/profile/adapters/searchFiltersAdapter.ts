@@ -1,44 +1,32 @@
-import type { SearchFilters, SearchFiltersFormData } from "../services/searchFiltersService";
+import type {
+  SearchFilters,
+  SearchFiltersFormData,
+  UpdateSearchFiltersRequest,
+} from "../services/searchFiltersService";
 
 /**
- * Adaptador para mapear datos de SearchFilters (API) a SearchFiltersFormData (Formulario)
+ * Adaptador para mapear datos entre SearchFilters (API) y SearchFiltersFormData (Formulario)
  */
 class SearchFiltersAdapter {
   /**
    * Mapea datos de la API a formato de formulario
    */
   mapApiToFormData(apiData: SearchFilters): SearchFiltersFormData {
-    let preferredNeighborhoods: string[] = [];
-    if ((apiData as any).preferredLocations && Array.isArray((apiData as any).preferredLocations)) {
-      preferredNeighborhoods = (apiData as any).preferredLocations
-        .map((location: any) => location?.neighborhood?.id)
-        .filter((id: string) => id);
+    let preferredLocations: string[] = [];
+
+    if (apiData.preferredLocations && Array.isArray(apiData.preferredLocations)) {
+      preferredLocations = apiData.preferredLocations
+        .map(location => location?.neighborhood?.id)
+        .filter((id): id is string => !!id && typeof id === "string");
     }
 
-    if (preferredNeighborhoods.length === 0 && apiData.preferredNeighborhoods) {
-      if (Array.isArray(apiData.preferredNeighborhoods)) {
-        if (apiData.preferredNeighborhoods.length > 0) {
-          const firstItem = apiData.preferredNeighborhoods[0];
-          if (
-            typeof firstItem === "object" &&
-            firstItem !== null &&
-            "neighborhoodId" in firstItem
-          ) {
-            preferredNeighborhoods = apiData.preferredNeighborhoods
-              .map((item: any) => item.neighborhoodId || item.id)
-              .filter((id: string) => id);
-          } else {
-            // Si es array de strings
-            preferredNeighborhoods = apiData.preferredNeighborhoods as string[];
-          }
-        }
-      }
-    }
+    // Extraer ID del barrio principal desde mainPreferredLocation
+    const mainPreferredNeighborhoodId = apiData.mainPreferredLocation?.neighborhood?.id || "";
 
     const result = {
       // Filtros de Ubicación
-      mainPreferredNeighborhoodId: apiData.mainPreferredLocation?.neighborhood?.id || "",
-      preferredNeighborhoods,
+      mainPreferredNeighborhoodId,
+      preferredLocations,
       includeAdjacentNeighborhoods:
         apiData.includeAdjacentNeighborhoods !== undefined &&
         apiData.includeAdjacentNeighborhoods !== null
@@ -65,6 +53,29 @@ class SearchFiltersAdapter {
       onlyWithPhoto: apiData.onlyWithPhoto ?? true,
     };
     return result;
+  }
+
+  /**
+   * Mapea datos del formulario a formato de API para actualizar
+   * El backend espera solo IDs (strings), no objetos completos
+   */
+  async mapFormDataToApi(formData: SearchFiltersFormData): Promise<UpdateSearchFiltersRequest> {
+    return {
+      // Filtros de Ubicación
+      mainPreferredLocation: formData.mainPreferredNeighborhoodId,
+      preferredLocations: formData.preferredLocations,
+      includeAdjacentNeighborhoods: formData.includeAdjacentNeighborhoods,
+      // Filtros Demográficos
+      genderPref: formData.genderPref,
+      genders: formData.genders,
+      minAge: formData.minAge,
+      maxAge: formData.maxAge,
+      // Filtros Económicos
+      budgetMin: formData.budgetMin,
+      budgetMax: formData.budgetMax,
+      // Filtros de Calidad
+      onlyWithPhoto: formData.onlyWithPhoto,
+    };
   }
 }
 

@@ -63,7 +63,7 @@ export const useFiltersScreen = () => {
   const { handleNeighborhoodConfirm, ...neighborhoodsData } = useNeighborhoodsLogic({
     selectedQuestion: modals.selectedQuestion,
     updateSearchFilters,
-    preferredNeighborhoods: editProfileLogic.preferredNeighborhoods,
+    preferredLocations: editProfileLogic.preferredLocations,
     mainPreferredNeighborhoodId: editProfileLogic.mainPreferredNeighborhoodId,
     includeAdjacentNeighborhoods: editProfileLogic.includeAdjacentNeighborhoods,
     cachedFilters: editProfileLogic.cachedFilters,

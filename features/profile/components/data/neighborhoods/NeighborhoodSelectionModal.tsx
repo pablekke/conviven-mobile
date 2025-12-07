@@ -178,11 +178,7 @@ export const NeighborhoodSelectionModal: React.FC<NeighborhoodSelectionModalProp
 
               <View style={styles.footer}>
                 <Text style={[styles.selectedCount, { color: colors.mutedForeground }]}>
-                  {mode === "main"
-                    ? selectedMainId
-                      ? "1 barrio principal seleccionado"
-                      : "Selecciona un barrio principal (obligatorio)"
-                    : `${selectedIds.length} ${selectedIds.length === 1 ? "barrio seleccionado" : "barrios seleccionados"}`}
+                 Cambiar de barrio eliminará todos los barrios adicionales seleccionados.
                 </Text>
                 <TouchableOpacity
                   style={[

@@ -379,7 +379,7 @@ export const useEditProfileLogic = () => {
     searchFiltersLoading,
     searchFiltersSaving,
     handleUpdate,
-    preferredNeighborhoods: searchFiltersData.preferredNeighborhoods || [],
+    preferredLocations: searchFiltersData.preferredLocations || [],
     mainPreferredNeighborhoodId: (() => {
       const userFromFullProfile = (fullProfile as any)?.user;
       const cachedFilters =
@@ -393,13 +393,9 @@ export const useEditProfileLogic = () => {
         return searchFiltersData.mainPreferredNeighborhoodId;
       }
 
-      console.log("cachedFilters", cachedFilters);
       if (cachedFilters) {
         const fromCached =
-          cachedFilters.mainPreferredNeighborhoodId ||
           cachedFilters.mainPreferredLocation?.neighborhood?.id ||
-          (cachedFilters as any)?.mainPreferredNeighborhood?.id ||
-          (cachedFilters as any)?.mainNeighborhoodId ||
           (cachedFilters as any)?.mainPreferredNeighborhoodId;
 
         if (fromCached && fromCached !== "") {
@@ -415,5 +411,6 @@ export const useEditProfileLogic = () => {
       const userFilters = userFromFullProfile?.filters || (user as any)?.filters;
       return userFilters || fullProfile?.filters || fullProfile?.searchFilters || null;
     })(),
+    searchFiltersData,
   };
 };

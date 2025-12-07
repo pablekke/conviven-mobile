@@ -4,32 +4,39 @@ import { neighborhoodsService } from "../services";
 interface UseAdjacentNeighborhoodsProps {
   includeAdjacentNeighborhoods: boolean;
   mainPreferredNeighborhoodId: string;
-  preferredNeighborhoods: string[];
+  preferredLocations: string[];
   onNeighborhoodsUpdate: (newNeighborhoods: string[]) => void;
 }
 
 export const useAdjacentNeighborhoods = ({
   includeAdjacentNeighborhoods,
   mainPreferredNeighborhoodId,
-  preferredNeighborhoods,
+  preferredLocations,
   onNeighborhoodsUpdate,
 }: UseAdjacentNeighborhoodsProps) => {
   const [loadingAdjacents, setLoadingAdjacents] = useState(false);
-  const preferredRef = useRef(preferredNeighborhoods);
-  preferredRef.current = preferredNeighborhoods;
+  const preferredRef = useRef(preferredLocations);
+  preferredRef.current = preferredLocations;
 
   const prevInclude = useRef(includeAdjacentNeighborhoods);
+  const lastProcessedKey = useRef<string | null>(null);
 
   useEffect(() => {
     const handleAdjacentNeighborhoods = async () => {
       if (!mainPreferredNeighborhoodId) return;
 
+      const key = `${mainPreferredNeighborhoodId}-${includeAdjacentNeighborhoods}`;
+      if (lastProcessedKey.current === key) {
+        return;
+      }
+      lastProcessedKey.current = key;
+
       const includeChanged = prevInclude.current !== includeAdjacentNeighborhoods;
       prevInclude.current = includeAdjacentNeighborhoods;
 
-      console.log(
-        `AdjacentHook: Triggered. include=${includeAdjacentNeighborhoods}, main=${mainPreferredNeighborhoodId}`,
-      );
+      if (!includeAdjacentNeighborhoods && !includeChanged) {
+        return;
+      }
 
       setLoadingAdjacents(true);
       try {

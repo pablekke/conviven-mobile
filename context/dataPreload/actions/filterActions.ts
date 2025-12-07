@@ -30,14 +30,14 @@ export const loadSearchFiltersAction = async (
     setState(prev => {
       const prevParams = prev.searchFilters as any;
       const prevLocations = prevParams?.preferredLocations;
-      const prevNeighborhoods = prev.searchFilters?.preferredNeighborhoods;
+      const prevNeighborhoods = prev.searchFilters?.preferredLocations;
 
       const hasPrevLocations = Array.isArray(prevLocations) && prevLocations.length > 0;
       const hasPrevNeighborhoods = Array.isArray(prevNeighborhoods) && prevNeighborhoods.length > 0;
 
       const newParams = searchFilters as any;
       const newLocations = newParams.preferredLocations;
-      const newNeighborhoods = searchFilters.preferredNeighborhoods;
+      const newNeighborhoods = searchFilters.preferredLocations;
 
       const hasNewLocations = Array.isArray(newLocations) && newLocations.length > 0;
       const hasNewNeighborhoods =
@@ -46,21 +46,21 @@ export const loadSearchFiltersAction = async (
       const apiHasData = hasNewLocations || hasNewNeighborhoods;
 
       let finalPreferredLocations = newLocations;
-      let finalPreferredNeighborhoods = newNeighborhoods;
+      let finalpreferredLocations = newNeighborhoods;
 
       if (!apiHasData) {
         if (hasPrevLocations) {
           finalPreferredLocations = prevLocations;
         }
         if (hasPrevNeighborhoods) {
-          finalPreferredNeighborhoods = prevNeighborhoods;
+          finalpreferredLocations = prevNeighborhoods;
         }
       }
 
       const mergedFilters = {
         ...searchFilters,
         preferredLocations: finalPreferredLocations,
-        preferredNeighborhoods: finalPreferredNeighborhoods,
+        preferredLocations: finalpreferredLocations,
       };
 
       return {

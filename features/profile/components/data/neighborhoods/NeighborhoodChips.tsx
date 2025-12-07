@@ -29,7 +29,7 @@ export const NeighborhoodChips: React.FC<NeighborhoodChipsProps> = ({
     neighborhoodIds,
     cachedFilters,
   });
-
+  
   const handleRemove = (id: string) => {
     if (!editable || !onNeighborhoodsChange) return;
     const newIds = neighborhoodIds.filter(neighborhoodId => neighborhoodId !== id);
@@ -51,7 +51,7 @@ export const NeighborhoodChips: React.FC<NeighborhoodChipsProps> = ({
       </View>
     );
   }
-0
+
   if (neighborhoods.length === 0) {
     return (
       <View style={styles.container}>
