@@ -15,42 +15,48 @@ export const useAdjacentNeighborhoods = ({
   onNeighborhoodsUpdate,
 }: UseAdjacentNeighborhoodsProps) => {
   const [loadingAdjacents, setLoadingAdjacents] = useState(false);
-  const adjacentIdsRef = useRef<Set<string>>(new Set());
+  const preferredRef = useRef(preferredNeighborhoods);
+  preferredRef.current = preferredNeighborhoods;
+
+  const prevInclude = useRef(includeAdjacentNeighborhoods);
 
   useEffect(() => {
     const handleAdjacentNeighborhoods = async () => {
-      if (!includeAdjacentNeighborhoods) {
-        if (adjacentIdsRef.current.size > 0) {
-          const filteredNeighborhoods = preferredNeighborhoods.filter(
-            id => !adjacentIdsRef.current.has(id),
-          );
-          onNeighborhoodsUpdate(filteredNeighborhoods);
-          adjacentIdsRef.current.clear();
-        }
-        return;
-      }
+      if (!mainPreferredNeighborhoodId) return;
 
-      if (!mainPreferredNeighborhoodId) {
-        return;
-      }
+      const includeChanged = prevInclude.current !== includeAdjacentNeighborhoods;
+      prevInclude.current = includeAdjacentNeighborhoods;
+
+      console.log(
+        `AdjacentHook: Triggered. include=${includeAdjacentNeighborhoods}, main=${mainPreferredNeighborhoodId}`,
+      );
 
       setLoadingAdjacents(true);
       try {
         const adjacents = await neighborhoodsService.getAdjacentNeighborhoods(
           mainPreferredNeighborhoodId,
         );
-        const adjacentIds = adjacents.map(n => n.id);
+        const adjacentIds = new Set(adjacents.map(n => n.id));
+        const currentPreferred = preferredRef.current;
 
-        adjacentIds.forEach(id => adjacentIdsRef.current.add(id));
+        if (includeAdjacentNeighborhoods) {
+          const currentIds = new Set(currentPreferred);
+          const newIds = adjacents.map(n => n.id).filter(id => !currentIds.has(id));
 
-        const currentIds = new Set(preferredNeighborhoods);
-        const newIds = adjacentIds.filter(id => !currentIds.has(id));
+          if (newIds.length > 0) {
+            onNeighborhoodsUpdate([...currentPreferred, ...newIds]);
+          }
+        } else {
+          if (includeChanged && !includeAdjacentNeighborhoods) {
+            const filteredNeighborhoods = currentPreferred.filter(id => !adjacentIds.has(id));
 
-        if (newIds.length > 0) {
-          onNeighborhoodsUpdate([...preferredNeighborhoods, ...newIds]);
+            if (filteredNeighborhoods.length !== currentPreferred.length) {
+              onNeighborhoodsUpdate(filteredNeighborhoods);
+            }
+          }
         }
       } catch (error) {
-        console.error("Error loading adjacent neighborhoods:", error);
+        console.error("Error handling adjacent neighborhoods:", error);
       } finally {
         setLoadingAdjacents(false);
       }
@@ -59,12 +65,6 @@ export const useAdjacentNeighborhoods = ({
     handleAdjacentNeighborhoods();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [includeAdjacentNeighborhoods, mainPreferredNeighborhoodId]);
-
-  useEffect(() => {
-    if (mainPreferredNeighborhoodId) {
-      adjacentIdsRef.current.clear();
-    }
-  }, [mainPreferredNeighborhoodId]);
 
   return {
     loadingAdjacents,

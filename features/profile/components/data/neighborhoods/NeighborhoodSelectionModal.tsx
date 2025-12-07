@@ -55,11 +55,15 @@ export const NeighborhoodSelectionModal: React.FC<NeighborhoodSelectionModalProp
 
   const handleConfirm = () => {
     if (mode === "main") {
-      onConfirm([], selectedMainId);
+      const finalMainId = selectedMainId || mainNeighborhoodId;
+      if (finalMainId) {
+        onConfirm([], finalMainId);
+        onClose();
+      }
     } else {
       onConfirm(selectedIds);
+      onClose();
     }
-    onClose();
   };
 
   return (
@@ -94,17 +98,17 @@ export const NeighborhoodSelectionModal: React.FC<NeighborhoodSelectionModalProp
               </View>
             </>
           ) : error ? (
-              <View style={styles.emptyContainer}>
-                <Text style={[styles.emptyText, { color: colors.destructive }]}>{error}</Text>
-                <TouchableOpacity
-                  onPress={refetch}
-                  style={[styles.retryButton, { backgroundColor: colors.primary }]}
-                >
-                  <Text style={[styles.retryButtonText, { color: colors.primaryForeground }]}>
-                    Reintentar
-                  </Text>
-                </TouchableOpacity>
-              </View>
+            <View style={styles.emptyContainer}>
+              <Text style={[styles.emptyText, { color: colors.destructive }]}>{error}</Text>
+              <TouchableOpacity
+                onPress={refetch}
+                style={[styles.retryButton, { backgroundColor: colors.primary }]}
+              >
+                <Text style={[styles.retryButtonText, { color: colors.primaryForeground }]}>
+                  Reintentar
+                </Text>
+              </TouchableOpacity>
+            </View>
           ) : (
             <>
               <SearchBar
@@ -177,14 +181,33 @@ export const NeighborhoodSelectionModal: React.FC<NeighborhoodSelectionModalProp
                   {mode === "main"
                     ? selectedMainId
                       ? "1 barrio principal seleccionado"
-                      : "Ningún barrio seleccionado"
+                      : "Selecciona un barrio principal (obligatorio)"
                     : `${selectedIds.length} ${selectedIds.length === 1 ? "barrio seleccionado" : "barrios seleccionados"}`}
                 </Text>
                 <TouchableOpacity
-                  style={[styles.confirmButton, { backgroundColor: colors.primary }]}
+                  style={[
+                    styles.confirmButton,
+                    {
+                      backgroundColor:
+                        mode === "main" && !selectedMainId && !mainNeighborhoodId
+                          ? colors.muted
+                          : colors.primary,
+                    },
+                  ]}
                   onPress={handleConfirm}
+                  disabled={mode === "main" && !selectedMainId && !mainNeighborhoodId}
                 >
-                  <Text style={[styles.confirmButtonText, { color: colors.primaryForeground }]}>
+                  <Text
+                    style={[
+                      styles.confirmButtonText,
+                      {
+                        color:
+                          mode === "main" && !selectedMainId && !mainNeighborhoodId
+                            ? colors.mutedForeground
+                            : colors.primaryForeground,
+                      },
+                    ]}
+                  >
                     LISTO
                   </Text>
                 </TouchableOpacity>

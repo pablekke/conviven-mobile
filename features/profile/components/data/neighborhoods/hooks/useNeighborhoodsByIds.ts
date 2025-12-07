@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo } from "react";
 import { neighborhoodsService, neighborhoodsCacheService } from "../services";
 import type { Neighborhood } from "../../../../../../types/user";
+import { useState, useEffect, useMemo } from "react";
 
 interface UseNeighborhoodsByIdsReturn {
   neighborhoods: Neighborhood[];

@@ -1,11 +1,11 @@
-import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
-import { Feather } from "@expo/vector-icons";
 import { useTheme } from "../../../../../context/ThemeContext";
 import { useNeighborhood } from "./hooks/useNeighborhood";
+import { Feather } from "@expo/vector-icons";
+import React from "react";
 
 interface MainNeighborhoodCardProps {
-  neighborhoodId: string | null;
+  neighborhoodId: string | null | undefined;
   onPress: () => void;
   cachedFilters?: any | null;
 }
@@ -16,7 +16,10 @@ export const MainNeighborhoodCard: React.FC<MainNeighborhoodCardProps> = ({
   cachedFilters,
 }) => {
   const { colors } = useTheme();
-  const { neighborhood, loading } = useNeighborhood({ neighborhoodId, cachedFilters });
+  const { neighborhood, loading } = useNeighborhood({
+    neighborhoodId: neighborhoodId || null,
+    cachedFilters,
+  });
 
   return (
     <TouchableOpacity
@@ -25,9 +28,9 @@ export const MainNeighborhoodCard: React.FC<MainNeighborhoodCardProps> = ({
         styles.card,
         {
           backgroundColor: colors.card,
-          borderColor: neighborhoodId ? colors.primary : colors.border,
-          borderWidth: neighborhoodId ? 2 : 1,
+          borderColor: colors.primary,
         },
+        styles.cardBorder,
       ]}
       activeOpacity={0.7}
     >
@@ -37,15 +40,11 @@ export const MainNeighborhoodCard: React.FC<MainNeighborhoodCardProps> = ({
             style={[
               styles.iconContainer,
               {
-                backgroundColor: neighborhoodId ? colors.primary + "20" : colors.muted,
+                backgroundColor: colors.primary + "20",
               },
             ]}
           >
-            <Feather
-              name="map-pin"
-              size={18}
-              color={neighborhoodId ? colors.primary : colors.mutedForeground}
-            />
+            <Feather name="map-pin" size={18} color={colors.primary} />
           </View>
           <View style={styles.cardContent}>
             <Text style={[styles.label, { color: colors.mutedForeground }]}>Barrio principal</Text>
@@ -55,9 +54,13 @@ export const MainNeighborhoodCard: React.FC<MainNeighborhoodCardProps> = ({
               <Text style={[styles.name, { color: colors.foreground }]} numberOfLines={1}>
                 {neighborhood.name}
               </Text>
+            ) : !neighborhoodId ? (
+              <Text style={[styles.placeholder, { color: colors.destructive }]}>
+                Seleccionar barrio principal (obligatorio)
+              </Text>
             ) : (
               <Text style={[styles.placeholder, { color: colors.mutedForeground }]}>
-                Seleccionar barrio principal
+                Cargando...
               </Text>
             )}
           </View>
@@ -73,6 +76,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
+  },
+  cardBorder: {
+    borderWidth: 2,
   },
   cardHeader: {
     flexDirection: "row",

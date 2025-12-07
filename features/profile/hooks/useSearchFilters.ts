@@ -1,16 +1,10 @@
-import {
-  getCachedValue,
-  setCachedValue,
-  clearCachedValue,
-} from "../../../services/resilience/cache";
+import { neighborhoodsService } from "../components/data/neighborhoods/services";
+import { useDataPreload } from "../../../context/DataPreloadContext";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useAuth } from "../../../context/AuthContext";
 import { searchFiltersService } from "../services";
 import { searchFiltersAdapter } from "../adapters";
-import { useState, useEffect, useCallback } from "react";
-import { useAuth } from "../../../context/AuthContext";
-import { useDataPreload } from "../../../context/DataPreloadContext";
-import { neighborhoodsService } from "../components/data/neighborhoods/services";
 import type {
-  SearchFilters,
   SearchFiltersFormData,
   UpdateSearchFiltersRequest,
 } from "../services/searchFiltersService";
@@ -23,6 +17,7 @@ export interface UseSearchFiltersReturn {
   updateFormData: (field: keyof SearchFiltersFormData, value: any) => void;
   saveFormData: (overrideValues?: Partial<SearchFiltersFormData>) => Promise<void>;
   resetFormData: () => void;
+  reloadFromContext: () => void;
 }
 
 const DEFAULT_FILTERS: SearchFiltersFormData = {
@@ -44,68 +39,69 @@ const DEFAULT_FILTERS: SearchFiltersFormData = {
 
 export const useSearchFilters = (): UseSearchFiltersReturn => {
   const { user } = useAuth();
-  const { refreshProfile } = useDataPreload();
+  const { searchFilters, searchFiltersLoading, updateSearchFiltersState } = useDataPreload();
+
   const [formData, setFormData] = useState<SearchFiltersFormData>(DEFAULT_FILTERS);
   const [originalData, setOriginalData] = useState<SearchFiltersFormData>(DEFAULT_FILTERS);
-  // Inicializar loading en false para evitar spinners si hay datos en cache
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
-  const [initialized, setInitialized] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const initialized = useRef(false);
+  const lastSearchFiltersRef = useRef<any>(null);
+  const componentMountedRef = useRef(true);
 
-  useEffect(() => {
-    const loadFilters = async (forceRefresh: boolean = false) => {
-      if (!user) {
-        setInitialized(true);
-        return;
-      }
+  const loadDataFromContext = useCallback(() => {
+    if (!componentMountedRef.current) return;
 
-      try {
-        // Primero intentar usar cache de API (ya precargado)
-        if (!forceRefresh) {
-          const cachedData = await getCachedValue<SearchFilters>("/search-filters/me");
-          if (cachedData) {
-            const formattedData = searchFiltersAdapter.mapApiToFormData(cachedData);
-            setFormData(formattedData);
-            setOriginalData(formattedData);
-            setLoading(false);
-            setInitialized(true);
-            // Hacer refresh en background para mantener datos actualizados
-            searchFiltersService
-              .getSearchFilters()
-              .then(data => {
-                const updatedFormattedData = searchFiltersAdapter.mapApiToFormData(data);
-                setFormData(updatedFormattedData);
-                setOriginalData(updatedFormattedData);
-              })
-              .catch(error => {
-                console.error("Error refreshing search filters in background:", error);
-              });
-            return;
-          }
-        }
+    if (searchFilters) {
+      const formattedData = searchFiltersAdapter.mapApiToFormData(searchFilters);
 
-        // Solo mostrar loading si no hay cache disponible
-        setLoading(true);
-        const data = await searchFiltersService.getSearchFilters();
-        const formattedData = searchFiltersAdapter.mapApiToFormData(data);
+      const searchFiltersChanged =
+        JSON.stringify(searchFilters) !== JSON.stringify(lastSearchFiltersRef.current);
+      if (!initialized.current || (!hasChanges && searchFiltersChanged)) {
         setFormData(formattedData);
         setOriginalData(formattedData);
-        setInitialized(true);
-      } catch (error) {
-        console.error("Error loading search filters:", error);
-        setFormData(DEFAULT_FILTERS);
-        setOriginalData(DEFAULT_FILTERS);
-        setInitialized(true);
-      } finally {
+        setHasChanges(false);
         setLoading(false);
+        initialized.current = true;
+        lastSearchFiltersRef.current = searchFilters;
       }
-    };
-
-    if (!initialized) {
-      loadFilters(false);
+    } else if (!searchFiltersLoading && !searchFilters) {
+      if (!initialized.current) {
+        setLoading(false);
+        initialized.current = true;
+      }
     }
-  }, [user, initialized]);
+  }, [searchFilters, searchFiltersLoading, hasChanges]);
+
+  useEffect(() => {
+    loadDataFromContext();
+  }, [loadDataFromContext]);
+
+  const reloadFromContext = useCallback(() => {
+    if (!hasChanges && searchFilters) {
+      const formattedData = searchFiltersAdapter.mapApiToFormData(searchFilters);
+      setFormData(formattedData);
+      setOriginalData(formattedData);
+      lastSearchFiltersRef.current = searchFilters;
+      setHasChanges(false);
+      initialized.current = true;
+    }
+  }, [hasChanges, searchFilters]);
+
+  useEffect(() => {
+    return () => {
+      componentMountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!user) {
+      initialized.current = false;
+      setFormData(DEFAULT_FILTERS);
+      setLoading(false);
+    }
+  }, [user]);
 
   const updateFormData = useCallback(
     (field: keyof SearchFiltersFormData, value: any) => {
@@ -113,15 +109,6 @@ export const useSearchFilters = (): UseSearchFiltersReturn => {
         const newData = { ...prev, [field]: value };
         const changed = JSON.stringify(newData) !== JSON.stringify(originalData);
         setHasChanges(changed);
-
-        if (
-          changed ||
-          field === "preferredNeighborhoods" ||
-          field === "mainPreferredNeighborhoodId"
-        ) {
-          setCachedValue("@searchFilters/draft", newData).catch(() => {});
-        }
-
         return newData;
       });
     },
@@ -129,7 +116,7 @@ export const useSearchFilters = (): UseSearchFiltersReturn => {
   );
 
   useEffect(() => {
-    if (!initialized) return;
+    if (!initialized.current) return;
 
     const filterNeighborhoodsByDepartment = async () => {
       if (!formData.mainPreferredNeighborhoodId) {
@@ -176,7 +163,7 @@ export const useSearchFilters = (): UseSearchFiltersReturn => {
     };
 
     filterNeighborhoodsByDepartment();
-  }, [formData.mainPreferredNeighborhoodId, initialized]);
+  }, [formData.mainPreferredNeighborhoodId]);
 
   const saveFormData = useCallback(
     async (overrideValues?: Partial<SearchFiltersFormData>) => {
@@ -213,15 +200,16 @@ export const useSearchFilters = (): UseSearchFiltersReturn => {
           onlyWithPhoto: dataToSave.onlyWithPhoto,
         };
 
-        await searchFiltersService.upsertSearchFilters(payload);
-        const reloadedData = await searchFiltersService.getSearchFilters();
-        const formattedData = searchFiltersAdapter.mapApiToFormData(reloadedData);
+        const updatedFilters = await searchFiltersService.upsertSearchFilters(payload);
+
+        // Update local state closely to what we expect
+        const formattedData = searchFiltersAdapter.mapApiToFormData(updatedFilters);
         setFormData(formattedData);
         setOriginalData(formattedData);
         setHasChanges(false);
 
-        await clearCachedValue("@searchFilters/draft");
-        await refreshProfile();
+        // Update Global Context
+        updateSearchFiltersState(updatedFilters);
       } catch (error) {
         console.error("Error saving search filters:", error);
         throw error;
@@ -229,7 +217,7 @@ export const useSearchFilters = (): UseSearchFiltersReturn => {
         setSaving(false);
       }
     },
-    [user, formData],
+    [user, formData, updateSearchFiltersState],
   );
 
   const resetFormData = useCallback(() => {
@@ -239,11 +227,12 @@ export const useSearchFilters = (): UseSearchFiltersReturn => {
 
   return {
     formData,
-    loading,
+    loading: loading || (searchFiltersLoading && !initialized.current),
     saving,
     hasChanges,
     updateFormData,
     saveFormData,
     resetFormData,
+    reloadFromContext,
   };
 };

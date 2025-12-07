@@ -178,19 +178,19 @@ export const useSearchPreferencesForm = (): UseSearchPreferencesFormReturn => {
     try {
       const dataToSave = {
         // Filtros de Ubicación
-        mainPreferredNeighborhoodId: formData.mainPreferredNeighborhoodId || undefined,
+        mainPreferredNeighborhoodId: formData.mainPreferredNeighborhoodId,
         preferredNeighborhoods:
-          formData.preferredNeighborhoods.length > 0 ? formData.preferredNeighborhoods : undefined,
+          formData.preferredNeighborhoods.length > 0 ? formData.preferredNeighborhoods : [],
         includeAdjacentNeighborhoods: formData.includeAdjacentNeighborhoods,
 
         // Filtros Demográficos
-        genderPref: formData.genderPref.length > 0 ? formData.genderPref : undefined,
-        minAge: formData.minAge ?? undefined,
-        maxAge: formData.maxAge ?? undefined,
+        genderPref: formData.genderPref.length > 0 ? formData.genderPref : [],
+        minAge: formData.minAge,
+        maxAge: formData.maxAge,
 
         // Filtros Económicos
-        budgetMin: formData.budgetMin ?? undefined,
-        budgetMax: formData.budgetMax ?? undefined,
+        budgetMin: formData.budgetMin,
+        budgetMax: formData.budgetMax,
 
         // Filtros de Calidad
         onlyWithPhoto: formData.onlyWithPhoto,
@@ -213,7 +213,7 @@ export const useSearchPreferencesForm = (): UseSearchPreferencesFormReturn => {
         languagesPref: formData.languagesPref.length > 0 ? formData.languagesPref : undefined,
         interestsPref: formData.interestsPref.length > 0 ? formData.interestsPref : undefined,
         zodiacPref: formData.zodiacPref.length > 0 ? formData.zodiacPref : undefined,
-      };
+      } as any;
 
       const updatedData = await searchPreferencesService.upsertSearchPreferences(dataToSave);
 

@@ -1,4 +1,12 @@
-import { City, Department, Gender, User, UserRole, UserStatus, VerificationStatus } from "@/types/user";
+import {
+  City,
+  Department,
+  Gender,
+  User,
+  UserRole,
+  UserStatus,
+  VerificationStatus,
+} from "@/types/user";
 
 const normalizeString = (value: any): string | undefined => {
   if (typeof value === "string" && value.trim() !== "") {
@@ -32,15 +40,15 @@ const mapVerificationStatus = (data: any): VerificationStatus | undefined => {
   }
 
   const emailVerified = Boolean(
-    data.emailVerified ?? data.email_verified ?? data.isEmailVerified ?? data.email
+    data.emailVerified ?? data.email_verified ?? data.isEmailVerified ?? data.email,
   );
 
   const identityVerified = Boolean(
-    data.identityVerified ?? data.identity_verified ?? data.isIdentityVerified
+    data.identityVerified ?? data.identity_verified ?? data.isIdentityVerified,
   );
 
   const phoneVerified = Boolean(
-    data.phoneVerified ?? data.phone_verified ?? data.isPhoneVerified ?? data.phone
+    data.phoneVerified ?? data.phone_verified ?? data.isPhoneVerified ?? data.phone,
   );
 
   const references =
@@ -85,7 +93,8 @@ export function mapUserFromApi(payload: any): User {
 
   const department: Partial<Department> =
     payload.department ?? payload.departmentInfo ?? payload.departmentData ?? {};
-  const neighborhood = payload.neighborhood ?? payload.neighborhoodInfo ?? payload.neighborhoodData ?? {};
+  const neighborhood =
+    payload.neighborhood ?? payload.neighborhoodInfo ?? payload.neighborhoodData ?? {};
   const city: Partial<City> =
     payload.city ??
     payload.cityInfo ??
@@ -167,9 +176,7 @@ export function mapUserFromApi(payload: any): User {
       normalizeString(payload.cityName) ??
       normalizeString(neighborhood.cityName),
     neighborhoodId:
-      neighborhood.id ??
-      payload.neighborhoodId ??
-      normalizeString(payload.neighborhood_id),
+      neighborhood.id ?? payload.neighborhoodId ?? normalizeString(payload.neighborhood_id),
     neighborhoodName:
       normalizeString(neighborhood.name) ?? normalizeString(payload.neighborhoodName),
     role: parseUserRole(payload.role) ?? parseUserRole(payload.userRole),
@@ -190,7 +197,7 @@ export function mapUserFromApi(payload: any): User {
       normalizeString(payload.lastLoginAt) ??
       normalizeString(payload.lastLogin) ??
       normalizeString(payload.last_login_at),
-    roommatePreferences:
-      payload.roommatePreferences ?? payload.preferences?.roommate ?? undefined,
+    roommatePreferences: payload.roommatePreferences ?? payload.preferences?.roommate ?? undefined,
+    filters: payload.filters ?? undefined,
   };
 }

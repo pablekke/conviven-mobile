@@ -37,7 +37,7 @@ class SearchFiltersAdapter {
 
     const result = {
       // Filtros de Ubicación
-      mainPreferredNeighborhoodId: apiData.mainPreferredNeighborhoodId ?? "",
+      mainPreferredNeighborhoodId: apiData.mainPreferredLocation?.neighborhood?.id || "",
       preferredNeighborhoods,
       includeAdjacentNeighborhoods:
         apiData.includeAdjacentNeighborhoods !== undefined &&

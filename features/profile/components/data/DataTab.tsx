@@ -19,9 +19,9 @@ interface DataTabProps {
   budgetMax: string;
   setBudgetMax: (value: string) => void;
   updateSearchFilters: (field: any, value: any) => void;
-  preferredNeighborhoods?: string[];
-  mainPreferredNeighborhoodId?: string;
-  includeAdjacentNeighborhoods?: boolean;
+  preferredNeighborhoods: string[];
+  mainPreferredNeighborhoodId: string;
+  includeAdjacentNeighborhoods: boolean;
   cachedFilters?: any | null;
 }
 
@@ -38,8 +38,8 @@ export const DataTab: React.FC<DataTabProps> = ({
   setBudgetMax,
   updateSearchFilters,
   preferredNeighborhoods = [],
-  mainPreferredNeighborhoodId = "",
-  includeAdjacentNeighborhoods = true,
+  mainPreferredNeighborhoodId,
+  includeAdjacentNeighborhoods,
   cachedFilters,
 }) => {
   const { colors } = useTheme();
@@ -68,7 +68,7 @@ export const DataTab: React.FC<DataTabProps> = ({
   const formatAge = (value: number) => {
     return `${value} años`;
   };
-
+  console.log("mainPreferredNeighborhoodId", mainPreferredNeighborhoodId?.toString());
   return (
     <>
       <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
@@ -183,7 +183,6 @@ export const DataTab: React.FC<DataTabProps> = ({
                   {
                     backgroundColor: colors.card,
                     borderColor: colors.border,
-                    borderWidth: 1,
                   },
                 ]}
               >
@@ -291,6 +290,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginTop: 16,
+    borderWidth: 1,
+    
   },
   toggleContent: {
     flexDirection: "row",

@@ -22,7 +22,6 @@ export const useNeighborhoodSelection = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [mainCityId, setMainCityId] = useState<string | null>(null);
 
-  // Obtener el cityId del barrio principal cuando está en modo "multiple"
   useEffect(() => {
     const loadMainNeighborhood = async () => {
       if (mode === "multiple" && mainNeighborhoodId && visible) {
@@ -89,30 +88,31 @@ export const useNeighborhoodSelection = ({
 
   const toggleSelection = (id: string) => {
     if (mode === "main") {
-      const newMainId = selectedMainId === id ? null : id;
-      setSelectedMainId(newMainId);
+      if (selectedMainId === id) {
+        return;
+      }
 
-      if (newMainId) {
-        const mainNeighborhood = neighborhoods.find(n => n.id === newMainId);
-        const mainDepartmentId =
-          mainNeighborhood?.departmentId ||
-          mainNeighborhood?.city?.departmentId ||
-          mainNeighborhood?.city?.department?.id;
+      setSelectedMainId(id);
 
-        if (mainDepartmentId) {
-          setSelectedIds(prev => {
-            return prev.filter(selectedId => {
-              const neighborhood = neighborhoods.find(n => n.id === selectedId);
-              const neighborhoodDepartmentId =
-                neighborhood?.departmentId ||
-                neighborhood?.city?.departmentId ||
-                neighborhood?.city?.department?.id;
-              return neighborhoodDepartmentId === mainDepartmentId;
-            });
+      const mainNeighborhood = neighborhoods.find(n => n.id === id);
+      const mainDepartmentId =
+        mainNeighborhood?.departmentId ||
+        mainNeighborhood?.city?.departmentId ||
+        mainNeighborhood?.city?.department?.id;
+
+      if (mainDepartmentId) {
+        setSelectedIds(prev => {
+          return prev.filter(selectedId => {
+            const neighborhood = neighborhoods.find(n => n.id === selectedId);
+            const neighborhoodDepartmentId =
+              neighborhood?.departmentId ||
+              neighborhood?.city?.departmentId ||
+              neighborhood?.city?.department?.id;
+            return neighborhoodDepartmentId === mainDepartmentId;
           });
-        } else {
-          setSelectedIds([]);
-        }
+        });
+      } else {
+        setSelectedIds([]);
       }
     } else {
       if (selectedMainId) {

@@ -138,6 +138,7 @@ export interface User {
   petFriendly?: boolean;
   profile?: UserProfile;
   searchPreferences?: UserSearchPreferences;
+  filters?: any;
 }
 
 export interface AuthState {

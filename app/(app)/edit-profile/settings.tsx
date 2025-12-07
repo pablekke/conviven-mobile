@@ -248,7 +248,7 @@ export default function SettingsScreen() {
           onBack={isSaving ? () => {} : handleBack}
           onSave={handleSave}
           isSaving={isSaving}
-          title="Ajustes"
+          title="Filtros"
           showTabs={false}
           headerHeight={120}
         />

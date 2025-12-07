@@ -14,38 +14,38 @@ export interface SearchPreferences {
   userId: string;
 
   // Filtros de Ubicación
-  mainPreferredNeighborhoodId: string | null;
-  preferredNeighborhoods: string[] | null;
-  includeAdjacentNeighborhoods: boolean | null;
+  mainPreferredNeighborhoodId: string;
+  preferredNeighborhoods: string[];
+  includeAdjacentNeighborhoods: boolean;
 
   // Filtros Demográficos
-  genderPref: GenderPreference[] | null;
-  minAge: number | null;
-  maxAge: number | null;
+  genderPref: GenderPreference[];
+  minAge: number;
+  maxAge: number;
 
   // Filtros Económicos
-  budgetMin: number | null;
-  budgetMax: number | null;
+  budgetMin: number;
+  budgetMax: number;
 
   // Filtros de Calidad
-  onlyWithPhoto: boolean | null;
-  lastActiveWithinDays: number | null;
+  onlyWithPhoto: boolean;
+  lastActiveWithinDays: number;
 
   // Dealbreakers (Preferencias Estrictas)
-  noCigarettes: boolean | null;
-  noWeed: boolean | null;
-  noPets: boolean | null;
-  petsRequired: boolean | null;
-  requireQuietHoursOverlap: boolean | null;
+  noCigarettes: boolean;
+  noWeed: boolean;
+  noPets: boolean;
+  petsRequired: boolean;
+  requireQuietHoursOverlap: boolean;
 
   // Preferencias de Vibe (Rangos)
-  tidinessMin: Tidiness | null;
+  tidinessMin: Tidiness;
   schedulePref: Schedule | null;
   guestsMax: GuestsFreq | null;
   musicMax: MusicUsage | null;
 
   // Nice-to-have (Preferencias Suaves)
-  languagesPref: Language[] | null;
+  languagesPref: Language[];
   interestsPref: Interest[] | null;
   zodiacPref: ZodiacSign[] | null;
 

@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
 import { neighborhoodsService } from "../services";
+import { useState, useEffect } from "react";
 
 interface UseNeighborhoodsListReturn {
   neighborhoods: any[];

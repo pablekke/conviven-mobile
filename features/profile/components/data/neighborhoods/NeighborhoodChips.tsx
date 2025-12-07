@@ -1,8 +1,7 @@
-import { useTheme } from "../../../../../context/ThemeContext";
-import type { Neighborhood } from "../../../../../types/user";
-import React from "react";
-import { Feather } from "@expo/vector-icons";
 import { useNeighborhoodsByIds } from "./hooks/useNeighborhoodsByIds";
+import { useTheme } from "../../../../../context/ThemeContext";
+import { Feather } from "@expo/vector-icons";
+import React from "react";
 import {
   View,
   Text,
@@ -37,7 +36,7 @@ export const NeighborhoodChips: React.FC<NeighborhoodChipsProps> = ({
     onNeighborhoodsChange(newIds);
   };
 
-  if (loading && neighborhoods.length === 0 && neighborhoodIds.length > 0) {
+  if (loading && neighborhoodIds.length > 0) {
     return (
       <View style={styles.container}>
         <ActivityIndicator size="small" color={colors.primary} />
@@ -52,7 +51,7 @@ export const NeighborhoodChips: React.FC<NeighborhoodChipsProps> = ({
       </View>
     );
   }
-
+0
   if (neighborhoods.length === 0) {
     return (
       <View style={styles.container}>
@@ -69,33 +68,31 @@ export const NeighborhoodChips: React.FC<NeighborhoodChipsProps> = ({
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.chipsContainer}
     >
-      {neighborhoods
-        .filter((n): n is Neighborhood => n !== null && n !== undefined && !!n.id && !!n.name)
-        .map(neighborhood => (
-          <View
-            key={neighborhood.id}
-            style={[
-              styles.chip,
-              {
-                backgroundColor: colors.card,
-                borderColor: colors.border,
-              },
-            ]}
-          >
-            <Text style={[styles.chipText, { color: colors.foreground }]} numberOfLines={1}>
-              {neighborhood.name}
-            </Text>
-            {editable && onNeighborhoodsChange && (
-              <TouchableOpacity
-                onPress={() => handleRemove(neighborhood.id)}
-                style={styles.removeButton}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                <Feather name="x" size={14} color={colors.mutedForeground} />
-              </TouchableOpacity>
-            )}
-          </View>
-        ))}
+      {neighborhoods.map(neighborhood => (
+        <View
+          key={neighborhood.id}
+          style={[
+            styles.chip,
+            {
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+            },
+          ]}
+        >
+          <Text style={[styles.chipText, { color: colors.foreground }]} numberOfLines={1}>
+            {neighborhood.name}
+          </Text>
+          {editable && onNeighborhoodsChange && (
+            <TouchableOpacity
+              onPress={() => handleRemove(neighborhood.id)}
+              style={styles.removeButton}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Feather name="x" size={14} color={colors.mutedForeground} />
+            </TouchableOpacity>
+          )}
+        </View>
+      ))}
     </ScrollView>
   );
 };
