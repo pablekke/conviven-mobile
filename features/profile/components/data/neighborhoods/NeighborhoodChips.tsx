@@ -1,15 +1,9 @@
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import { useNeighborhoodsByIds } from "./hooks/useNeighborhoodsByIds";
 import { useTheme } from "../../../../../context/ThemeContext";
+import { SkeletonChips } from "./SkeletonChips";
 import { Feather } from "@expo/vector-icons";
 import React from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  ActivityIndicator,
-} from "react-native";
 
 interface NeighborhoodChipsProps {
   neighborhoodIds: string[];
@@ -29,7 +23,7 @@ export const NeighborhoodChips: React.FC<NeighborhoodChipsProps> = ({
     neighborhoodIds,
     cachedFilters,
   });
-  
+
   const handleRemove = (id: string) => {
     if (!editable || !onNeighborhoodsChange) return;
     const newIds = neighborhoodIds.filter(neighborhoodId => neighborhoodId !== id);
@@ -37,11 +31,7 @@ export const NeighborhoodChips: React.FC<NeighborhoodChipsProps> = ({
   };
 
   if (loading && neighborhoodIds.length > 0) {
-    return (
-      <View style={styles.container}>
-        <ActivityIndicator size="small" color={colors.primary} />
-      </View>
-    );
+    return <SkeletonChips count={neighborhoodIds.length} />;
   }
 
   if (error) {

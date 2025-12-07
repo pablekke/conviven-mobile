@@ -1,8 +1,8 @@
 import { QUESTION_TITLES, QUESTION_OPTIONS } from "../../../features/profile/constants";
-import { Animated, StyleSheet, View } from "react-native";
 import { useEditProfileLogic } from "../../../features/profile/hooks";
 import { SafeAreaView } from "react-native-safe-area-context";
 import TabTransition from "../../../components/TabTransition";
+import { Animated, StyleSheet, View } from "react-native";
 import Toast from "react-native-toast-message";
 import { StatusBar } from "expo-status-bar";
 import { useState, useRef } from "react";
@@ -15,9 +15,9 @@ import {
   UnsavedChangesModal,
   NeighborhoodSelectionModal,
 } from "../../../features/profile/components";
-import { Spinner } from "@/components";
+import { LoadingModal } from "@/components";
 
-export default function SettingsScreen() {
+export default function FiltersScreen() {
   const router = useRouter();
   const [modalVisible, setModalVisible] = useState(false);
   const [unsavedChangesModalVisible, setUnsavedChangesModalVisible] = useState(false);
@@ -48,6 +48,7 @@ export default function SettingsScreen() {
     preferredLocations,
     mainPreferredNeighborhoodId,
     searchFiltersData,
+    searchFiltersLoading,
   } = useEditProfileLogic();
 
   const openSelectionModal = (questionKey: string) => {
@@ -146,6 +147,17 @@ export default function SettingsScreen() {
 
   const handleSave = async () => {
     try {
+      if (!searchFiltersHasChanges) {
+        Toast.show({
+          type: "info",
+          text1: "Sin cambios",
+          text2: "No hay cambios para guardar",
+          position: "bottom",
+          visibilityTime: 2000,
+        });
+        return;
+      }
+
       const overrideValues: Partial<any> = {};
       if (minAge && !isNaN(parseInt(minAge, 10))) {
         overrideValues.minAge = parseInt(minAge, 10);
@@ -223,11 +235,7 @@ export default function SettingsScreen() {
     <TabTransition>
       <View style={styles.container}>
         <StatusBar style="light" backgroundColor="#FFFFFF" />
-        {isSaving && (
-          <View style={styles.savingOverlay}>
-            <Spinner size={52} color="#007BFF" trackColor="rgba(0, 123, 255, 0.15)" thickness={5} />
-          </View>
-        )}
+        <LoadingModal visible={isSaving || searchFiltersLoading} />
         <EditProfileHeaderSection
           scrollY={scrollY}
           activeTab="data"
@@ -318,17 +326,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F8F9FA",
-  },
-  savingOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 9999,
   },
   safeArea: {
     flex: 1,

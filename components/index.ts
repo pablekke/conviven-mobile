@@ -2,6 +2,7 @@
 export { default as Button } from "./Button";
 export { default as LoadingScreen } from "./LoadingScreen";
 export { default as Spinner } from "./Spinner";
+export { default as LoadingModal } from "./LoadingModal";
 
 // Componentes de formulario
 export { default as RegisterForm } from "./RegisterForm";

@@ -32,12 +32,12 @@ export default function ProfileScreen() {
         return 0;
       });
       const photoUrls = sortedPhotos.map(photo => photo.url);
-      
+
       // Si el avatar del usuario no está en las fotos, agregarlo al inicio
       if (user?.avatar && !photoUrls.includes(user.avatar)) {
         return [user.avatar, ...photoUrls];
       }
-      
+
       return photoUrls;
     }
     if (user?.avatar) {
@@ -78,7 +78,7 @@ export default function ProfileScreen() {
               progressPercentage={progressPercentage}
               photos={allPhotoUrls}
               onEditPress={() => router.push("./edit-profile")}
-              onSettingsPress={() => router.push("./edit-profile/settings")}
+              onSettingsPress={() => router.push("./edit-profile/filters")}
               onPhotosPress={() => router.push("./edit-profile/photos")}
             />
 

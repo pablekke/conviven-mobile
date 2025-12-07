@@ -59,7 +59,6 @@ export const loadSearchFiltersAction = async (
 
       const mergedFilters = {
         ...searchFilters,
-        preferredLocations: finalPreferredLocations,
         preferredLocations: finalpreferredLocations,
       };
 
