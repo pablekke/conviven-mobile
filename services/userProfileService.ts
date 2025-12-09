@@ -52,7 +52,7 @@ class UserProfileService {
       return {
         user: userData,
         profile: userData.profile,
-        searchPreferences: userData.searchPreferences,
+        searchPreferences: userData.preferences || userData.searchPreferences,
         filters: userData.filters,
       };
     } catch (error) {

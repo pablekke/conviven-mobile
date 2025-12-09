@@ -1,5 +1,5 @@
-import { useNeighborhoodsLogic } from "../components/data/neighborhoods/hooks";
-import { useEditProfileLogic } from "./useEditProfileLogic";
+import { useNeighborhoodsLogic } from "../components/filters/neighborhoods/hooks";
+import { useEditFiltersLogic } from "./useEditFiltersLogic";
 import { useFocusEffect } from "@react-navigation/native";
 import { useFiltersModals } from "./useFiltersModals";
 import { useFiltersScroll } from "./useFiltersScroll";
@@ -7,7 +7,7 @@ import { useFiltersSave } from "./useFiltersSave";
 import { useCallback } from "react";
 
 export const useFiltersScreen = () => {
-  const editProfileLogic = useEditProfileLogic();
+  const editFiltersLogic = useEditFiltersLogic();
   const {
     selectedAnswers,
     setSelectedAnswers,
@@ -27,7 +27,11 @@ export const useFiltersScreen = () => {
     searchFiltersLoading,
     searchFiltersSaving,
     handleUpdate,
-  } = editProfileLogic;
+    preferredLocations,
+    mainPreferredNeighborhoodId,
+    includeAdjacentNeighborhoods,
+    cachedFilters,
+  } = editFiltersLogic;
 
   useFocusEffect(
     useCallback(() => {
@@ -63,10 +67,10 @@ export const useFiltersScreen = () => {
   const { handleNeighborhoodConfirm, ...neighborhoodsData } = useNeighborhoodsLogic({
     selectedQuestion: modals.selectedQuestion,
     updateSearchFilters,
-    preferredLocations: editProfileLogic.preferredLocations,
-    mainPreferredNeighborhoodId: editProfileLogic.mainPreferredNeighborhoodId,
-    includeAdjacentNeighborhoods: editProfileLogic.includeAdjacentNeighborhoods,
-    cachedFilters: editProfileLogic.cachedFilters,
+    preferredLocations,
+    mainPreferredNeighborhoodId,
+    includeAdjacentNeighborhoods,
+    cachedFilters,
   });
 
   return {

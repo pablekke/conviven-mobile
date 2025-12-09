@@ -1,8 +1,10 @@
 import { View, ScrollView, useWindowDimensions, StatusBar, StyleSheet } from "react-native";
+import { CardDeck, UserInfoCard, EmptyFeedCard, FeedLoadingCard } from "./index";
 import { mapBackendItemToMockedUser } from "../adapters/backendToMockedUser";
 import { useFeedPrefetchHydrator } from "../hooks/useFeedPrefetchHydrator";
+import { useDataPreload } from "../../../context/DataPreloadContext";
+import { useAuth } from "../../../context/AuthContext";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CardDeck, UserInfoCard, EmptyFeedCard } from "./index";
 import { prefetchRoomiesImages } from "../utils/prefetchImages";
 import { FEED_CONSTANTS } from "../constants/feed.constants";
 import { useProfileDeck } from "../hooks/useProfileDeck";
@@ -17,7 +19,6 @@ import {
 } from "../mocks/incomingProfile";
 // -------------------- Pantalla --------------------
 function FeedScreen() {
-
   const { width: screenWidth } = useWindowDimensions();
 
   const [profiles, setProfiles] = useState<MockedBackendUser[]>([]);
@@ -25,11 +26,21 @@ function FeedScreen() {
   const [noMoreProfiles, setNoMoreProfiles] = useState(false);
   const mainRef = useRef<ScrollView | null>(null);
   const { hydratePrefetchedFeed } = useFeedPrefetchHydrator();
+  const { isPreloading, preloadCompleted } = useDataPreload();
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+
+    if (isPreloading || !preloadCompleted) {
+      return;
+    }
+
     let isMounted = true;
 
-    const prefetched = hydratePrefetchedFeed({ invalidate: true });
+    const prefetched = hydratePrefetchedFeed({ invalidate: false });
     if (prefetched) {
       if (isMounted) {
         setProfiles(prefetched.profiles);
@@ -97,7 +108,7 @@ function FeedScreen() {
     return () => {
       isMounted = false;
     };
-  }, [hydratePrefetchedFeed]);
+  }, [hydratePrefetchedFeed, isPreloading, preloadCompleted, isAuthenticated]);
 
   const deck = useProfileDeck(profiles);
   const { primaryCard, secondaryCard, primaryBackend, advance, total } = deck;
@@ -143,7 +154,9 @@ function FeedScreen() {
         scrollEnabled={!noMoreProfiles && total > 0 && !!deck.primaryProfile}
         style={styles.mainScroll}
       >
-        {isLoading ? null : noMoreProfiles || total === 0 || !deck.primaryProfile ? (
+        {isLoading ? (
+          <FeedLoadingCard />
+        ) : noMoreProfiles || total === 0 || !deck.primaryProfile ? (
           <EmptyFeedCard />
         ) : (
           <>

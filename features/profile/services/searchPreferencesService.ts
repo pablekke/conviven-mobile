@@ -1,13 +1,13 @@
-/**
- * Servicio para manejar Search Preferences API
- */
-
-import { SearchPreferences, CreateSearchPreferencesRequest } from "../interfaces";
+import {
+  SearchPreferences,
+  CreateSearchPreferencesRequest,
+  CreateRoommatePreferencesRequest,
+} from "../interfaces";
 import { BaseApiService } from "../../../services/apiHelper";
 
 class SearchPreferencesService extends BaseApiService {
   constructor() {
-    super("/search-filters");
+    super("/search-preferences");
   }
 
   /**
@@ -21,7 +21,7 @@ class SearchPreferencesService extends BaseApiService {
    * Crear o actualizar las preferencias de búsqueda del usuario autenticado
    */
   async upsertSearchPreferences(
-    preferences: CreateSearchPreferencesRequest,
+    preferences: CreateSearchPreferencesRequest | CreateRoommatePreferencesRequest,
   ): Promise<SearchPreferences> {
     return this.put<SearchPreferences>("me", preferences);
   }

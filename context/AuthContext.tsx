@@ -1,3 +1,5 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Alert } from "react-native";
 import React, {
   createContext,
   useContext,
@@ -7,7 +9,6 @@ import React, {
   useCallback,
   useRef,
 } from "react";
-import { Alert } from "react-native";
 
 import AuthService from "../services/authService";
 import { AuthState, LoginCredentials, RegisterCredentials, User } from "../types/user";
@@ -60,7 +61,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logoutSuppressUntilRef = useRef<number>(0);
   const { prefetchFeed, clearPrefetch } = useFeedPrefetch();
 
-  useAuthBootstrap({ setState, logoutSuppressUntilRef, prefetchFeed });
+  useAuthBootstrap({ setState, logoutSuppressUntilRef });
 
   const { login, register, logout, clearError, refreshUser, setUserValue, updateUser } =
     useAuthActions({
@@ -103,33 +104,33 @@ export default AuthContext;
 type AuthBootstrapDeps = {
   setState: React.Dispatch<React.SetStateAction<AuthState>>;
   logoutSuppressUntilRef: React.MutableRefObject<number>;
-  prefetchFeed: () => Promise<unknown>;
 };
 
-function useAuthBootstrap({ setState, logoutSuppressUntilRef, prefetchFeed }: AuthBootstrapDeps) {
+function useAuthBootstrap({ setState, logoutSuppressUntilRef }: AuthBootstrapDeps) {
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
         const isAuthenticated = await AuthService.isAuthenticated();
 
         if (isAuthenticated) {
-          const user = await AuthService.getCurrentUser();
+          try {
+            const cachedUserData = await AsyncStorage.getItem("user_data");
+            const cachedUser = cachedUserData ? (JSON.parse(cachedUserData) as User) : null;
 
-          // Precargar el feed antes de establecer isLoading: false (similar al login)
-          if (user) {
-            try {
-              await prefetchFeed();
-            } catch (prefetchError) {
-              console.warn("[AuthBootstrap] Error precargando feed tras bootstrap:", prefetchError);
-            }
+            setState({
+              user: cachedUser,
+              isAuthenticated: !!cachedUser,
+              isLoading: false,
+              error: null,
+            });
+          } catch (error) {
+            setState({
+              user: null,
+              isAuthenticated: false,
+              isLoading: false,
+              error: null,
+            });
           }
-
-          setState({
-            user,
-            isAuthenticated: !!user,
-            isLoading: false,
-            error: null,
-          });
         } else {
           setState({
             user: null,
@@ -157,7 +158,7 @@ function useAuthBootstrap({ setState, logoutSuppressUntilRef, prefetchFeed }: Au
     };
 
     checkAuthStatus();
-  }, [setState, prefetchFeed]);
+  }, [setState]);
 
   useEffect(() => {
     const unsubscribe = authSession.subscribe(event => {

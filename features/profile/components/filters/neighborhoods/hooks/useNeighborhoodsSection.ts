@@ -14,6 +14,7 @@ export interface UseNeighborhoodsSectionReturn {
   updateMainNeighborhood: (neighborhoodId: string) => void;
   updatepreferredLocations: (neighborhoodIds: string[]) => void;
   updateIncludeAdjacentNeighborhoods: (value: boolean) => void;
+  handleAdjacentToggleChange: (value: boolean) => void;
 }
 
 interface UseNeighborhoodsSectionProps {
@@ -45,13 +46,15 @@ export const useNeighborhoodsSection = ({
   const preferredLocations = formData.preferredLocations || [];
   const includeAdjacentNeighborhoods = formData.includeAdjacentNeighborhoods || false;
 
-  // Hook para manejar barrios adyacentes
-  const { loadingAdjacents } = useAdjacentNeighborhoods({
-    includeAdjacentNeighborhoods,
+  // Hook para manejar barrios adyacentes (solo se ejecuta cuando el usuario cambia el switch)
+  const { loadingAdjacents, handleToggleChange } = useAdjacentNeighborhoods({
     mainPreferredNeighborhoodId,
     preferredLocations,
     onNeighborhoodsUpdate: newNeighborhoods => {
       updateFormData("preferredLocations", newNeighborhoods);
+    },
+    onToggleChange: value => {
+      updateFormData("includeAdjacentNeighborhoods", value);
     },
   });
 
@@ -74,7 +77,7 @@ export const useNeighborhoodsSection = ({
   };
 
   const updateIncludeAdjacentNeighborhoods = (value: boolean) => {
-    updateFormData("includeAdjacentNeighborhoods", value);
+    handleToggleChange(value);
   };
 
   return {
@@ -87,5 +90,6 @@ export const useNeighborhoodsSection = ({
     updateMainNeighborhood,
     updatepreferredLocations,
     updateIncludeAdjacentNeighborhoods,
+    handleAdjacentToggleChange: handleToggleChange,
   };
 };

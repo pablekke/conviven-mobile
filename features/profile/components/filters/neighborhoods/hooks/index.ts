@@ -1,7 +1,8 @@
 export { useIsMontevideoNeighborhood } from "./useIsMontevideoNeighborhood";
 export { useAdjacentNeighborhoods } from "./useAdjacentNeighborhoods";
 export { useNeighborhoodSelection } from "./useNeighborhoodSelection";
-export { useNeighborhoodsLogic } from "./useNeighborhoodsLogic";
+export { useNeighborhoodsSection } from "./useNeighborhoodsSection";
 export { useNeighborhoodsByIds } from "./useNeighborhoodsByIds";
+export { useNeighborhoodsLogic } from "./useNeighborhoodsLogic";
 export { useNeighborhoodsList } from "./useNeighborhoodsList";
 export { useNeighborhood } from "./useNeighborhood";

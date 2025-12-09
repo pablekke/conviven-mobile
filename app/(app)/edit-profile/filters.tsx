@@ -1,10 +1,11 @@
 import { QUESTION_TITLES, QUESTION_OPTIONS } from "../../../features/profile/constants";
-import { useEditProfileLogic } from "../../../features/profile/hooks";
+import { useEditFiltersLogic } from "../../../features/profile/hooks";
 import { SafeAreaView } from "react-native-safe-area-context";
 import TabTransition from "../../../components/TabTransition";
 import { Animated, StyleSheet, View } from "react-native";
 import Toast from "react-native-toast-message";
 import { StatusBar } from "expo-status-bar";
+import { LoadingModal } from "@/components";
 import { useState, useRef } from "react";
 import { useRouter } from "expo-router";
 import {
@@ -15,7 +16,6 @@ import {
   UnsavedChangesModal,
   NeighborhoodSelectionModal,
 } from "../../../features/profile/components";
-import { LoadingModal } from "@/components";
 
 export default function FiltersScreen() {
   const router = useRouter();
@@ -42,14 +42,16 @@ export default function FiltersScreen() {
     searchFiltersHasChanges,
     saveSearchFilters,
     resetSearchFilters,
+    reloadSearchFiltersFromContext,
     updateSearchFilters,
     searchFiltersSaving,
     handleUpdate,
+    getSelectedLabel,
     preferredLocations,
     mainPreferredNeighborhoodId,
     searchFiltersData,
     searchFiltersLoading,
-  } = useEditProfileLogic();
+  } = useEditFiltersLogic();
 
   const openSelectionModal = (questionKey: string) => {
     if (isSaving) return;
@@ -83,8 +85,6 @@ export default function FiltersScreen() {
     closeModal();
   };
 
-  const getSelectedLabel = (questionKey: string) => selectedAnswers[questionKey] || "Seleccionar";
-
   const hasAnyUnsavedChanges = searchFiltersHasChanges;
 
   const handleBack = () => {
@@ -96,7 +96,10 @@ export default function FiltersScreen() {
   };
 
   const handleDiscardChanges = () => {
-    if (searchFiltersHasChanges) resetSearchFilters();
+    if (searchFiltersHasChanges) {
+      resetSearchFilters();
+      reloadSearchFiltersFromContext();
+    }
     setUnsavedChangesModalVisible(false);
     router.replace("/(app)/profile");
   };

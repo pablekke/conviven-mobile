@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
 import { useNeighborhoodsList } from "./useNeighborhoodsList";
-import { neighborhoodsService } from "../services";
+import { getCachedNeighborhood, neighborhoodsCacheService } from "../services";
+import { useEffect, useState, useMemo } from "react";
 
 interface UseNeighborhoodSelectionProps {
   visible: boolean;
@@ -8,6 +8,7 @@ interface UseNeighborhoodSelectionProps {
   mainNeighborhoodId?: string | null;
   mode?: "main" | "multiple";
   excludeNeighborhoodIds?: string[];
+  cachedFilters?: any | null;
 }
 
 export const useNeighborhoodSelection = ({
@@ -16,34 +17,30 @@ export const useNeighborhoodSelection = ({
   mainNeighborhoodId,
   mode = "multiple",
   excludeNeighborhoodIds = [],
+  cachedFilters,
 }: UseNeighborhoodSelectionProps) => {
   const [selectedIds, setSelectedIds] = useState<string[]>(selectedNeighborhoodIds);
   const [selectedMainId, setSelectedMainId] = useState<string | null>(mainNeighborhoodId || null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [mainCityId, setMainCityId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const loadMainNeighborhood = async () => {
-      if (mode === "multiple" && mainNeighborhoodId && visible) {
-        try {
-          const neighborhood = await neighborhoodsService.getNeighborhoodById(mainNeighborhoodId);
-          if (neighborhood) {
-            const cityId = neighborhood.cityId || neighborhood.city?.id;
-            setMainCityId(cityId || null);
-          } else {
-            setMainCityId(null);
-          }
-        } catch (error) {
-          console.error("Error loading main neighborhood:", error);
-          setMainCityId(null);
-        }
-      } else {
-        setMainCityId(null);
+  const mainCityId = useMemo(() => {
+    if (mode === "multiple" && mainNeighborhoodId && visible) {
+      const neighborhood = getCachedNeighborhood(mainNeighborhoodId);
+      if (neighborhood) {
+        return neighborhood.cityId || null;
       }
-    };
-
-    loadMainNeighborhood();
-  }, [mode, mainNeighborhoodId, visible]);
+      if (cachedFilters) {
+        const cached = neighborhoodsCacheService.getNeighborhoodByIdFromCache(
+          mainNeighborhoodId,
+          cachedFilters,
+        );
+        if (cached) {
+          return cached.cityId || null;
+        }
+      }
+    }
+    return null;
+  }, [mode, mainNeighborhoodId, visible, cachedFilters]);
 
   const { neighborhoods, loading, error, refetch } = useNeighborhoodsList(
     visible,

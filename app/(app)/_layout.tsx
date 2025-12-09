@@ -135,7 +135,6 @@ export default function AppLayout() {
           tabBarLabel: "Perfil",
         }}
       />
-      <Tabs.Screen name="settings" options={{ href: null }} />
       <Tabs.Screen name="conversation/[id]" options={{ href: null }} />
       <Tabs.Screen name="edit-profile/index" options={{ href: null }} />
       <Tabs.Screen name="edit-profile/photos" options={{ href: null }} />

@@ -1,6 +1,7 @@
 export { default as FeedScreen } from "./FeedScreen";
 export { BudgetHighlight } from "./BudgetHighlight";
 export { ProfileHeadline } from "./ProfileHeadline";
+export { FeedLoadingCard } from "./FeedLoadingCard";
 export { BasicInfoPills } from "./BasicInfoPills";
 export { BackgroundCard } from "./BackgroundCard";
 export { EmptyFeedCard } from "./EmptyFeedCard";

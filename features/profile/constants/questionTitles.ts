@@ -19,4 +19,7 @@ export const QUESTION_TITLES: Record<string, string> = {
   genders: "Géneros",
   gender: "Género",
   onlyWithPhoto: "¿Perfiles con foto?",
+  languagesPref: "Idiomas preferidos",
+  interestsPref: "Intereses preferidos",
+  zodiacPref: "Signos zodiacales preferidos",
 };

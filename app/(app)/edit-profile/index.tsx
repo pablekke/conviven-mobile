@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import { Animated, StyleSheet, View, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import Toast from "react-native-toast-message";
 
@@ -17,17 +17,20 @@ import {
 } from "../../../features/profile/components";
 import type { TabType } from "../../../features/profile/components";
 import { QUESTION_TITLES, QUESTION_OPTIONS } from "../../../features/profile/constants";
-import { useEditProfileLogic } from "../../../features/profile/hooks";
+import { useEditProfileLogic, useRoommateTabModal } from "../../../features/profile/hooks";
 import { useTheme } from "../../../context/ThemeContext";
+import LoadingScreen from "@/components/LoadingScreen";
+import { LoadingModal } from "@/components";
 
 export default function EditProfileScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const [activeTab, setActiveTab] = useState<TabType>("about");
-  const [modalVisible, setModalVisible] = useState(false);
   const [unsavedChangesModalVisible, setUnsavedChangesModalVisible] = useState(false);
-  const [selectedQuestion, setSelectedQuestion] = useState("");
-  const [selectedValue, setSelectedValue] = useState("");
+  // Estado del modal para tabs que no son roomie
+  const [otherTabsModalVisible, setOtherTabsModalVisible] = useState(false);
+  const [otherTabsSelectedQuestion, setOtherTabsSelectedQuestion] = useState("");
+  const [otherTabsSelectedValue, setOtherTabsSelectedValue] = useState("");
   const scrollViewRef = useRef<any>(null);
   const scrollY = useRef(new Animated.Value(0)).current;
   const currentScrollYRef = useRef(0);
@@ -46,47 +49,101 @@ export default function EditProfileScreen() {
     searchPrefsHasChanges,
     saveSearchPrefs,
     resetSearchPrefs,
-    searchFiltersHasChanges,
-    saveSearchFilters,
-    resetSearchFilters,
+    reinitializeSearchPrefs,
     saving,
     searchPrefsSaving,
-    searchFiltersSaving,
     handleUpdate,
+    resetAboutAndAnswers,
+    reinitializeState,
+    roommatePrefsData,
   } = useEditProfileLogic();
 
+  const isSaving = saving || searchPrefsSaving;
+
+  // Hook para la lógica del modal de roomie
+  const roommateTabModal = useRoommateTabModal({
+    roommatePrefsData,
+    handleUpdate,
+    selectedAnswers,
+    setSelectedAnswers,
+    isSaving,
+  });
+
+  // Lógica del modal para otras tabs (about y data)
   const openSelectionModal = (questionKey: string) => {
     if (isSaving) return;
-    setSelectedQuestion(questionKey);
+
+    // Si es un campo de roomie, usar el hook de roomie
+    if (
+      [
+        "languagesPref",
+        "interestsPref",
+        "zodiacPref",
+        "noCigarettes",
+        "noWeed",
+        "petsPreference",
+        "tidinessMin",
+        "schedulePref",
+        "guestsMax",
+        "musicMax",
+      ].includes(questionKey)
+    ) {
+      roommateTabModal.openSelectionModal(questionKey);
+      return;
+    }
+
+    // Para otras tabs
+    setOtherTabsSelectedQuestion(questionKey);
     const selectedLabel = selectedAnswers[questionKey];
     const options = QUESTION_OPTIONS[questionKey as keyof typeof QUESTION_OPTIONS];
     const selectedOption = options?.find(option => option.label === selectedLabel);
-    setSelectedValue(selectedOption?.value ?? "");
-    setModalVisible(true);
+    setOtherTabsSelectedValue(selectedOption?.value ?? "");
+    setOtherTabsModalVisible(true);
   };
 
-  const closeModal = () => {
-    setModalVisible(false);
-    setSelectedQuestion("");
-    setSelectedValue("");
+  const closeOtherTabsModal = () => {
+    setOtherTabsModalVisible(false);
+    setOtherTabsSelectedQuestion("");
+    setOtherTabsSelectedValue("");
   };
 
-  const confirmSelection = () => {
-    const options = QUESTION_OPTIONS[selectedQuestion as keyof typeof QUESTION_OPTIONS] ?? [];
-    const selectedOption = options.find(option => option.value === selectedValue);
+  const handleOtherTabsModalSelect = (value: string) => {
+    setOtherTabsSelectedValue(value);
+  };
+
+  const confirmOtherTabsSelection = () => {
+    if (!otherTabsSelectedValue) return;
+
+    const options =
+      QUESTION_OPTIONS[otherTabsSelectedQuestion as keyof typeof QUESTION_OPTIONS] ?? [];
+    const selectedOption = options.find(option => option.value === otherTabsSelectedValue);
     const selectedLabel = selectedOption?.label ?? "";
 
-    setSelectedAnswers(prev => ({ ...prev, [selectedQuestion]: selectedLabel }));
-    handleUpdate(selectedQuestion, selectedValue);
-    closeModal();
+    setSelectedAnswers(prev => ({ ...prev, [otherTabsSelectedQuestion]: selectedLabel }));
+    handleUpdate(otherTabsSelectedQuestion, otherTabsSelectedValue);
+    closeOtherTabsModal();
   };
 
   const getSelectedLabel = (questionKey: string) => selectedAnswers[questionKey] || "Seleccionar";
 
-  const hasAnyUnsavedChanges =
-    profileHasChanges || searchPrefsHasChanges || searchFiltersHasChanges;
+  const hasBeenInitializedRef = useRef(false);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!hasBeenInitializedRef.current) {
+        hasBeenInitializedRef.current = true;
+        return;
+      }
+
+      const hasChanges = profileHasChanges || searchPrefsHasChanges;
+      if (!hasChanges) {
+        reinitializeState();
+      }
+    }, [reinitializeState, profileHasChanges, searchPrefsHasChanges]),
+  );
 
   const handleBack = () => {
+    const hasAnyUnsavedChanges = profileHasChanges || searchPrefsHasChanges;
     if (hasAnyUnsavedChanges) {
       setUnsavedChangesModalVisible(true);
     } else {
@@ -94,11 +151,15 @@ export default function EditProfileScreen() {
     }
   };
 
-  const handleDiscardChanges = () => {
+  const handleDiscardChanges = async () => {
     if (profileHasChanges) resetToUserData();
-    if (searchPrefsHasChanges) resetSearchPrefs();
-    if (searchFiltersHasChanges) resetSearchFilters();
+    if (searchPrefsHasChanges) {
+      await reinitializeSearchPrefs();
+    } else {
+      resetSearchPrefs();
+    }
     resetUserFields();
+    resetAboutAndAnswers();
 
     setUnsavedChangesModalVisible(false);
     router.replace("/(app)/profile");
@@ -110,9 +171,6 @@ export default function EditProfileScreen() {
       if (profileHasChanges) savePromises.push(saveProfileData());
       savePromises.push(saveUserFields());
       if (searchPrefsHasChanges) savePromises.push(saveSearchPrefs());
-      if (searchFiltersHasChanges) {
-        savePromises.push(saveSearchFilters());
-      }
 
       await Promise.all(savePromises);
 
@@ -154,11 +212,6 @@ export default function EditProfileScreen() {
         savePromises.push(saveSearchPrefs());
       }
 
-      if (searchFiltersHasChanges) {
-        savePromises.push(saveSearchFilters());
-      }
-
-      // Si no hay cambios en ninguna tab, mostrar mensaje
       if (savePromises.length === 0) {
         Toast.show({
           type: "info",
@@ -170,7 +223,6 @@ export default function EditProfileScreen() {
         return;
       }
 
-      // Guardar todos los cambios
       await Promise.all(savePromises);
       Toast.show({
         type: "success",
@@ -192,8 +244,6 @@ export default function EditProfileScreen() {
     }
   };
 
-  const isSaving = saving || searchPrefsSaving || searchFiltersSaving;
-
   const handleScroll = Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
     useNativeDriver: true,
     listener: (event: any) => {
@@ -206,8 +256,7 @@ export default function EditProfileScreen() {
 
     if (currentScrollY === 0) return;
 
-    // Animación más lenta y suave usando requestAnimationFrame
-    const duration = 800; // Duración más larga para animación más lenta
+    const duration = 800;
     let startTime: number | null = null;
 
     const animate = (timestamp: number) => {
@@ -235,11 +284,7 @@ export default function EditProfileScreen() {
     <TabTransition>
       <View style={styles.container}>
         <StatusBar style="light" backgroundColor="#FFFFFF" />
-        {isSaving && (
-          <View style={styles.savingOverlay}>
-            <ActivityIndicator size="large" color={colors.primary} />
-          </View>
-        )}
+        <LoadingModal visible={isSaving} />
         <EditProfileHeaderSection
           scrollY={scrollY}
           activeTab={activeTab}
@@ -282,16 +327,45 @@ export default function EditProfileScreen() {
             </View>
           </Animated.ScrollView>
 
-          {/* Modal */}
-          <SelectionModal
-            visible={modalVisible && !isSaving}
-            title={QUESTION_TITLES[selectedQuestion] ?? ""}
-            options={QUESTION_OPTIONS[selectedQuestion as keyof typeof QUESTION_OPTIONS] ?? []}
-            selectedValue={selectedValue}
-            onSelect={setSelectedValue}
-            onClose={closeModal}
-            onConfirm={confirmSelection}
-          />
+          {/* Modal para roomie */}
+          {activeTab === "roommate" && (
+            <SelectionModal
+              visible={roommateTabModal.modalVisible && !isSaving}
+              title={QUESTION_TITLES[roommateTabModal.selectedQuestion] ?? ""}
+              options={
+                QUESTION_OPTIONS[
+                  roommateTabModal.selectedQuestion as keyof typeof QUESTION_OPTIONS
+                ] ?? []
+              }
+              selectedValue={roommateTabModal.selectedValue}
+              onSelect={roommateTabModal.handleModalSelect}
+              onClose={roommateTabModal.closeModal}
+              onConfirm={roommateTabModal.confirmSelection}
+              isMultiSelect={roommateTabModal.isArrayField(roommateTabModal.selectedQuestion)}
+              selectedValues={
+                roommateTabModal.isArrayField(roommateTabModal.selectedQuestion)
+                  ? roommateTabModal.modalSelectedValues
+                  : []
+              }
+            />
+          )}
+
+          {/* Modal para otras tabs */}
+          {activeTab !== "roommate" && (
+            <SelectionModal
+              visible={otherTabsModalVisible && !isSaving}
+              title={QUESTION_TITLES[otherTabsSelectedQuestion] ?? ""}
+              options={
+                QUESTION_OPTIONS[otherTabsSelectedQuestion as keyof typeof QUESTION_OPTIONS] ?? []
+              }
+              selectedValue={otherTabsSelectedValue}
+              onSelect={handleOtherTabsModalSelect}
+              onClose={closeOtherTabsModal}
+              onConfirm={confirmOtherTabsSelection}
+              isMultiSelect={false}
+              selectedValues={[]}
+            />
+          )}
         </SafeAreaView>
       </View>
       <ExpandableTab scrollY={scrollY} onExpand={handleExpandHeader} />

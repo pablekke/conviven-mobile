@@ -21,7 +21,7 @@ export function useDeckController<T>(items: readonly T[]) {
 
   const prepareNext = useCallback(() => {
     // Deja la capa next en posición detrás, sutilmente más chica/abajo
-    nextScale.setValue(0.96);
+    nextScale.setValue(0.98);
     nextTranslateY.setValue(16);
     nextOpacity.setValue(1);
     revealProgress.setValue(0);
@@ -33,19 +33,19 @@ export function useDeckController<T>(items: readonly T[]) {
       Animated.parallel([
         Animated.timing(nextScale, {
           toValue: 1,
-          duration: 460,
+          duration: 200,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
         Animated.timing(nextTranslateY, {
           toValue: 0,
-          duration: 460,
+          duration: 200,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
         Animated.timing(revealProgress, {
           toValue: 1,
-          duration: 460,
+          duration: 200,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: false, // usamos para opacidades y props no transform
         }),

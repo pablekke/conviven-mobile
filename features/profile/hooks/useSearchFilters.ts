@@ -1,4 +1,4 @@
-import { neighborhoodsService } from "../components/data/neighborhoods/services";
+import { neighborhoodsService } from "../components/filters/neighborhoods/services";
 import type { SearchFiltersFormData } from "../services/searchFiltersService";
 import { useDataPreload } from "../../../context/DataPreloadContext";
 import { useState, useEffect, useCallback, useRef } from "react";

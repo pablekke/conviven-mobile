@@ -1,13 +1,13 @@
 import { StyleSheet, Text, TextInput, View, ScrollView } from "react-native";
-import DatePickerComponent from "../../../../components/DatePicker";
-import LocationService from "../../../../services/locationService";
-import { LocationSelectionModal } from "./LocationSelectionModal";
-import { useTheme } from "../../../../context/ThemeContext";
-import ProfileService from "../../services/profileService";
-import { useAuth } from "../../../../context/AuthContext";
+import DatePickerComponent from "../../../../../components/DatePicker";
+import LocationService from "../../../../../services/locationService";
+import { LocationSelectionModal } from "../LocationSelectionModal";
+import { useTheme } from "../../../../../context/ThemeContext";
+import ProfileService from "../../../services/profileService";
+import { useAuth } from "../../../../../context/AuthContext";
+import { SectionHeader } from "../../SectionHeader";
 import React, { useState, useEffect } from "react";
-import { QuestionRow } from "../QuestionRow";
-import { Feather } from "@expo/vector-icons";
+import { QuestionRow } from "../../QuestionRow";
 
 const calculateAge = (birthDate: string | null | undefined): number | null => {
   if (!birthDate) return null;
@@ -129,7 +129,6 @@ export const PersonalDataTab: React.FC<PersonalDataTabProps> = ({
     if (!user) return;
 
     try {
-      // Obtener los nombres de la ubicación seleccionada
       const [department, city, neighborhood] = await Promise.all([
         LocationService.getDepartment(departmentId),
         LocationService.getCity(cityId),
@@ -154,10 +153,7 @@ export const PersonalDataTab: React.FC<PersonalDataTabProps> = ({
   return (
     <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
       <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Feather name="user" size={16} color="#007BFF" />
-          <Text style={styles.sectionTitle}>Información Personal</Text>
-        </View>
+        <SectionHeader icon="user" title="Información Personal" />
 
         <View style={styles.inputContainer}>
           <Text style={[styles.label, { color: colors.mutedForeground }]}>Nombre</Text>
@@ -333,18 +329,6 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 32,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#1A1A1A",
-    fontFamily: "Inter-Bold",
   },
   inputContainer: {
     marginBottom: 20,

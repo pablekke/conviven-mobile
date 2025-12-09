@@ -3,9 +3,20 @@ import { createTimeoutPromise } from "../utils";
 import { DataPreloadState } from "../types";
 import React from "react";
 
+let lastProfileCallTime = 0;
+const PROFILE_CALL_COOLDOWN = 3000;
+
 export const loadProfileAction = async (
   setState: React.Dispatch<React.SetStateAction<DataPreloadState>>,
+  skipIfRecent?: boolean,
 ) => {
+  const now = Date.now();
+
+  if (skipIfRecent && lastProfileCallTime && now - lastProfileCallTime < PROFILE_CALL_COOLDOWN) {
+    return;
+  }
+
+  lastProfileCallTime = now;
   setState(prev => ({ ...prev, profileLoading: true, profileError: null }));
 
   try {

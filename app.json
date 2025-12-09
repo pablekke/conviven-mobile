@@ -15,6 +15,18 @@
     "experiments": {
       "typedRoutes": true
     },
-    "scheme": "conviven"
+    "scheme": "conviven",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "19e28da3-43e7-4595-a8bd-dd1dcfcf489d"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.conviven.expoconviven",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    }
   }
 }

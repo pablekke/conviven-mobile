@@ -1,7 +1,7 @@
-import React from "react";
 import { View, Text, StyleSheet, Modal, TouchableOpacity } from "react-native";
 import { useTheme } from "../../../context/ThemeContext";
 import Spinner from "../../../components/Spinner";
+import React from "react";
 
 interface UnsavedChangesModalProps {
   visible: boolean;

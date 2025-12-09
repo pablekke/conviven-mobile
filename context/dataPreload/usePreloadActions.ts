@@ -1,3 +1,4 @@
+import { useFeedPrefetch } from "@/features/feed/hooks/useFeedPrefetch";
 import { loadSearchFiltersAction } from "./actions/filterActions";
 import { loadProfileAction } from "./actions/profileActions";
 import { loadChatsAction } from "./actions/chatActions";
@@ -11,6 +12,7 @@ export const usePreloadActions = (
   isAuthenticated: boolean,
   authLoading: boolean,
 ) => {
+  const { prefetchFeed } = useFeedPrefetch();
   const loadChats = useCallback(
     async (forceRefresh = false) => {
       if (!user || !isAuthenticated) return;
@@ -19,10 +21,13 @@ export const usePreloadActions = (
     [user, isAuthenticated, setState],
   );
 
-  const loadProfile = useCallback(async () => {
-    if (!user || !isAuthenticated) return;
-    await loadProfileAction(setState);
-  }, [user, isAuthenticated, setState]);
+  const loadProfile = useCallback(
+    async (skipIfRecent = false) => {
+      if (!user || !isAuthenticated) return;
+      await loadProfileAction(setState, skipIfRecent);
+    },
+    [user, isAuthenticated, setState],
+  );
 
   const loadSearchFilters = useCallback(async () => {
     if (!user || !isAuthenticated) return;
@@ -45,7 +50,16 @@ export const usePreloadActions = (
       const timeoutPromise = createTimeoutPromise("Preload timeout", 10000);
 
       await Promise.race([
-        Promise.allSettled([loadChats(), loadProfile(), loadSearchFilters()]),
+        Promise.allSettled([
+          loadChats(),
+          loadProfile(true),
+          loadSearchFilters(),
+          prefetchFeed().catch(error => {
+            console.warn("[DataPreload] Error precargando feed:", error);
+          }),
+        ]).then(() => {
+          return new Promise(resolve => setTimeout(resolve, 100));
+        }),
         timeoutPromise,
       ]);
 
@@ -64,7 +78,16 @@ export const usePreloadActions = (
         preloadError: error instanceof Error ? error : new Error("Error en precarga"),
       }));
     }
-  }, [user, isAuthenticated, authLoading, loadChats, loadProfile, loadSearchFilters, setState]);
+  }, [
+    user,
+    isAuthenticated,
+    authLoading,
+    loadChats,
+    loadProfile,
+    loadSearchFilters,
+    prefetchFeed,
+    setState,
+  ]);
 
   return {
     loadChats,

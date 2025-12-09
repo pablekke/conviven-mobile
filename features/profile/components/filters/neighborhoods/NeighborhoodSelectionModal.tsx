@@ -1,9 +1,9 @@
 import { useTheme } from "../../../../../context/ThemeContext";
-import React from "react";
-import { Feather } from "@expo/vector-icons";
-import { useNeighborhoodSelection } from "./hooks/useNeighborhoodSelection";
-import { SearchBar } from "./SearchBar";
 import { NeighborhoodSkeleton } from "./NeighborhoodSkeleton";
+import { useNeighborhoodSelection } from "./hooks";
+import { Feather } from "@expo/vector-icons";
+import { SearchBar } from "./SearchBar";
+import React from "react";
 import {
   Modal,
   Pressable,
@@ -178,7 +178,7 @@ export const NeighborhoodSelectionModal: React.FC<NeighborhoodSelectionModalProp
 
               <View style={styles.footer}>
                 <Text style={[styles.selectedCount, { color: colors.mutedForeground }]}>
-                 Cambiar de barrio eliminará todos los barrios adicionales seleccionados.
+                  Cambiar de barrio eliminará todos los barrios adicionales seleccionados.
                 </Text>
                 <TouchableOpacity
                   style={[

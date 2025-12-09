@@ -1,8 +1,8 @@
-import type { SearchPreferences } from "../interfaces/searchPreferences.interface";
 import { searchFiltersService, searchPreferencesService } from "../services";
 import type { SearchFilters } from "../services/searchFiltersService";
 import { useDataPreload } from "../../../context/DataPreloadContext";
 import { getCachedValue } from "../../../services/resilience/cache";
+import type { SearchPreferences } from "../interfaces";
 import { useAuth } from "../../../context/AuthContext";
 import { useCallback } from "react";
 

@@ -1,10 +1,10 @@
 import { getCachedValue, setCachedValue } from "../../../services/resilience/cache";
+import { useDataPreload } from "../../../context/DataPreloadContext";
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import { searchPreferencesService } from "../services";
 import { searchPreferencesAdapter } from "../adapters";
 import { useCachedProfile } from "./useCachedProfile";
-import { useDataPreload } from "../../../context/DataPreloadContext";
 import {
   SearchPreferencesFormData,
   createDefaultSearchPreferences,
@@ -17,6 +17,7 @@ export interface UseSearchPreferencesFormReturn {
   saving: boolean;
   updateFormData: (field: keyof SearchPreferencesFormData, value: any) => void;
   resetFormData: () => void;
+  reinitializeFormData: () => Promise<void>;
   saveFormData: () => Promise<void>;
   hasChanges: boolean;
 }
@@ -68,8 +69,8 @@ export const useSearchPreferencesForm = (): UseSearchPreferencesFormReturn => {
   }, []);
 
   // Cargar datos iniciales desde cache o API
-  useEffect(() => {
-    const loadPreferences = async (forceRefresh: boolean = false) => {
+  const loadPreferences = useCallback(
+    async (forceRefresh: boolean = false) => {
       if (!user) {
         setLoading(false);
         setInitialized(true);
@@ -86,17 +87,6 @@ export const useSearchPreferencesForm = (): UseSearchPreferencesFormReturn => {
             setInitialData(formattedData);
             setLoading(false);
             setInitialized(true);
-            // Hacer refresh en background para mantener datos actualizados
-            searchPreferencesService
-              .getSearchPreferences()
-              .then(data => {
-                const updatedFormattedData = searchPreferencesAdapter.mapApiToFormData(data);
-                setFormData(updatedFormattedData);
-                setInitialData(updatedFormattedData);
-              })
-              .catch(error => {
-                console.error("Error refreshing search preferences in background:", error);
-              });
             return;
           }
         }
@@ -110,17 +100,6 @@ export const useSearchPreferencesForm = (): UseSearchPreferencesFormReturn => {
             setInitialData(formattedData);
             setLoading(false);
             setInitialized(true);
-            // Hacer refresh en background
-            searchPreferencesService
-              .getSearchPreferences()
-              .then(data => {
-                const updatedFormattedData = searchPreferencesAdapter.mapApiToFormData(data);
-                setFormData(updatedFormattedData);
-                setInitialData(updatedFormattedData);
-              })
-              .catch(error => {
-                console.error("Error refreshing search preferences in background:", error);
-              });
             return;
           }
         }
@@ -140,12 +119,19 @@ export const useSearchPreferencesForm = (): UseSearchPreferencesFormReturn => {
       } finally {
         setLoading(false);
       }
-    };
+    },
+    [user, mapCachedToApiData, fullProfile],
+  );
 
+  useEffect(() => {
     if (!initialized) {
       loadPreferences(false);
     }
-  }, [user, mapCachedToApiData, fullProfile, initialized]);
+  }, [initialized, loadPreferences]);
+
+  const reinitializeFormData = useCallback(async () => {
+    await loadPreferences(true);
+  }, [loadPreferences]);
 
   const updateFormData = useCallback(
     (field: keyof SearchPreferencesFormData, value: any) => {
@@ -237,6 +223,7 @@ export const useSearchPreferencesForm = (): UseSearchPreferencesFormReturn => {
     saving,
     updateFormData,
     resetFormData,
+    reinitializeFormData,
     saveFormData,
     hasChanges,
   };

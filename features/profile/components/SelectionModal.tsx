@@ -1,3 +1,4 @@
+import { Feather } from "@expo/vector-icons";
 import {
   Modal,
   Pressable,
@@ -7,7 +8,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Feather } from "@expo/vector-icons";
 
 interface SelectionModalProps {
   visible: boolean;
@@ -17,6 +17,8 @@ interface SelectionModalProps {
   onSelect: (value: string) => void;
   onClose: () => void;
   onConfirm: () => void;
+  isMultiSelect?: boolean;
+  selectedValues?: string[];
 }
 
 export const SelectionModal: React.FC<SelectionModalProps> = ({
@@ -27,6 +29,8 @@ export const SelectionModal: React.FC<SelectionModalProps> = ({
   onSelect,
   onClose,
   onConfirm,
+  isMultiSelect = false,
+  selectedValues = [],
 }) => {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -44,25 +48,27 @@ export const SelectionModal: React.FC<SelectionModalProps> = ({
           </View>
 
           <ScrollView style={styles.optionsContainer} showsVerticalScrollIndicator={false}>
-            {options.map(option => (
-              <TouchableOpacity
-                key={option.value}
-                style={[
-                  styles.optionButton,
-                  selectedValue === option.value && styles.selectedOptionButton,
-                ]}
-                onPress={() => onSelect(option.value)}
-              >
-                <Text
-                  style={[
-                    styles.optionText,
-                    selectedValue === option.value && styles.selectedOptionText,
-                  ]}
+            {options.map(option => {
+              const isSelected = isMultiSelect
+                ? selectedValues.includes(option.value)
+                : selectedValue === option.value;
+              return (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[styles.optionButton, isSelected && styles.selectedOptionButton]}
+                  onPress={() => onSelect(option.value)}
                 >
-                  {option.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <View style={styles.optionContent}>
+                    <Text style={[styles.optionText, isSelected && styles.selectedOptionText]}>
+                      {option.label}
+                    </Text>
+                    {isSelected && (
+                      <Feather name="check" size={20} color="#007BFF" style={styles.checkIcon} />
+                    )}
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
           </ScrollView>
 
           <TouchableOpacity style={styles.confirmButton} onPress={onConfirm}>
@@ -155,6 +161,14 @@ const styles = StyleSheet.create({
   selectedOptionText: {
     color: "#007BFF",
     fontWeight: "700",
+  },
+  optionContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  checkIcon: {
+    marginLeft: 8,
   },
   confirmButton: {
     backgroundColor: "#007BFF",

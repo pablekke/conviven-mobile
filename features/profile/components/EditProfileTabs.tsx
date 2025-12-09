@@ -1,5 +1,5 @@
-export { AboutTab } from "./about";
-export { DataTab } from "./data/DataTab";
-export { RoommateTab } from "./roommate";
-export { QuestionRow } from "./QuestionRow";
 export { SelectionModal } from "./SelectionModal";
+export { QuestionRow } from "./QuestionRow";
+export { DataTab } from "./filters";
+export { RoommateTab } from "./roommate";
+export { AboutTab } from "./about";

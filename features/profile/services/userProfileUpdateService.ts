@@ -1,3 +1,4 @@
+import { Schedule } from "../enums/searchPreferences.enums";
 import { apiPut } from "../../../services/apiHelper";
 import { UserProfileData } from "../interfaces";
 import { User } from "../../../types/user";
@@ -43,14 +44,26 @@ class UserProfileUpdateService {
       apiData.guestsFreq = formData.socialLife.toUpperCase();
     }
 
-    if (formData.workSchedule) {
-      apiData.schedule =
-        formData.workSchedule === "flexible" ? "MIXED" : formData.workSchedule.toUpperCase();
-    }
-
     if (formData.sleepTime) {
-      apiData.schedule =
-        formData.sleepTime === "flexible" ? "MIXED" : formData.sleepTime.toUpperCase();
+      if (formData.sleepTime === "flexible") {
+        apiData.schedule = Schedule.MIXED;
+      } else if (formData.sleepTime === "early_bird") {
+        apiData.schedule = Schedule.EARLY_BIRD;
+      } else if (formData.sleepTime === "night_owl") {
+        apiData.schedule = Schedule.NIGHT_OWL;
+      } else {
+        apiData.schedule = formData.sleepTime.toUpperCase() as Schedule;
+      }
+    } else if (formData.workSchedule) {
+      if (formData.workSchedule === "morning") {
+        apiData.schedule = Schedule.EARLY_BIRD;
+      } else if (formData.workSchedule === "evening") {
+        apiData.schedule = Schedule.NIGHT_OWL;
+      } else if (formData.workSchedule === "mixed" || formData.workSchedule === "afternoon") {
+        apiData.schedule = Schedule.MIXED;
+      } else {
+        apiData.schedule = formData.workSchedule.toUpperCase() as Schedule;
+      }
     }
 
     // Campos adicionales que vienen del perfil completo (si existen en formData)
