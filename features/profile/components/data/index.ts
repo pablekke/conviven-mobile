@@ -1,1 +1,2 @@
-export { PersonalDataTab } from "./components";
+export * from "./components";
+export * from "./hooks";

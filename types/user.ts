@@ -56,6 +56,8 @@ export interface UserProfile {
   languages?: string[];
   interests?: string[];
   zodiacSign?: string;
+  occupation?: string;
+  education?: string;
   hasPhoto?: boolean;
   notificationsEnabled?: boolean;
   notificationToken?: string | null;

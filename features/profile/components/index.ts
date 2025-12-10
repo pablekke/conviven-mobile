@@ -26,7 +26,7 @@ export { ChecklistItem } from "./ChecklistItem";
 export type { ChecklistItemProps } from "./ChecklistItem";
 
 export { AboutTab } from "./about";
-export { PersonalDataTab } from "./data";
+export { DataTab as PersonalDataTab } from "./data";
 export { DataTab, NeighborhoodSelectionModal } from "./filters";
 export { RoommateTab } from "./roommate";
 export { QuestionRow } from "./QuestionRow";

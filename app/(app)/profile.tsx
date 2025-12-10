@@ -1,31 +1,36 @@
+import { useProfileScreen, useProfilePhotos } from "../../features/profile/hooks";
+import { ProfileCard } from "../../features/profile/components";
+import { SafeAreaView } from "react-native-safe-area-context";
+import TabTransition from "../../components/TabTransition";
+import { useRouter, useFocusEffect } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
+import { useAuth } from "../../context/AuthContext";
+import Spinner from "../../components/Spinner";
+import { useCallback, useMemo } from "react";
 import {
-  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-
-import TabTransition from "../../components/TabTransition";
-import { ProfileCard } from "../../features/profile/components";
-import { useProfileScreen, useProfilePhotos } from "../../features/profile/hooks";
-import { useAuth } from "../../context/AuthContext";
-import Spinner from "../../components/Spinner";
-import { useMemo } from "react";
+import { LoadingModal } from "@/components";
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, userName, userAge, progressPercentage } = useProfileScreen();
-  const { logout, isLogoutInProgress } = useAuth();
-  const { photos } = useProfilePhotos();
+  const { logout, isLogoutInProgress, refreshUser } = useAuth();
+  const { photos, loadPhotos } = useProfilePhotos();
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshUser().catch(() => {});
+      loadPhotos().catch(() => {});
+    }, [refreshUser, loadPhotos]),
+  );
 
   const allPhotoUrls = useMemo(() => {
     if (photos && photos.length > 0) {
-      // Ordenar para que la foto principal esté primero
       const sortedPhotos = [...photos].sort((a, b) => {
         if (a.isPrimary) return -1;
         if (b.isPrimary) return 1;
@@ -33,7 +38,6 @@ export default function ProfileScreen() {
       });
       const photoUrls = sortedPhotos.map(photo => photo.url);
 
-      // Si el avatar del usuario no está en las fotos, agregarlo al inicio
       if (user?.avatar && !photoUrls.includes(user.avatar)) {
         return [user.avatar, ...photoUrls];
       }
@@ -47,11 +51,7 @@ export default function ProfileScreen() {
   }, [photos, user?.avatar]);
 
   if (!user) {
-    return (
-      <View className="flex-1 items-center justify-center bg-background">
-        <ActivityIndicator color="#007BFF" />
-      </View>
-    );
+    return <LoadingModal visible={!user} />;
   }
 
   return (

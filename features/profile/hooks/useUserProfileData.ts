@@ -73,10 +73,22 @@ export const useUserProfileData = (): UseUserProfileDataReturn => {
 
     setSaving(true);
     try {
-      // Combinar profileData con los campos del perfil completo que no están en el formulario
+      const changedFields: Partial<UserProfileData> = {};
+
+      Object.keys(profileData).forEach(key => {
+        const field = key as keyof UserProfileData;
+        if (profileData[field] !== originalData[field]) {
+          changedFields[field] = profileData[field];
+        }
+      });
+
+      if (Object.keys(changedFields).length === 0) {
+        setSaving(false);
+        return;
+      }
+
       const completeProfileData = {
-        ...profileData,
-        // Incluir campos adicionales del perfil existente
+        ...changedFields,
         ...(fullProfile?.profile && {
           cooking: fullProfile.profile.cooking,
           diet: fullProfile.profile.diet,
@@ -101,7 +113,7 @@ export const useUserProfileData = (): UseUserProfileDataReturn => {
     } finally {
       setSaving(false);
     }
-  }, [user, profileData, fullProfile, updateUser]);
+  }, [user, profileData, originalData, fullProfile, updateUser, refreshDataPreloadProfile]);
 
   const resetToUserData = useCallback(() => {
     setProfileData(originalData);

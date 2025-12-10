@@ -26,26 +26,6 @@ const calculateAge = (birthDate: string | null | undefined): number | null => {
   }
 };
 
-const isValidDate = (dateString: string | null | undefined): boolean => {
-  if (!dateString) return false;
-  try {
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateRegex.test(dateString)) return false;
-
-    const [year, month, day] = dateString.split("-").map(Number);
-    const date = new Date(year, month - 1, day);
-
-    return (
-      !isNaN(date.getTime()) &&
-      date.getFullYear() === year &&
-      date.getMonth() === month - 1 &&
-      date.getDate() === day
-    );
-  } catch {
-    return false;
-  }
-};
-
 interface PersonalDataTabProps {
   getSelectedLabel: (key: string) => string;
   openSelectionModal: (key: string) => void;
@@ -77,13 +57,15 @@ export const PersonalDataTab: React.FC<PersonalDataTabProps> = ({
   }, [user]);
 
   const handleFirstNameChange = (text: string) => {
-    setFirstName(text);
-    updateUser({ firstName: text });
+    const filteredText = text.replace(/[0-9]/g, "");
+    setFirstName(filteredText);
+    updateUser({ firstName: filteredText });
   };
 
   const handleLastNameChange = (text: string) => {
-    setLastName(text);
-    updateUser({ lastName: text });
+    const filteredText = text.replace(/[0-9]/g, "");
+    setLastName(filteredText);
+    updateUser({ lastName: filteredText });
   };
 
   const handleBioChange = (text: string) => {
@@ -149,46 +131,81 @@ export const PersonalDataTab: React.FC<PersonalDataTabProps> = ({
       console.error("Error updating location:", error);
     }
   };
+  const formatBirthDate = (dateString: string | null | undefined): string => {
+    if (!dateString) return "";
+    try {
+      if (dateString.includes("T")) {
+        const datePart = dateString.split("T")[0];
+        if (datePart.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          return datePart;
+        }
+      }
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "";
+      const year = date.getUTCFullYear();
+      const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+      const day = String(date.getUTCDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    } catch {
+      return "";
+    }
+  };
+
+  const getInitialDate = (): Date => {
+    if (user?.birthDate) {
+      try {
+        const date = new Date(user.birthDate);
+        if (!isNaN(date.getTime())) {
+          return date;
+        }
+      } catch {
+        // Fall through to default
+      }
+    }
+    return new Date(2000, 0, 1);
+  };
 
   return (
     <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
       <View style={styles.section}>
         <SectionHeader icon="user" title="Información Personal" />
 
-        <View style={styles.inputContainer}>
-          <Text style={[styles.label, { color: colors.mutedForeground }]}>Nombre</Text>
-          <TextInput
-            style={[
-              styles.textInput,
-              {
-                backgroundColor: colors.card,
-                color: colors.foreground,
-                borderColor: colors.border,
-              },
-            ]}
-            value={firstName}
-            onChangeText={handleFirstNameChange}
-            placeholder="Ingresa tu nombre"
-            placeholderTextColor={colors.mutedForeground}
-          />
-        </View>
+        <View style={styles.nameRowContainer}>
+          <View style={[styles.inputContainer, styles.nameInputContainer]}>
+            <Text style={[styles.label, { color: colors.mutedForeground }]}>Nombre</Text>
+            <TextInput
+              style={[
+                styles.textInput,
+                {
+                  backgroundColor: colors.card,
+                  color: colors.foreground,
+                  borderColor: colors.border,
+                },
+              ]}
+              value={firstName}
+              onChangeText={handleFirstNameChange}
+              placeholder="Ingresa tu nombre"
+              placeholderTextColor={colors.mutedForeground}
+            />
+          </View>
 
-        <View style={styles.inputContainer}>
-          <Text style={[styles.label, { color: colors.mutedForeground }]}>Apellido</Text>
-          <TextInput
-            style={[
-              styles.textInput,
-              {
-                backgroundColor: colors.card,
-                color: colors.foreground,
-                borderColor: colors.border,
-              },
-            ]}
-            value={lastName}
-            onChangeText={handleLastNameChange}
-            placeholder="Ingresa tu apellido"
-            placeholderTextColor={colors.mutedForeground}
-          />
+          <View style={[styles.inputContainer, styles.nameInputContainer]}>
+            <Text style={[styles.label, { color: colors.mutedForeground }]}>Apellido</Text>
+            <TextInput
+              style={[
+                styles.textInput,
+                {
+                  backgroundColor: colors.card,
+                  color: colors.foreground,
+                  borderColor: colors.border,
+                },
+              ]}
+              value={lastName}
+              onChangeText={handleLastNameChange}
+              placeholder="Ingresa tu apellido"
+              placeholderTextColor={colors.mutedForeground}
+            />
+          </View>
         </View>
 
         <View style={styles.inputContainer}>
@@ -196,7 +213,7 @@ export const PersonalDataTab: React.FC<PersonalDataTabProps> = ({
           <View style={styles.datePickerWrapper}>
             <View style={styles.datePickerContainer}>
               <DatePickerComponent
-                value={user && isValidDate(user.birthDate) && user.birthDate ? user.birthDate : ""}
+                value={formatBirthDate(user?.birthDate)}
                 onValueChange={dateString => {
                   updateUser({ birthDate: dateString });
                 }}
@@ -206,11 +223,7 @@ export const PersonalDataTab: React.FC<PersonalDataTabProps> = ({
                   return new Date(today.getFullYear() - 16, today.getMonth(), today.getDate());
                 })()}
                 minimumDate={new Date(new Date().getFullYear() - 100, 0, 1)}
-                initialDate={
-                  user && isValidDate(user.birthDate) && user.birthDate
-                    ? new Date(user.birthDate)
-                    : new Date(2000, 0, 1)
-                }
+                initialDate={getInitialDate()}
               />
             </View>
             {age !== null && (
@@ -364,5 +377,14 @@ const styles = StyleSheet.create({
   ageText: {
     fontSize: 14,
     fontFamily: "Inter-Medium",
+  },
+  nameRowContainer: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 20,
+  },
+  nameInputContainer: {
+    flex: 1,
+    marginBottom: 0,
   },
 });

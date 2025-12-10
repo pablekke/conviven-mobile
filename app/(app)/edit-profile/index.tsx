@@ -1,11 +1,14 @@
-import React, { useState, useRef } from "react";
-import { Animated, StyleSheet, View, ActivityIndicator } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter, useFocusEffect } from "expo-router";
-import { StatusBar } from "expo-status-bar";
-import Toast from "react-native-toast-message";
-
+import { useEditProfileLogic, useRoommateTabModal } from "../../../features/profile/hooks";
+import { QUESTION_TITLES, QUESTION_OPTIONS } from "../../../features/profile/constants";
+import type { TabType } from "../../../features/profile/components";
 import TabTransition from "../../../components/TabTransition";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Animated, StyleSheet, View } from "react-native";
+import { useRouter, useFocusEffect } from "expo-router";
+import React, { useState, useRef } from "react";
+import Toast from "react-native-toast-message";
+import { LoadingModal } from "@/components";
+import { StatusBar } from "expo-status-bar";
 import {
   SelectionModal,
   PersonalDataTab,
@@ -15,16 +18,9 @@ import {
   EditProfileHeaderSection,
   UnsavedChangesModal,
 } from "../../../features/profile/components";
-import type { TabType } from "../../../features/profile/components";
-import { QUESTION_TITLES, QUESTION_OPTIONS } from "../../../features/profile/constants";
-import { useEditProfileLogic, useRoommateTabModal } from "../../../features/profile/hooks";
-import { useTheme } from "../../../context/ThemeContext";
-import LoadingScreen from "@/components/LoadingScreen";
-import { LoadingModal } from "@/components";
 
 export default function EditProfileScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
   const [activeTab, setActiveTab] = useState<TabType>("about");
   const [unsavedChangesModalVisible, setUnsavedChangesModalVisible] = useState(false);
   // Estado del modal para tabs que no son roomie
@@ -224,6 +220,7 @@ export default function EditProfileScreen() {
       }
 
       await Promise.all(savePromises);
+
       Toast.show({
         type: "success",
         text1: "¡Listo!",
@@ -312,8 +309,6 @@ export default function EditProfileScreen() {
               )}
               {activeTab === "about" && (
                 <AboutTab
-                  aboutText={aboutText}
-                  setAboutText={setAboutText}
                   getSelectedLabel={getSelectedLabel}
                   openSelectionModal={openSelectionModal}
                 />

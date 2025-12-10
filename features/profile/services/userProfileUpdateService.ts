@@ -92,6 +92,12 @@ class UserProfileUpdateService {
     if (additionalFields.quietHoursEnd !== undefined) {
       apiData.quietHoursEnd = additionalFields.quietHoursEnd;
     }
+    if (additionalFields.occupation !== undefined) {
+      apiData.occupation = additionalFields.occupation;
+    }
+    if (additionalFields.education !== undefined) {
+      apiData.education = additionalFields.education;
+    }
 
     return apiData;
   }
