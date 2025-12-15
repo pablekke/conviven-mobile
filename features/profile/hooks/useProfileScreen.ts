@@ -5,8 +5,8 @@ export const useProfileScreen = () => {
   const { user } = useAuth();
 
   const userName = useMemo(
-    () => user?.name ?? `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim() ?? "Usuario",
-    [user?.name, user?.firstName, user?.lastName],
+    () => `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim() || "Usuario",
+    [user?.firstName, user?.lastName],
   );
 
   const userAge = useMemo(() => {
@@ -19,10 +19,9 @@ export const useProfileScreen = () => {
     let completed = 0;
     const total = 5;
 
-    if (user.avatar) completed++;
-    if (user.bio && user.bio.length > 40) completed++;
-    if (user.neighborhoodId) completed++;
-    if (user.phone) completed++;
+    if (user.photoUrl) completed++;
+    if (user.profile?.bio && user.profile.bio.length > 40) completed++;
+    if (user.location?.neighborhood?.id) completed++;
     if (user.profile) completed++;
 
     return Math.round((completed / total) * 100);

@@ -8,18 +8,34 @@ interface MainNeighborhoodCardProps {
   neighborhoodId: string | null | undefined;
   onPress: () => void;
   cachedFilters?: any | null;
+  label?: string;
+  isFilterMode?: boolean;
+  userLocation?: { neighborhood?: { id: string; name: string } | null } | null;
 }
 
 export const MainNeighborhoodCard: React.FC<MainNeighborhoodCardProps> = ({
   neighborhoodId,
   onPress,
   cachedFilters,
+  label,
+  isFilterMode = false,
+  userLocation,
 }) => {
   const { colors } = useTheme();
-  const { neighborhood, loading } = useNeighborhood({
+  const { neighborhood: cachedNeighborhood, loading } = useNeighborhood({
     neighborhoodId: neighborhoodId || null,
     cachedFilters,
   });
+
+  // Use userLocation data if available, otherwise use cached data
+  const neighborhood = userLocation?.neighborhood || cachedNeighborhood;
+  const isLoading = !userLocation && loading;
+
+  const defaultLabel = isFilterMode ? "Barrio principal" : "Ubicación";
+  const displayLabel = label || defaultLabel;
+  const placeholderText = isFilterMode
+    ? "Seleccionar barrio principal (obligatorio)"
+    : "Seleccionar ubicación";
 
   return (
     <TouchableOpacity
@@ -30,7 +46,7 @@ export const MainNeighborhoodCard: React.FC<MainNeighborhoodCardProps> = ({
           backgroundColor: colors.card,
           borderColor: colors.primary,
         },
-        styles.cardBorder,
+        isFilterMode && styles.cardBorder,
       ]}
       activeOpacity={0.7}
     >
@@ -47,16 +63,21 @@ export const MainNeighborhoodCard: React.FC<MainNeighborhoodCardProps> = ({
             <Feather name="map-pin" size={18} color={colors.primary} />
           </View>
           <View style={styles.cardContent}>
-            <Text style={[styles.label, { color: colors.mutedForeground }]}>Barrio principal</Text>
-            {loading && !neighborhood ? (
+            <Text style={[styles.label, { color: colors.mutedForeground }]}>{displayLabel}</Text>
+            {isLoading && !neighborhood ? (
               <ActivityIndicator size="small" color={colors.primary} style={styles.loader} />
             ) : neighborhood ? (
               <Text style={[styles.name, { color: colors.foreground }]} numberOfLines={1}>
                 {neighborhood.name}
               </Text>
             ) : !neighborhoodId ? (
-              <Text style={[styles.placeholder, { color: colors.destructive }]}>
-                Seleccionar barrio principal (obligatorio)
+              <Text
+                style={[
+                  styles.placeholder,
+                  { color: isFilterMode ? colors.destructive : colors.mutedForeground },
+                ]}
+              >
+                {placeholderText}
               </Text>
             ) : (
               <Text style={[styles.placeholder, { color: colors.mutedForeground }]}>

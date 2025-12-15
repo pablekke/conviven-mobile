@@ -1,5 +1,5 @@
-import { useNeighborhoodsList } from "./useNeighborhoodsList";
 import { getCachedNeighborhood, neighborhoodsCacheService } from "../services";
+import { useNeighborhoodsList } from "./useNeighborhoodsList";
 import { useEffect, useState, useMemo } from "react";
 
 interface UseNeighborhoodSelectionProps {
@@ -9,6 +9,7 @@ interface UseNeighborhoodSelectionProps {
   mode?: "main" | "multiple";
   excludeNeighborhoodIds?: string[];
   cachedFilters?: any | null;
+  cityId?: string;
 }
 
 export const useNeighborhoodSelection = ({
@@ -18,12 +19,15 @@ export const useNeighborhoodSelection = ({
   mode = "multiple",
   excludeNeighborhoodIds = [],
   cachedFilters,
+  cityId,
 }: UseNeighborhoodSelectionProps) => {
   const [selectedIds, setSelectedIds] = useState<string[]>(selectedNeighborhoodIds);
   const [selectedMainId, setSelectedMainId] = useState<string | null>(mainNeighborhoodId || null);
   const [searchQuery, setSearchQuery] = useState("");
 
   const mainCityId = useMemo(() => {
+    if (cityId) return cityId;
+
     if (mode === "multiple" && mainNeighborhoodId && visible) {
       const neighborhood = getCachedNeighborhood(mainNeighborhoodId);
       if (neighborhood) {
@@ -53,7 +57,7 @@ export const useNeighborhoodSelection = ({
   }, [selectedNeighborhoodIds, mainNeighborhoodId, visible]);
 
   useEffect(() => {
-    if (selectedMainId && neighborhoods.length > 0) {
+    if (mode !== "main" && selectedMainId && neighborhoods.length > 0) {
       const mainNeighborhood = neighborhoods.find(n => n.id === selectedMainId);
       const mainDepartmentId =
         mainNeighborhood?.departmentId ||

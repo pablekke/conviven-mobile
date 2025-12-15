@@ -1,11 +1,16 @@
-import { useEditProfileLogic, useRoommateTabModal } from "../../../features/profile/hooks";
+import {
+  useEditProfileLogic,
+  useOtherTabsSelectionModal,
+  useRoommateTabModal,
+} from "../../../features/profile/hooks";
 import { QUESTION_TITLES, QUESTION_OPTIONS } from "../../../features/profile/constants";
 import type { TabType } from "../../../features/profile/components";
 import TabTransition from "../../../components/TabTransition";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Animated, StyleSheet, View } from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
-import React, { useState, useRef } from "react";
+import { useAuth } from "../../../context/AuthContext";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import Toast from "react-native-toast-message";
 import { LoadingModal } from "@/components";
 import { StatusBar } from "expo-status-bar";
@@ -21,21 +26,19 @@ import {
 
 export default function EditProfileScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>("about");
   const [unsavedChangesModalVisible, setUnsavedChangesModalVisible] = useState(false);
-  // Estado del modal para tabs que no son roomie
-  const [otherTabsModalVisible, setOtherTabsModalVisible] = useState(false);
-  const [otherTabsSelectedQuestion, setOtherTabsSelectedQuestion] = useState("");
-  const [otherTabsSelectedValue, setOtherTabsSelectedValue] = useState("");
+
   const scrollViewRef = useRef<any>(null);
   const scrollY = useRef(new Animated.Value(0)).current;
   const currentScrollYRef = useRef(0);
 
   const {
-    aboutText,
-    setAboutText,
     selectedAnswers,
     setSelectedAnswers,
+    profileData,
+    aboutHasChanges,
     profileHasChanges,
     userFieldsChanged,
     saveProfileData,
@@ -52,26 +55,14 @@ export default function EditProfileScreen() {
     resetAboutAndAnswers,
     reinitializeState,
     roommatePrefsData,
+    data,
   } = useEditProfileLogic();
 
   const isSaving = saving || searchPrefsSaving;
 
-  // Hook para la lógica del modal de roomie
-  const roommateTabModal = useRoommateTabModal({
-    roommatePrefsData,
-    handleUpdate,
-    selectedAnswers,
-    setSelectedAnswers,
-    isSaving,
-  });
-
-  // Lógica del modal para otras tabs (about y data)
-  const openSelectionModal = (questionKey: string) => {
-    if (isSaving) return;
-
-    // Si es un campo de roomie, usar el hook de roomie
-    if (
-      [
+  const roommateQuestionKeys = useMemo(
+    () =>
+      new Set([
         "languagesPref",
         "interestsPref",
         "zodiacPref",
@@ -82,50 +73,47 @@ export default function EditProfileScreen() {
         "schedulePref",
         "guestsMax",
         "musicMax",
-      ].includes(questionKey)
-    ) {
-      roommateTabModal.openSelectionModal(questionKey);
-      return;
-    }
+      ]),
+    [],
+  );
 
-    // Para otras tabs
-    setOtherTabsSelectedQuestion(questionKey);
-    const selectedLabel = selectedAnswers[questionKey];
-    const options = QUESTION_OPTIONS[questionKey as keyof typeof QUESTION_OPTIONS];
-    const selectedOption = options?.find(option => option.label === selectedLabel);
-    setOtherTabsSelectedValue(selectedOption?.value ?? "");
-    setOtherTabsModalVisible(true);
-  };
+  const roommateTabModal = useRoommateTabModal({
+    roommatePrefsData,
+    handleUpdate,
+    selectedAnswers,
+    setSelectedAnswers,
+    isSaving,
+  });
 
-  const closeOtherTabsModal = () => {
-    setOtherTabsModalVisible(false);
-    setOtherTabsSelectedQuestion("");
-    setOtherTabsSelectedValue("");
-  };
+  const otherTabsModal = useOtherTabsSelectionModal({
+    isSaving,
+    selectedAnswers,
+    setSelectedAnswers,
+    profileData,
+    handleUpdate,
+  });
 
-  const handleOtherTabsModalSelect = (value: string) => {
-    setOtherTabsSelectedValue(value);
-  };
+  const openSelectionModal = useCallback(
+    (questionKey: string) => {
+      if (isSaving) return;
+      if (roommateQuestionKeys.has(questionKey)) {
+        roommateTabModal.openSelectionModal(questionKey);
+        return;
+      }
+      otherTabsModal.open(questionKey);
+    },
+    [isSaving, otherTabsModal, roommateQuestionKeys, roommateTabModal],
+  );
 
-  const confirmOtherTabsSelection = () => {
-    if (!otherTabsSelectedValue) return;
-
-    const options =
-      QUESTION_OPTIONS[otherTabsSelectedQuestion as keyof typeof QUESTION_OPTIONS] ?? [];
-    const selectedOption = options.find(option => option.value === otherTabsSelectedValue);
-    const selectedLabel = selectedOption?.label ?? "";
-
-    setSelectedAnswers(prev => ({ ...prev, [otherTabsSelectedQuestion]: selectedLabel }));
-    handleUpdate(otherTabsSelectedQuestion, otherTabsSelectedValue);
-    closeOtherTabsModal();
-  };
-
-  const getSelectedLabel = (questionKey: string) => selectedAnswers[questionKey] || "Seleccionar";
+  const getSelectedLabel = useCallback(
+    (questionKey: string) => selectedAnswers[questionKey] || "Seleccionar",
+    [selectedAnswers],
+  );
 
   const hasBeenInitializedRef = useRef(false);
 
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       if (!hasBeenInitializedRef.current) {
         hasBeenInitializedRef.current = true;
         return;
@@ -161,85 +149,71 @@ export default function EditProfileScreen() {
     router.replace("/(app)/profile");
   };
 
-  const handleSaveAndExit = async () => {
-    try {
-      const savePromises: Promise<void>[] = [];
-      if (profileHasChanges) savePromises.push(saveProfileData());
-      savePromises.push(saveUserFields());
-      if (searchPrefsHasChanges) savePromises.push(saveSearchPrefs());
+  const buildSavePromises = useCallback((): Promise<void>[] => {
+    const promises: Promise<void>[] = [];
+    if (aboutHasChanges) promises.push(saveProfileData());
+    if (userFieldsChanged) promises.push(saveUserFields());
+    if (searchPrefsHasChanges) promises.push(saveSearchPrefs());
+    return promises;
+  }, [
+    aboutHasChanges,
+    saveProfileData,
+    saveSearchPrefs,
+    saveUserFields,
+    searchPrefsHasChanges,
+    userFieldsChanged,
+  ]);
 
-      await Promise.all(savePromises);
+  const runSave = useCallback(
+    async ({ exit }: { exit: boolean }) => {
+      try {
+        const savePromises = buildSavePromises();
 
-      Toast.show({
-        type: "success",
-        text1: "¡Listo!",
-        text2: "Tu perfil se actualizó correctamente",
-        position: "bottom",
-        visibilityTime: 3000,
-      });
+        if (savePromises.length === 0) {
+          Toast.show({
+            type: "info",
+            text1: "Sin cambios",
+            text2: "No hay cambios para guardar",
+            position: "bottom",
+            visibilityTime: 2000,
+          });
+          if (exit) {
+            setUnsavedChangesModalVisible(false);
+            router.replace("/(app)/profile");
+          }
+          return;
+        }
 
-      setUnsavedChangesModalVisible(false);
-      router.replace("/(app)/profile");
-    } catch (error) {
-      console.error("❌ Error:", error);
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: error instanceof Error ? error.message : "No se pudo guardar",
-        position: "bottom",
-        visibilityTime: 4000,
-      });
-    }
-  };
+        await Promise.all(savePromises);
 
-  const handleSave = async () => {
-    try {
-      const savePromises: Promise<void>[] = [];
-
-      if (profileHasChanges) {
-        savePromises.push(saveProfileData());
-      }
-
-      if (userFieldsChanged) {
-        savePromises.push(saveUserFields());
-      }
-
-      if (searchPrefsHasChanges) {
-        savePromises.push(saveSearchPrefs());
-      }
-
-      if (savePromises.length === 0) {
         Toast.show({
-          type: "info",
-          text1: "Sin cambios",
-          text2: "No hay cambios para guardar",
+          type: "success",
+          text1: "¡Listo!",
+          text2: "Tu perfil se actualizó correctamente",
           position: "bottom",
-          visibilityTime: 2000,
+          visibilityTime: 3000,
         });
-        return;
+
+        if (exit) {
+          setUnsavedChangesModalVisible(false);
+        }
+        router.replace("/(app)/profile");
+      } catch (error) {
+        console.error("❌ Error:", error);
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: error instanceof Error ? error.message : "No se pudo guardar",
+          position: "bottom",
+          visibilityTime: 4000,
+        });
       }
+    },
+    [buildSavePromises, router],
+  );
 
-      await Promise.all(savePromises);
-
-      Toast.show({
-        type: "success",
-        text1: "¡Listo!",
-        text2: "Tu perfil se actualizó correctamente",
-        position: "bottom",
-        visibilityTime: 3000,
-      });
-      router.replace("/(app)/profile");
-    } catch (error) {
-      console.error("❌ Error:", error);
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: error instanceof Error ? error.message : "No se pudo guardar",
-        position: "bottom",
-        visibilityTime: 4000,
-      });
-    }
-  };
+  const handleSaveAndExit = useCallback(() => runSave({ exit: true }), [runSave]);
+  const handleSave = useCallback(() => runSave({ exit: false }), [runSave]);
 
   const handleScroll = Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
     useNativeDriver: true,
@@ -305,6 +279,23 @@ export default function EditProfileScreen() {
                 <PersonalDataTab
                   getSelectedLabel={getSelectedLabel}
                   openSelectionModal={openSelectionModal}
+                  firstName={data.firstName}
+                  lastName={data.lastName}
+                  bio={data.bio}
+                  occupation={data.occupation}
+                  education={data.education}
+                  birthDate={data.birthDate}
+                  user={user}
+                  draftLocation={data.draftLocation}
+                  locationModalVisible={data.locationModalVisible}
+                  setLocationModalVisible={data.setLocationModalVisible}
+                  setFirstName={data.setFirstName}
+                  setLastName={data.setLastName}
+                  setBio={data.setBio}
+                  setOccupation={data.setOccupation}
+                  setEducation={data.setEducation}
+                  setBirthDate={data.setBirthDate}
+                  handleLocationConfirm={data.handleLocationConfirm}
                 />
               )}
               {activeTab === "about" && (
@@ -348,17 +339,19 @@ export default function EditProfileScreen() {
           {/* Modal para otras tabs */}
           {activeTab !== "roommate" && (
             <SelectionModal
-              visible={otherTabsModalVisible && !isSaving}
-              title={QUESTION_TITLES[otherTabsSelectedQuestion] ?? ""}
+              visible={otherTabsModal.modalVisible && !isSaving}
+              title={QUESTION_TITLES[otherTabsModal.selectedQuestion] ?? ""}
               options={
-                QUESTION_OPTIONS[otherTabsSelectedQuestion as keyof typeof QUESTION_OPTIONS] ?? []
+                QUESTION_OPTIONS[
+                  otherTabsModal.selectedQuestion as keyof typeof QUESTION_OPTIONS
+                ] ?? []
               }
-              selectedValue={otherTabsSelectedValue}
-              onSelect={handleOtherTabsModalSelect}
-              onClose={closeOtherTabsModal}
-              onConfirm={confirmOtherTabsSelection}
-              isMultiSelect={false}
-              selectedValues={[]}
+              selectedValue={otherTabsModal.selectedValue}
+              onSelect={otherTabsModal.onSelect}
+              onClose={otherTabsModal.close}
+              onConfirm={otherTabsModal.confirm}
+              isMultiSelect={otherTabsModal.isArrayField(otherTabsModal.selectedQuestion)}
+              selectedValues={otherTabsModal.selectedValues}
             />
           )}
         </SafeAreaView>

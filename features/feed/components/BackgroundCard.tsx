@@ -1,5 +1,6 @@
 import { memo } from "react";
-import { ImageBackground, StyleSheet, View, useWindowDimensions } from "react-native";
+import { StyleSheet, View, useWindowDimensions } from "react-native";
+import { Image as ExpoImage } from "expo-image";
 import Animated, { useAnimatedStyle, SharedValue } from "react-native-reanimated";
 import { BlurView } from "expo-blur";
 
@@ -47,11 +48,18 @@ function BackgroundCardComponent({
   });
 
   return (
-    <ImageBackground
-      key={backgroundPhoto}
-      resizeMode="cover"
-      style={[StyleSheet.absoluteFillObject, styles.wrapper, { height: cardHeight }]}
-    >
+    <View style={[StyleSheet.absoluteFillObject, styles.wrapper, { height: cardHeight }]}>
+      {backgroundPhoto ? (
+        <ExpoImage
+          source={{ uri: backgroundPhoto }}
+          style={StyleSheet.absoluteFillObject}
+          contentFit="cover"
+          cachePolicy="memory-disk"
+          recyclingKey={backgroundPhoto}
+          transition={0}
+        />
+      ) : null}
+
       <View style={StyleSheet.absoluteFillObject}>
         <PrimaryCard
           {...cardProps}
@@ -80,7 +88,7 @@ function BackgroundCardComponent({
           </>
         ) : null}
       </View>
-    </ImageBackground>
+    </View>
   );
 }
 

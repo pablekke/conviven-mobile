@@ -246,7 +246,7 @@ class ChatService {
           }
 
           const fullName = `${otherUser.firstName} ${otherUser.lastName}`.trim() || "Usuario";
-          const userAvatar = otherUser.avatar?.trim();
+          const userAvatar = otherUser.photoUrl?.trim();
           return {
             id: otherUser.id,
             name: fullName,
@@ -297,7 +297,7 @@ class ChatService {
               id: user.id,
               firstName: user.firstName || null,
               lastName: user.lastName || null,
-              photoUrl: user.avatar || null,
+              photoUrl: user.photoUrl || null,
               secondaryPhotoUrls: undefined, // Se puede agregar después si es necesario
               birthDate: user.birthDate || null,
               gender: user.gender || null,
@@ -387,7 +387,7 @@ class ChatService {
           }
 
           const fullName = `${otherUser.firstName} ${otherUser.lastName}`.trim() || "Usuario";
-          const userAvatar = otherUser.avatar?.trim();
+          const userAvatar = otherUser.photoUrl?.trim();
           return {
             id: otherUser.id,
             name: fullName,
@@ -441,7 +441,7 @@ class ChatService {
           }
 
           const fullName = `${otherUser.firstName} ${otherUser.lastName}`.trim() || "Usuario";
-          const userAvatar = otherUser.avatar?.trim();
+          const userAvatar = otherUser.photoUrl?.trim();
           return {
             id: otherUser.id,
             name: fullName,
@@ -527,13 +527,14 @@ class ChatService {
         otherUserIds.map(async userId => {
           try {
             const user = await UserService.getById(userId);
+            const fullName = `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Usuario";
             return {
               id: user.id,
-              name:
-                user.name || `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Usuario",
+              name: fullName,
               avatar:
-                user.avatar ||
-                `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || user.id)}&background=2563EB&color=fff&bold=true&size=128`,
+                user.photoUrl && user.photoUrl.trim().length > 0
+                  ? user.photoUrl
+                  : `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName || user.id)}&background=2563EB&color=fff&bold=true&size=128`,
               age: user.birthDate ? this.calculateAge(user.birthDate) : undefined,
             };
           } catch (error) {

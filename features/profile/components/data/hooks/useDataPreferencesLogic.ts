@@ -1,7 +1,7 @@
+import userProfileUpdateService from "../../../services/userProfileUpdateService";
 import LocationService from "../../../../../services/locationService";
 import { useCallback, useEffect, useState, useRef } from "react";
 import ProfileService from "../../../services/profileService";
-import userProfileUpdateService from "../../../services/userProfileUpdateService";
 import { useAuth } from "../../../../../context/AuthContext";
 
 export interface UseDataPreferencesLogicReturn {
@@ -25,11 +25,13 @@ export interface UseDataPreferencesLogicReturn {
   setBirthDate: (value: string) => void;
   setGender: (value: string) => void;
 
-  handleLocationConfirm: (
-    departmentId: string,
-    cityId: string,
-    neighborhoodId: string,
-  ) => Promise<void>;
+  handleLocationConfirm: (selectedIds: string[], mainNeighborhoodId?: string | null) => void;
+
+  draftLocation: {
+    neighborhoodId: string | null;
+    cityId: string | null;
+    departmentId: string | null;
+  } | null;
 
   getLocationLabel: () => string;
   calculateAge: () => number | null;
@@ -42,30 +44,44 @@ export const useDataPreferencesLogic = (): UseDataPreferencesLogicReturn => {
   const { user, updateUser } = useAuth();
   const [firstName, setFirstNameState] = useState(user?.firstName || "");
   const [lastName, setLastNameState] = useState(user?.lastName || "");
-  const [bio, setBioState] = useState(user?.bio || "");
+  const [bio, setBioState] = useState(user?.profile?.bio || "");
   const [occupation, setOccupationState] = useState(user?.profile?.occupation || "");
   const [education, setEducationState] = useState(user?.profile?.education || "");
   const [locationModalVisible, setLocationModalVisible] = useState(false);
   const [dataSaving, setDataSaving] = useState(false);
 
+  // Draft de ubicación (solo se guarda cuando se presiona "guardar")
+  const [draftLocation, setDraftLocation] = useState<{
+    neighborhoodId: string | null;
+    cityId: string | null;
+    departmentId: string | null;
+  } | null>(null);
+
+  // Draft de género (solo se guarda cuando se presiona "guardar")
+  const [draftGender, setDraftGender] = useState<string | null>(null);
+
   const originalDataRef = useRef<{
     firstName: string;
     lastName: string;
-    phone: string;
     birthDate: string;
     gender: string;
     occupation: string;
     education: string;
     bio: string;
+    neighborhoodId: string | null;
+    cityId: string | null;
+    departmentId: string | null;
   }>({
     firstName: "",
     lastName: "",
-    phone: "",
     birthDate: "",
     gender: "",
     occupation: "",
     education: "",
     bio: "",
+    neighborhoodId: null,
+    cityId: null,
+    departmentId: null,
   });
 
   const normalizeBirthDate = (dateString: string | null | undefined): string => {
@@ -80,18 +96,22 @@ export const useDataPreferencesLogic = (): UseDataPreferencesLogicReturn => {
     if (user) {
       setFirstNameState(user.firstName || "");
       setLastNameState(user.lastName || "");
-      setBioState(user.bio || "");
+      setBioState(user.profile?.bio || "");
       setOccupationState(user.profile?.occupation || "");
       setEducationState(user.profile?.education || "");
+      setDraftLocation(null); // Resetear draft cuando cambia el usuario
+      setDraftGender(null); // Resetear draft de género cuando cambia el usuario
       originalDataRef.current = {
         firstName: user.firstName || "",
         lastName: user.lastName || "",
-        phone: user.phone || "",
         birthDate: normalizeBirthDate(user.birthDate) || "",
         gender: user.gender || "",
         occupation: user.profile?.occupation || "",
         education: user.profile?.education || "",
-        bio: user.bio || "",
+        bio: user.profile?.bio || "",
+        neighborhoodId: user.location?.neighborhood?.id || null,
+        cityId: user.location?.city?.id || null,
+        departmentId: user.location?.department?.id || null,
       };
     }
   }, [user?.id]);
@@ -100,10 +120,11 @@ export const useDataPreferencesLogic = (): UseDataPreferencesLogicReturn => {
     (firstName || "") !== (originalDataRef.current.firstName || "") ||
     (lastName || "") !== (originalDataRef.current.lastName || "") ||
     normalizeBirthDate(user?.birthDate) !== (originalDataRef.current.birthDate || "") ||
-    (user?.gender || "") !== (originalDataRef.current.gender || "") ||
+    (draftGender || user?.gender || "") !== (originalDataRef.current.gender || "") ||
     (occupation || "") !== (originalDataRef.current.occupation || "") ||
     (education || "") !== (originalDataRef.current.education || "") ||
-    (bio || "") !== (originalDataRef.current.bio || "");
+    (bio || "") !== (originalDataRef.current.bio || "") ||
+    (draftLocation?.neighborhoodId || null) !== (originalDataRef.current.neighborhoodId || null);
 
   const setFirstName = useCallback(
     (value: string) => {
@@ -126,39 +147,40 @@ export const useDataPreferencesLogic = (): UseDataPreferencesLogicReturn => {
   const setBio = useCallback(
     (value: string) => {
       setBioState(value);
-      updateUser({ bio: value });
+      updateUser({
+        profile: {
+          ...(user?.profile as any),
+          bio: value,
+        },
+      });
     },
-    [updateUser],
+    [updateUser, user?.profile],
   );
 
   const setOccupation = useCallback(
     (value: string) => {
       setOccupationState(value);
-      if (user?.profile) {
-        updateUser({
-          profile: {
-            ...user.profile,
-            occupation: value,
-          },
-        });
-      }
+      updateUser({
+        profile: {
+          ...(user?.profile as any),
+          occupation: value,
+        },
+      });
     },
-    [updateUser, user],
+    [updateUser, user?.profile],
   );
 
   const setEducation = useCallback(
     (value: string) => {
       setEducationState(value);
-      if (user?.profile) {
-        updateUser({
-          profile: {
-            ...user.profile,
-            education: value,
-          },
-        });
-      }
+      updateUser({
+        profile: {
+          ...(user?.profile as any),
+          education: value,
+        },
+      });
     },
-    [updateUser, user],
+    [updateUser, user?.profile],
   );
 
   const setBirthDate = useCallback(
@@ -170,18 +192,12 @@ export const useDataPreferencesLogic = (): UseDataPreferencesLogicReturn => {
 
   const setGender = useCallback(
     (value: string) => {
+      // Solo guardar en draft, NO hacer llamadas API
+      setDraftGender(value);
+      // Actualizar UI localmente sin hacer llamadas API
       updateUser({ gender: value as any });
-      if (user) {
-        ProfileService.update(user.id, { gender: value as any })
-          .then(updatedUser => {
-            updateUser(updatedUser);
-          })
-          .catch(error => {
-            console.error("Error actualizando género:", error);
-          });
-      }
     },
-    [updateUser, user],
+    [updateUser],
   );
 
   const calculateAge = useCallback((): number | null => {
@@ -201,39 +217,60 @@ export const useDataPreferencesLogic = (): UseDataPreferencesLogicReturn => {
     }
   }, [user?.birthDate]);
 
-  const getLocationLabel = useCallback((): string => {
-    if (user?.neighborhoodName) return user.neighborhoodName;
-    if (user?.cityName) return user.cityName;
-    if (user?.departmentName) return user.departmentName;
+  const getLocationLabel = useCallback(() => {
+    // Si hay draft, mostrarlo (nombre desde cache)
+    if (draftLocation?.neighborhoodId) {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const {
+        getCachedNeighborhood,
+      } = require("../../filters/neighborhoods/services/neighborhoodsService");
+      const n = getCachedNeighborhood(draftLocation.neighborhoodId);
+      if (n?.name) return n.name;
+    }
+
+    const loc = user?.location;
+    if (loc?.neighborhood?.name) return loc.neighborhood.name;
+    if (loc?.city?.name) return loc.city.name;
+    if (loc?.department?.name) return loc.department.name;
+
     return "Seleccionar";
-  }, [user]);
+  }, [user, draftLocation]);
 
   const handleLocationConfirm = useCallback(
-    async (departmentId: string, cityId: string, neighborhoodId: string) => {
-      if (!user) return;
+    (selectedIds: string[], mainNeighborhoodId?: string | null) => {
+      if (!user || !mainNeighborhoodId) return;
 
-      try {
-        const [department, city, neighborhood] = await Promise.all([
-          LocationService.getDepartment(departmentId),
-          LocationService.getCity(cityId),
-          LocationService.getNeighborhood(neighborhoodId),
-        ]);
+      // Solo guardar en draft, NO hacer llamadas API
+      const {
+        getCachedNeighborhood,
+      } = require("../../filters/neighborhoods/services/neighborhoodsService");
+      const neighborhood = getCachedNeighborhood(mainNeighborhoodId);
 
-        const updatedUser = await ProfileService.update(user.id, {
-          departmentId,
-          cityId,
-          neighborhoodId,
-          departmentName: department.name,
-          cityName: city.name,
-          neighborhoodName: neighborhood.name,
-        });
+      let cityId: string | null = null;
+      let departmentId: string | null = null;
 
-        updateUser(updatedUser);
-      } catch (error) {
-        console.error("Error updating location:", error);
+      // Intentar obtener datos del cache
+      if (neighborhood) {
+        cityId = neighborhood.cityId || null;
+        departmentId = neighborhood.departmentId || null;
       }
+
+      // Si faltan datos del cache, intentar desde user.location
+      if (!cityId && user.location?.city?.id) {
+        cityId = user.location.city.id;
+      }
+      if (!departmentId && user.location?.department?.id) {
+        departmentId = user.location.department.id;
+      }
+
+      // Guardar en draft (se enviará cuando se presione "guardar")
+      setDraftLocation({
+        neighborhoodId: mainNeighborhoodId,
+        cityId,
+        departmentId,
+      });
     },
-    [user, updateUser],
+    [user],
   );
 
   const saveDataPrefs = useCallback(async () => {
@@ -242,6 +279,11 @@ export const useDataPreferencesLogic = (): UseDataPreferencesLogicReturn => {
     setDataSaving(true);
     try {
       const payload: any = {};
+      let locationPatchUser: {
+        departmentId: string | null;
+        cityId: string | null;
+        neighborhoodId: string | null;
+      } | null = null;
       const original = originalDataRef.current;
 
       if ((firstName || "") !== (original.firstName || "")) {
@@ -255,15 +297,57 @@ export const useDataPreferencesLogic = (): UseDataPreferencesLogicReturn => {
       if (normalizedUserBirthDate !== normalizedOriginalBirthDate) {
         payload.birthDate = normalizedUserBirthDate;
       }
-      if ((user.gender || "") !== (original.gender || "")) {
-        payload.gender = user.gender;
+      // Incluir cambios de género si hay draft
+      const currentGender = draftGender !== null ? draftGender : user.gender;
+      if ((currentGender || "") !== (original.gender || "")) {
+        payload.gender = currentGender;
       }
+
+      // Incluir cambios de ubicación solo si cambió realmente
+      if (draftLocation && draftLocation.neighborhoodId !== original.neighborhoodId) {
+        // Solo hacer llamadas API si faltan datos necesarios
+        let cityId = draftLocation.cityId;
+        let departmentId = draftLocation.departmentId;
+
+        if (!cityId || !departmentId) {
+          // Obtener datos faltantes del neighborhood
+          const neighborhood = await LocationService.getNeighborhood(draftLocation.neighborhoodId!);
+          cityId = neighborhood.cityId || null;
+          departmentId = neighborhood.departmentId || null;
+
+          if (!cityId) {
+            console.error("No cityId found for neighborhood", neighborhood);
+            setDataSaving(false);
+            return;
+          }
+
+          if (!departmentId) {
+            const city = await LocationService.getCity(cityId);
+            departmentId = city.departmentId;
+          }
+
+          if (!departmentId) {
+            const department = await LocationService.getDepartment(departmentId!);
+            departmentId = department.id;
+          }
+        }
+
+        locationPatchUser = {
+          departmentId: departmentId || null,
+          cityId: cityId || null,
+          neighborhoodId: draftLocation.neighborhoodId || null,
+        };
+      }
+
       const profilePayload: any = {};
       if ((occupation || "") !== (original.occupation || "")) {
         profilePayload.occupation = occupation;
       }
       if ((education || "") !== (original.education || "")) {
         profilePayload.education = education;
+      }
+      if ((bio || "") !== (original.bio || "")) {
+        profilePayload.bio = bio;
       }
 
       let finalUpdatedUser = user;
@@ -272,10 +356,14 @@ export const useDataPreferencesLogic = (): UseDataPreferencesLogicReturn => {
         finalUpdatedUser = await userProfileUpdateService.updateUserProfile(profilePayload);
         updateUser(finalUpdatedUser);
       }
-      if ((bio || "") !== (original.bio || "")) {
-        payload.bio = bio;
+
+      // 1) Ubicación (PATCH /profiles/me con { user: { ... } })
+      if (locationPatchUser) {
+        finalUpdatedUser = await ProfileService.updateMe({ user: locationPatchUser });
+        updateUser(finalUpdatedUser);
       }
 
+      // 2) Otros campos del usuario (PUT /users/{id})
       if (Object.keys(payload).length > 0) {
         finalUpdatedUser = await ProfileService.update(user.id, payload);
         updateUser(finalUpdatedUser);
@@ -285,13 +373,18 @@ export const useDataPreferencesLogic = (): UseDataPreferencesLogicReturn => {
         originalDataRef.current = {
           firstName: finalUpdatedUser.firstName || "",
           lastName: finalUpdatedUser.lastName || "",
-          phone: finalUpdatedUser.phone || "",
           birthDate: normalizeBirthDate(finalUpdatedUser.birthDate) || "",
           gender: finalUpdatedUser.gender || "",
           occupation: finalUpdatedUser.profile?.occupation || "",
           education: finalUpdatedUser.profile?.education || "",
-          bio: finalUpdatedUser.bio || "",
+          bio: finalUpdatedUser.profile?.bio || "",
+          neighborhoodId: finalUpdatedUser.location?.neighborhood?.id || null,
+          cityId: finalUpdatedUser.location?.city?.id || null,
+          departmentId: finalUpdatedUser.location?.department?.id || null,
         };
+        // Limpiar drafts después de guardar
+        setDraftLocation(null);
+        setDraftGender(null);
       }
     } catch (error) {
       console.error("Error saving data preferences:", error);
@@ -299,7 +392,18 @@ export const useDataPreferencesLogic = (): UseDataPreferencesLogicReturn => {
     } finally {
       setDataSaving(false);
     }
-  }, [user, firstName, lastName, occupation, education, bio, dataHasChanges, updateUser]);
+  }, [
+    user,
+    firstName,
+    lastName,
+    occupation,
+    education,
+    bio,
+    dataHasChanges,
+    draftLocation,
+    draftGender,
+    updateUser,
+  ]);
 
   const resetDataPrefs = useCallback(() => {
     if (!user) return;
@@ -309,30 +413,18 @@ export const useDataPreferencesLogic = (): UseDataPreferencesLogicReturn => {
     setOccupationState(original.occupation);
     setEducationState(original.education);
     setBioState(original.bio);
-    if (user.profile) {
-      updateUser({
-        firstName: original.firstName,
-        lastName: original.lastName,
-        phone: original.phone,
-        birthDate: original.birthDate,
-        gender: original.gender as any,
-        profile: {
-          ...user.profile,
-          occupation: original.occupation,
-          education: original.education,
-        },
+    updateUser({
+      firstName: original.firstName,
+      lastName: original.lastName,
+      birthDate: original.birthDate,
+      gender: original.gender as any,
+      profile: {
+        ...(user.profile as any),
+        occupation: original.occupation,
+        education: original.education,
         bio: original.bio,
-      });
-    } else {
-      updateUser({
-        firstName: original.firstName,
-        lastName: original.lastName,
-        phone: original.phone,
-        birthDate: original.birthDate,
-        gender: original.gender as any,
-        bio: original.bio,
-      });
-    }
+      },
+    });
   }, [user, updateUser]);
 
   return {
@@ -355,6 +447,7 @@ export const useDataPreferencesLogic = (): UseDataPreferencesLogicReturn => {
     setBirthDate,
     setGender,
     handleLocationConfirm,
+    draftLocation,
     getLocationLabel,
     calculateAge,
     saveDataPrefs,

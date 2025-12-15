@@ -40,6 +40,22 @@ export const useEditProfileLogic = () => {
   } = useAboutPreferencesLogic(setSelectedAnswers, fullProfile, user);
 
   const {
+    firstName,
+    lastName,
+    bio,
+    occupation,
+    education,
+    birthDate,
+    locationModalVisible,
+    setLocationModalVisible,
+    setFirstName,
+    setLastName,
+    setBio,
+    setOccupation,
+    setEducation,
+    setBirthDate,
+    handleLocationConfirm,
+    draftLocation,
     dataHasChanges,
     dataSaving,
     setGender: setDataGender,
@@ -57,18 +73,22 @@ export const useEditProfileLogic = () => {
   }, [fullProfile, user, profileData, initializeSelectedAnswers]);
 
   const handleUpdate = useCallback(
-    (question: string, value: string) => {
+    (question: string, value: string | string[]) => {
       if (
         [
           "smoking",
           "marijuana",
           "alcohol",
           "pets",
+          "petsOwned",
           "acceptPets",
           "tidiness",
           "visitors",
           "sleepRoutine",
-          "workRoutine",
+          "cooking",
+          "diet",
+          "sharePolicy",
+          "interests",
         ].includes(question)
       ) {
         updateAboutPreference(question, value);
@@ -86,12 +106,13 @@ export const useEditProfileLogic = () => {
           "zodiacPref",
         ].includes(question)
       ) {
-        updateRoommatePreference(question, value);
+        updateRoommatePreference(question, value as string);
       } else if (question === "gender") {
-        setDataGender(value);
+        const genderValue = value as string;
+        setDataGender(genderValue);
         setSelectedAnswers(prev => ({
           ...prev,
-          gender: findOptionLabel(value, QUESTION_OPTIONS.gender) || "Seleccionar",
+          gender: findOptionLabel(genderValue, QUESTION_OPTIONS.gender) || "Seleccionar",
         }));
       }
     },
@@ -136,8 +157,28 @@ export const useEditProfileLogic = () => {
     selectedAnswers,
     setSelectedAnswers,
     profileData,
+    aboutHasChanges,
     profileHasChanges: aboutHasChanges || dataHasChanges || roommatePrefsHasChanges,
     userFieldsChanged: dataHasChanges,
+    // data tab state/actions (single source of truth)
+    data: {
+      firstName,
+      lastName,
+      bio,
+      occupation,
+      education,
+      birthDate,
+      locationModalVisible,
+      setLocationModalVisible,
+      setFirstName,
+      setLastName,
+      setBio,
+      setOccupation,
+      setEducation,
+      setBirthDate,
+      handleLocationConfirm,
+      draftLocation,
+    },
     saveProfileData: saveAboutPrefs,
     resetToUserData: resetAboutPrefs,
     saveUserFields,

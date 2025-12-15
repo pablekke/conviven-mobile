@@ -7,7 +7,6 @@ export const QUESTION_TITLES: Record<string, string> = {
   tidiness: "¿Cuán ordenado/a sos?",
   visitors: "¿Recibís visitas en casa?",
   sleepRoutine: "¿Cuál es tu rutina de sueño?",
-  workRoutine: "¿Cuándo preferís estudiar/trabajar?",
   noCigarettes: "¿No aceptás fumadores?",
   noWeed: "¿No aceptás consumidores de marihuana?",
   petsPreference: "¿Preferencias sobre mascotas?",
@@ -22,4 +21,10 @@ export const QUESTION_TITLES: Record<string, string> = {
   languagesPref: "Idiomas preferidos",
   interestsPref: "Intereses preferidos",
   zodiacPref: "Signos zodiacales preferidos",
+  cooking: "¿Con qué frecuencia cocinás?",
+  diet: "¿Tenés alguna dieta especial?",
+  sharePolicy: "Política de compartir cosas",
+  interests: "Intereses",
+  zodiacSign: "Signo zodiacal",
+  petsOwned: "¿Qué mascotas tenés?",
 };

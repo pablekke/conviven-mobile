@@ -1,61 +1,32 @@
+import { InterestsSubsection } from "./subsections/InterestsSubsection";
+import { HabitsSubsection } from "./subsections/HabitsSubsection";
+import { LivingSubsection } from "./subsections/LivingSubsection";
+import { PetsSubsection } from "./subsections/PetsSubsection";
+import { FoodSubsection } from "./subsections/FoodSubsection";
 import { SectionHeader } from "../../SectionHeader";
 import { StyleSheet, View } from "react-native";
-import { QuestionRow } from "../../QuestionRow";
+import React from "react";
 
 interface LifestyleSectionProps {
   getSelectedLabel: (key: string) => string;
   openSelectionModal: (key: string) => void;
 }
 
-export const LifestyleSection: React.FC<LifestyleSectionProps> = ({
-  getSelectedLabel,
-  openSelectionModal,
-}) => {
+export const LifestyleSection: React.FC<LifestyleSectionProps> = props => {
   return (
     <View style={styles.section}>
       <SectionHeader icon="home" title="Estilo de Convivencia" />
-
-      <QuestionRow
-        question="¿Fumás cigarrillos?"
-        selectedValue={getSelectedLabel("smoking")}
-        onPress={() => openSelectionModal("smoking")}
-      />
-      <QuestionRow
-        question="¿Fumás marihuana?"
-        selectedValue={getSelectedLabel("marijuana")}
-        onPress={() => openSelectionModal("marijuana")}
-      />
-      <QuestionRow
-        question="¿Tomás alcohol?"
-        selectedValue={getSelectedLabel("alcohol")}
-        onPress={() => openSelectionModal("alcohol")}
-      />
-      <QuestionRow
-        question="¿Tenés mascotas?"
-        selectedValue={getSelectedLabel("pets")}
-        onPress={() => openSelectionModal("pets")}
-      />
-      <QuestionRow
-        question="¿Aceptás mascotas?"
-        selectedValue={getSelectedLabel("acceptPets")}
-        onPress={() => openSelectionModal("acceptPets")}
-      />
-      <QuestionRow
-        question="¿Cuán ordenado/a sos?"
-        selectedValue={getSelectedLabel("tidiness")}
-        onPress={() => openSelectionModal("tidiness")}
-      />
-      <QuestionRow
-        question="¿Recibís visitas en casa?"
-        selectedValue={getSelectedLabel("visitors")}
-        onPress={() => openSelectionModal("visitors")}
-      />
+      <HabitsSubsection {...props} />
+      <PetsSubsection {...props} />
+      <LivingSubsection {...props} />
+      <FoodSubsection {...props} />
+      <InterestsSubsection {...props} />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   section: {
-    marginBottom: 32,
+    marginBottom: 24,
   },
 });

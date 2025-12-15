@@ -36,23 +36,6 @@ export const BirthDateField: React.FC<BirthDateFieldProps> = ({
     }
   };
 
-  const calculateAge = (): number | null => {
-    if (!value) return null;
-    try {
-      const birth = new Date(value);
-      if (isNaN(birth.getTime())) return null;
-      const today = new Date();
-      let age = today.getFullYear() - birth.getFullYear();
-      const monthDiff = today.getMonth() - birth.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-        age--;
-      }
-      return age >= 0 ? age : null;
-    } catch {
-      return null;
-    }
-  };
-
   const getInitialDate = (): Date => {
     if (value) {
       try {
@@ -76,13 +59,10 @@ export const BirthDateField: React.FC<BirthDateFieldProps> = ({
     return new Date(new Date().getFullYear() - 100, 0, 1);
   }, []);
 
-  const age = calculateAge();
-
   return (
     <View style={styles.inputContainer}>
       <Text style={[styles.label, { color: colors.mutedForeground }]}>Fecha de nacimiento</Text>
-      <View style={styles.datePickerWrapper}>
-        <View style={styles.datePickerContainer}>
+
           <DatePickerComponent
             value={formatBirthDate(value)}
             onValueChange={onValueChange}
@@ -91,18 +71,13 @@ export const BirthDateField: React.FC<BirthDateFieldProps> = ({
             minimumDate={minimumDate}
             initialDate={getInitialDate()}
           />
-        </View>
-        {age !== null && (
-          <Text style={[styles.ageText, { color: colors.mutedForeground }]}>{age} años</Text>
-        )}
-      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   inputContainer: {
-    marginBottom: 20,
+    marginBottom: 0,
   },
   label: {
     fontSize: 14,

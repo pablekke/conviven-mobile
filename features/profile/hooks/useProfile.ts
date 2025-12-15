@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useAuth } from "../../../context/AuthContext";
 import { User } from "../../../types/user";
-import LocationService from "../../../services/locationService";
 import {
   ChecklistItem as ChecklistItemData,
   LocationLabels,
@@ -39,61 +38,20 @@ export const useProfile = (): UseProfileReturn => {
   const [locationLabels, setLocationLabels] = useState<LocationLabels>(DEFAULT_LOCATION_LABELS);
 
   useEffect(() => {
-    let isMounted = true;
+    if (!user?.location) {
+      setLocationLabels(DEFAULT_LOCATION_LABELS);
+      return;
+    }
 
-    const fetchLocation = async () => {
-      if (!user) {
-        return;
-      }
-
-      try {
-        if (user.neighborhoodId) {
-          const neighborhood = await LocationService.getNeighborhood(user.neighborhoodId);
-          if (!isMounted) {
-            return;
-          }
-
-          const departmentName =
-            neighborhood.city?.department?.name ??
-            user.departmentName ??
-            (neighborhood.city?.department ? neighborhood.city.department.name : undefined);
-          const cityName = neighborhood.city?.name ?? user.cityName;
-          const neighborhoodName = neighborhood.name ?? user.neighborhoodName;
-
-          setLocationLabels({
-            department: formatLabel(departmentName, DEFAULT_LOCATION_LABELS.department),
-            city: formatLabel(cityName, DEFAULT_LOCATION_LABELS.city),
-            neighborhood: formatLabel(neighborhoodName, DEFAULT_LOCATION_LABELS.neighborhood),
-          });
-        } else if (user.departmentId) {
-          const department = await LocationService.getDepartment(user.departmentId);
-          if (!isMounted) {
-            return;
-          }
-
-          setLocationLabels(prev => ({
-            department: formatLabel(department.name, prev.department),
-            city: formatLabel(user.cityName, prev.city),
-            neighborhood: formatLabel(user.neighborhoodName, prev.neighborhood),
-          }));
-        }
-      } catch (error) {
-        console.error("Location fetch error", error);
-      }
-    };
-
-    fetchLocation();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [
-    user?.neighborhoodId,
-    user?.departmentId,
-    user?.cityId,
-    user?.cityName,
-    user?.neighborhoodName,
-  ]);
+    setLocationLabels({
+      department: formatLabel(user.location.department?.name, DEFAULT_LOCATION_LABELS.department),
+      city: formatLabel(user.location.city?.name, DEFAULT_LOCATION_LABELS.city),
+      neighborhood: formatLabel(
+        user.location.neighborhood?.name,
+        DEFAULT_LOCATION_LABELS.neighborhood,
+      ),
+    });
+  }, [user?.location]);
 
   const toggleSection = useCallback((sectionId: string) => {
     setExpandedSections(prev => ({
@@ -103,21 +61,20 @@ export const useProfile = (): UseProfileReturn => {
   }, []);
 
   const name = useMemo(
-    () =>
-      user?.name ?? ([user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Sin nombre"),
-    [user?.firstName, user?.lastName, user?.name],
+    () => [user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Sin nombre",
+    [user?.firstName, user?.lastName],
   );
 
   const heroMessage = useMemo(() => {
     const neighborhood =
       locationLabels.neighborhood !== DEFAULT_LOCATION_LABELS.neighborhood
         ? locationLabels.neighborhood
-        : formatLabel(user?.neighborhoodName ?? user?.neighborhoodId, "tu zona");
+        : formatLabel(user?.location?.neighborhood?.name, "tu zona");
     return `Busquemos el match ideal en ${neighborhood}`;
-  }, [locationLabels.neighborhood, user?.neighborhoodId, user?.neighborhoodName]);
+  }, [locationLabels.neighborhood, user?.location?.neighborhood?.name]);
 
   const searchStatusMeta = useMemo((): SearchStatusMeta => {
-    const rawStatus = (user?.searchStatus ?? user?.status ?? "active").toString().toLowerCase();
+    const rawStatus = (user?.status ?? "active").toString().toLowerCase();
 
     if (rawStatus.includes("pause") || rawStatus.includes("paus")) {
       return {
@@ -128,7 +85,7 @@ export const useProfile = (): UseProfileReturn => {
       };
     }
 
-    if (rawStatus.includes("match") || rawStatus.includes("activo")) {
+    if (rawStatus.includes("active") || rawStatus.includes("activo")) {
       return {
         label: "Buscando roomie",
         description: "Estamos acercándote perfiles alineados a tu estilo",
@@ -143,62 +100,23 @@ export const useProfile = (): UseProfileReturn => {
       accent: "#F59E0Bd8",
       textColor: "#0F172A",
     };
-  }, [user?.searchStatus, user?.status]);
+  }, [user?.status]);
 
   const lifestyleBadges = useMemo(
     () => [
-      formatLabel(user?.profession ?? user?.jobTitle, "Team orden"),
-      formatLabel(user?.petFriendly ? "Pet friendly" : undefined, "Buen roomie"),
-      formatLabel(user?.hobby, "Espacios chill"),
+      formatLabel(user?.profile?.occupation, "Tu ocupación"),
+      formatLabel(user?.profile?.education, "Tu educación"),
+      formatLabel(
+        (user?.profile?.languages?.length ?? 0) > 0 ? "Idiomas cargados" : undefined,
+        "Idiomas",
+      ),
     ],
-    [user?.hobby, user?.petFriendly, user?.profession, user?.jobTitle],
+    [user?.profile?.occupation, user?.profile?.education, user?.profile?.languages?.length],
   );
 
   const verificationBadges = useMemo((): VerificationBadge[] => {
-    const verification = user?.verificationStatus;
-    const trustLevel =
-      verification?.reliabilityLevel ??
-      (user?.reliabilityScore &&
-      user.reliabilityScore >= PROFILE_CONSTANTS.RELIABILITY_TOP_THRESHOLD
-        ? "Confianza top"
-        : user?.reliabilityScore &&
-            user.reliabilityScore >= PROFILE_CONSTANTS.RELIABILITY_GOOD_THRESHOLD
-          ? "Roomie confiable"
-          : "Confianza en construcción");
-
-    return [
-      {
-        icon: "mail" as const,
-        label: verification?.email ? "Email verificado" : "Verifica tu email",
-        tone: (verification?.email ? "success" : "pending") as "success" | "pending",
-      },
-      {
-        icon: "shield" as const,
-        label: verification?.identity ? "Identidad confirmada" : "Documentos pendientes",
-        tone: (verification?.identity ? "success" : "pending") as "success" | "pending",
-      },
-      {
-        icon: "phone" as const,
-        label: verification?.phone ? "Teléfono verificado" : "Suma tu teléfono",
-        tone: (verification?.phone ? "success" : "pending") as "success" | "pending",
-      },
-      {
-        icon: "users" as const,
-        label: `Referencias (${verification?.references ?? 0})`,
-        tone: (verification && verification.references > 0 ? "success" : "pending") as
-          | "success"
-          | "pending",
-      },
-      {
-        icon: "award" as const,
-        label: trustLevel ?? "Confianza en construcción",
-        tone: (user?.reliabilityScore &&
-        user.reliabilityScore >= PROFILE_CONSTANTS.RELIABILITY_GOOD_THRESHOLD
-          ? "success"
-          : "pending") as "success" | "pending",
-      },
-    ];
-  }, [user?.reliabilityScore, user?.verificationStatus]);
+    return [];
+  }, []);
 
   const preferenceSections = useMemo(
     (): PreferenceSection[] => [
@@ -207,52 +125,52 @@ export const useProfile = (): UseProfileReturn => {
         icon: "broom" as const,
         title: "Limpieza",
         summary:
-          user?.roommatePreferences?.cleanlinessLevel ??
-          "Contá con qué frecuencia te gusta ordenar los espacios",
-        details:
-          user?.roommatePreferences?.cleanlinessLevel ??
-          "¿Sábado de limpieza intensa o mini rutinas diarias?",
+          user?.profile?.tidiness ?? "Contá con qué frecuencia te gusta ordenar los espacios",
+        details: user?.profile?.tidiness ?? "¿Sábado de limpieza intensa o mini rutinas diarias?",
       },
       {
         id: "schedules",
         icon: "clock-outline" as const,
         title: "Horarios",
-        summary: user?.roommatePreferences?.schedules ?? "¿Team mañanas, nocturno o mixto?",
+        summary: user?.profile?.schedule ?? "¿Team mañanas, nocturno o mixto?",
         details:
-          user?.roommatePreferences?.schedules ??
+          user?.profile?.schedule ??
           "Compartí tus horarios de trabajo/estudio para coordinar mejor",
       },
       {
         id: "pets",
         icon: "paw" as const,
         title: "Mascotas",
-        summary:
-          user?.roommatePreferences?.petsPolicy ??
-          (user?.petFriendly ? "Amo convivir con mascotas" : "Define tu política pet friendly"),
-        details:
-          user?.roommatePreferences?.petsPolicy ??
-          "Contá si vivís con mascotas y cómo organizan el espacio",
+        summary: user?.profile?.petsOk ?? "Define tu política pet friendly",
+        details: user?.profile?.petsOk ?? "Contá si vivís con mascotas y cómo organizan el espacio",
       },
       {
         id: "guests",
         icon: "account-heart-outline" as const,
         title: "Visitas",
-        summary: user?.roommatePreferences?.guestsPolicy ?? "Explicá cómo te gusta recibir visitas",
-        details:
-          user?.roommatePreferences?.guestsPolicy ?? "¿Juntadas frecuentes o momentos puntuales?",
+        summary: user?.profile?.guestsFreq ?? "Explicá cómo te gusta recibir visitas",
+        details: user?.profile?.guestsFreq ?? "¿Juntadas frecuentes o momentos puntuales?",
       },
     ],
-    [user?.petFriendly, user?.roommatePreferences],
+    [
+      user?.profile?.tidiness,
+      user?.profile?.schedule,
+      user?.profile?.petsOk,
+      user?.profile?.guestsFreq,
+    ],
   );
 
   const matchSignals = useMemo((): MatchSignalData[] => {
-    const reliabilityScore = Math.min(Math.max(user?.reliabilityScore ?? 68, 0), 100);
-    const referencesScore = Math.min(
-      (user?.verificationStatus?.references ?? 0) * PROFILE_CONSTANTS.REFERENCES_INCREMENT +
-        PROFILE_CONSTANTS.REFERENCES_BASE_SCORE,
-      PROFILE_CONSTANTS.REFERENCES_MAX_SCORE,
+    const hasPhoto = Boolean(user?.photoUrl);
+    const hasBio = Boolean(
+      user?.profile?.bio && user.profile.bio.length > PROFILE_CONSTANTS.MIN_BIO_LENGTH,
     );
-    const vibeScore = reliabilityScore > 75 ? 88 : reliabilityScore > 60 ? 78 : 65;
+    const hasLocation = Boolean(user?.location?.neighborhood?.id);
+    const hasPreferences = Boolean(user?.preferences);
+
+    const completion = [hasPhoto, hasBio, hasLocation, hasPreferences].filter(Boolean).length;
+    const vibeScore = 55 + completion * 10;
+    const trustScore = 50 + completion * 12;
 
     return [
       {
@@ -266,18 +184,18 @@ export const useProfile = (): UseProfileReturn => {
         id: "trust",
         icon: "shield" as const,
         label: "Confianza",
-        value: reliabilityScore,
+        value: trustScore,
         description: "Completar tu perfil eleva tu posición en la comunidad",
       },
       {
         id: "references",
         icon: "message-circle" as const,
-        label: "Referencias",
-        value: referencesScore,
-        description: "Pedir reseñas acelera la elección del match",
+        label: "Perfil",
+        value: vibeScore,
+        description: "Completar datos mejora tus matches",
       },
     ];
-  }, [user?.reliabilityScore, user?.verificationStatus?.references]);
+  }, [user?.location?.neighborhood?.id, user?.photoUrl, user?.preferences, user?.profile?.bio]);
 
   const checklistItems = useMemo(
     (): ChecklistItemData[] => [
@@ -285,36 +203,38 @@ export const useProfile = (): UseProfileReturn => {
         id: "photo",
         label: "Actualiza tu foto",
         helper: "Una imagen reciente genera confianza inmediata",
-        completed: Boolean(user?.avatar),
+        completed: Boolean(user?.photoUrl),
       },
       {
         id: "bio",
         label: "Completa tu bio",
         helper: "Unas líneas sinceras ayudan a conectar",
-        completed: Boolean(user?.bio && user.bio.length > PROFILE_CONSTANTS.MIN_BIO_LENGTH),
+        completed: Boolean(
+          user?.profile?.bio && user.profile.bio.length > PROFILE_CONSTANTS.MIN_BIO_LENGTH,
+        ),
       },
       {
         id: "prefs",
         label: "Define tus preferencias",
         helper: "Alineá expectativas para matches claros",
-        completed: Boolean(user?.roommatePreferences),
+        completed: Boolean(user?.preferences),
       },
       {
         id: "location",
         label: "Confirma tu locación",
         helper: "Seleccioná departamento, ciudad y barrio",
         completed: Boolean(
-          user?.neighborhoodId &&
+          user?.location?.neighborhood?.id &&
             locationLabels.neighborhood !== DEFAULT_LOCATION_LABELS.neighborhood,
         ),
       },
     ],
     [
       locationLabels.neighborhood,
-      user?.avatar,
-      user?.bio,
-      user?.neighborhoodId,
-      user?.roommatePreferences,
+      user?.photoUrl,
+      user?.profile?.bio,
+      user?.location?.neighborhood?.id,
+      user?.preferences,
     ],
   );
 

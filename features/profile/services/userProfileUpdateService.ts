@@ -4,7 +4,7 @@ import { UserProfileData } from "../interfaces";
 import { User } from "../../../types/user";
 
 class UserProfileUpdateService {
-  private mapFormDataToApiData(formData: UserProfileData): any {
+  private mapFormDataToApiData(formData: Partial<UserProfileData>): any {
     const apiData: any = {};
 
     if (formData.bio !== undefined && formData.bio !== "") {
@@ -54,16 +54,6 @@ class UserProfileUpdateService {
       } else {
         apiData.schedule = formData.sleepTime.toUpperCase() as Schedule;
       }
-    } else if (formData.workSchedule) {
-      if (formData.workSchedule === "morning") {
-        apiData.schedule = Schedule.EARLY_BIRD;
-      } else if (formData.workSchedule === "evening") {
-        apiData.schedule = Schedule.NIGHT_OWL;
-      } else if (formData.workSchedule === "mixed" || formData.workSchedule === "afternoon") {
-        apiData.schedule = Schedule.MIXED;
-      } else {
-        apiData.schedule = formData.workSchedule.toUpperCase() as Schedule;
-      }
     }
 
     // Campos adicionales que vienen del perfil completo (si existen en formData)
@@ -106,7 +96,7 @@ class UserProfileUpdateService {
    * Actualiza el perfil del usuario
    * Endpoint: PUT /api/profiles/me
    */
-  async updateUserProfile(formData: UserProfileData): Promise<User> {
+  async updateUserProfile(formData: Partial<UserProfileData>): Promise<User> {
     try {
       const apiData = this.mapFormDataToApiData(formData);
 

@@ -43,6 +43,7 @@ export const NeighborhoodsSection: React.FC<NeighborhoodsSectionProps> = ({
         neighborhoodId={mainPreferredNeighborhoodId}
         onPress={() => openSelectionModal("mainPreferredNeighborhood")}
         cachedFilters={cachedFilters}
+        isFilterMode
       />
 
       {/* Barrios Preferidos Adicionales */}

@@ -5,13 +5,9 @@ interface UseNeighborhoodsListReturn {
   neighborhoods: any[];
   loading: boolean;
   error: string | null;
-  refetch: () => Promise<void>;
+  refetch: (forceRefresh?: boolean) => Promise<void>;
 }
-/**
- * Hook para cargar la lista de barrios
- * @param enabled - Si está habilitado para cargar
- * @param cityId - ID de la ciudad para filtrar (opcional)
- */
+
 export const useNeighborhoodsList = (
   enabled: boolean = true,
   cityId?: string | null,
@@ -20,11 +16,31 @@ export const useNeighborhoodsList = (
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadNeighborhoods = async () => {
+  const loadNeighborhoods = async (forceRefresh = false) => {
     setLoading(true);
     setError(null);
     try {
-      const allNeighborhoods = await neighborhoodsService.getAllNeighborhoods(cityId || undefined);
+      if (!forceRefresh) {
+        const cached = await neighborhoodsService.loadFromCache(cityId || undefined);
+        if (cached && cached.length > 0) {
+          setNeighborhoods(cached);
+          setLoading(false);
+          neighborhoodsService
+            .getAllNeighborhoods(cityId || undefined, false)
+            .then(updated => {
+              if (updated && updated.length > 0) {
+                setNeighborhoods(updated);
+              }
+            })
+            .catch(() => {});
+          return;
+        }
+      }
+
+      const allNeighborhoods = await neighborhoodsService.getAllNeighborhoods(
+        cityId || undefined,
+        forceRefresh,
+      );
 
       if (allNeighborhoods && Array.isArray(allNeighborhoods) && allNeighborhoods.length > 0) {
         setNeighborhoods(allNeighborhoods);
@@ -43,7 +59,7 @@ export const useNeighborhoodsList = (
 
   useEffect(() => {
     if (enabled) {
-      loadNeighborhoods();
+      loadNeighborhoods(false);
     }
   }, [enabled, cityId]);
 

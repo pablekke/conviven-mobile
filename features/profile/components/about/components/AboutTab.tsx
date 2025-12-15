@@ -1,6 +1,5 @@
 import { StyleSheet, ScrollView } from "react-native";
 import { LifestyleSection } from "./LifestyleSection";
-import { RoutinesSection } from "./RoutinesSection";
 
 interface AboutTabProps {
   getSelectedLabel: (key: string) => string;
@@ -11,10 +10,6 @@ export const AboutTab: React.FC<AboutTabProps> = ({ getSelectedLabel, openSelect
   return (
     <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
       <LifestyleSection
-        getSelectedLabel={getSelectedLabel}
-        openSelectionModal={openSelectionModal}
-      />
-      <RoutinesSection
         getSelectedLabel={getSelectedLabel}
         openSelectionModal={openSelectionModal}
       />

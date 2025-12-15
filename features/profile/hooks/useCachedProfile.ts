@@ -19,11 +19,16 @@ const DEFAULT_PROFILE_DATA: UserProfileData = {
   marijuanaStatus: "",
   alcoholStatus: "",
   hasPets: "",
+  petsOwned: [],
   acceptsPets: "",
   tidinessLevel: "",
   socialLife: "",
-  workSchedule: "",
   sleepTime: "",
+  cooking: "",
+  diet: "",
+  sharePolicy: "",
+  interests: [],
+  zodiacSign: "",
 };
 
 /**

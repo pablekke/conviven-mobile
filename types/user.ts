@@ -17,131 +17,104 @@ export enum Gender {
   UNSPECIFIED = "UNSPECIFIED",
 }
 
-export interface VerificationStatus {
-  email: boolean;
-  identity: boolean;
-  phone: boolean;
-  references: number;
-  reliabilityLevel?: string;
+export interface LocationEntity {
+  id: string;
+  name: string;
 }
 
-export interface RoommatePreferences {
-  cleanlinessLevel?: string;
-  schedules?: string;
-  guestsPolicy?: string;
-  petsPolicy?: string;
-  sharedSpaces?: string;
-  notes?: string;
+export interface LocationObject {
+  neighborhood: LocationEntity;
+  city: LocationEntity;
+  department: LocationEntity;
 }
 
 export interface UserProfile {
   id: string;
   userId: string;
-  bio?: string;
-  currency?: string;
-  tidiness?: string;
-  schedule?: string;
-  guestsFreq?: string;
-  musicUsage?: string;
-  quietHoursStart?: number;
-  quietHoursEnd?: number;
-  smokesCigarettes?: string;
-  smokesWeed?: string;
-  alcohol?: string;
-  petsOwned?: string[];
-  petsOk?: string;
-  cooking?: string;
-  diet?: string;
-  sharePolicy?: string;
-  languages?: string[];
-  interests?: string[];
-  zodiacSign?: string;
-  occupation?: string;
-  education?: string;
-  hasPhoto?: boolean;
-  notificationsEnabled?: boolean;
-  notificationToken?: string | null;
-  lastActiveAt?: string | null;
+  bio: string | null;
+  currency: string;
+  occupation: string | null;
+  education: string | null;
+  tidiness: string;
+  schedule: string;
+  guestsFreq: string;
+  musicUsage: string;
+  smokesCigarettes: string;
+  smokesWeed: string;
+  alcohol: string;
+  petsOwned: string[];
+  petsOk: string;
+  cooking: string;
+  diet: string;
+  sharePolicy: string;
+  languages: string[];
+  interests: string[];
+  zodiacSign: string;
+  hasPhoto: boolean;
+  notificationsEnabled: boolean;
+  notificationToken: string | null;
+  lastActiveAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface UserSearchPreferences {
+export interface UserPreferences {
   id: string;
   userId: string;
-  noCigarettes?: boolean;
-  noWeed?: boolean;
-  noPets?: boolean;
-  petsRequired?: boolean;
-  requireQuietHoursOverlap?: boolean;
-  tidinessMin?: string;
-  schedulePref?: string;
-  guestsMax?: string;
-  musicMax?: string;
-  languagesPref?: string[];
-  interestsPref?: string[];
-  zodiacPref?: string[];
-  lastActiveWithinDays?: number;
+  noCigarettes: boolean | null;
+  noWeed: boolean | null;
+  noPets: boolean | null;
+  petsRequired: boolean | null;
+  tidinessMin: string;
+  schedulePref: string;
+  guestsMax: string;
+  musicMax: string;
+  languagesPref: string[];
+  interestsPref: string[];
+  zodiacPref: string[];
+  lastActiveWithinDays: number;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface Department {
+export interface UserFilters {
   id: string;
-  name: string;
-}
-
-export interface City {
-  id: string;
-  name: string;
-  departmentId: string;
-  department?: Department;
-}
-
-export interface Neighborhood {
-  id: string;
-  name: string;
-  cityId: string;
-  cityName?: string;
-  departmentId?: string;
-  departmentName?: string;
-  city?: City;
+  userId: string;
+  includeAdjacentNeighborhoods: boolean;
+  genderPref: string[];
+  minAge: number;
+  maxAge: number;
+  budgetMin: string;
+  budgetMax: string;
+  onlyWithPhoto: boolean;
+  createdAt: string;
+  updatedAt: string;
+  mainPreferredLocation: LocationObject;
+  preferredLocations: LocationObject[];
 }
 
 export interface User {
   id: string;
   email: string;
-  name: string;
-  firstName?: string;
-  lastName?: string;
-  avatar?: string;
-  bio?: string;
-  location?: string;
-  phone?: string;
-  birthDate?: string;
-  gender?: Gender;
-  departmentId?: string;
-  departmentName?: string;
-  cityId?: string;
-  cityName?: string;
-  neighborhoodId?: string;
-  neighborhoodName?: string;
-  role?: UserRole;
-  status?: UserStatus;
-  searchPreferencesId?: string;
-  reliabilityScore?: number;
-  verificationStatus?: VerificationStatus;
-  searchStatus?: string;
-  lastLoginAt?: string;
-  roommatePreferences?: RoommatePreferences;
-  hobby?: string;
-  profession?: string;
-  jobTitle?: string;
-  petFriendly?: boolean;
-  profile?: UserProfile;
-  searchPreferences?: UserSearchPreferences;
-  filters?: any;
+  historicalEmail: string | null;
+  firstName: string;
+  lastName: string;
+  birthDate: string;
+  gender: string; // MALE, FEMALE, etc.
+  desirabilityRating: number;
+  role: string;
+  status: string;
+  location: LocationObject;
+  profile: UserProfile;
+  preferences: UserPreferences;
+  filters: UserFilters;
+  photoUrl: string | null;
+  secondaryPhotoUrls: string[];
+  lastLoginAt: string | null;
+  discardedAt: string | null;
 }
+
+// Auth & Helper Interfaces (Kept as they are needed for app flow, though not in user/me body)
 
 export interface AuthState {
   user: User | null;
@@ -166,52 +139,26 @@ export interface RegisterCredentials extends LoginCredentials {
   role?: UserRole;
 }
 
-export interface PublicRegisterPayload {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  birthDate: string;
-  gender: Gender;
-  departmentId?: string;
-  cityId?: string;
-  neighborhoodId?: string;
-  role?: UserRole;
-  status?: UserStatus;
+export interface Department {
+  id: string;
+  name: string;
 }
 
-export interface AdminRegisterPayload {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  birthDate: string;
-  gender: Gender;
+export interface City {
+  id: string;
+  name: string;
   departmentId: string;
-  cityId: string;
-  neighborhoodId: string;
+  department?: Department;
 }
 
-export interface UpdateUserPayload {
-  email?: string;
-  role?: UserRole;
-  status?: UserStatus;
-  searchPreferencesId?: string;
-  firstName?: string;
-  lastName?: string;
-  phone?: string;
-  bio?: string;
-  departmentId?: string;
-  cityId?: string;
-  neighborhoodId?: string;
-  departmentName?: string;
+export interface Neighborhood {
+  id: string;
+  name: string;
+  cityId: string;
   cityName?: string;
-  neighborhoodName?: string;
-  gender?: Gender;
-  birthDate?: string;
-  location?: string;
-  profession?: string;
-  hobby?: string;
+  departmentId?: string;
+  departmentName?: string;
+  city?: City;
 }
 
 export interface UserListQuery {
@@ -242,3 +189,20 @@ export interface PaginatedUsersResponse {
   users: User[];
   pagination: PaginationMeta;
 }
+
+// Payloads (compatibilidad)
+export type PublicRegisterPayload = RegisterCredentials;
+export type AdminRegisterPayload = RegisterCredentials & { role?: UserRole | string };
+
+export type UpdateUserPayload = Partial<{
+  firstName: string;
+  lastName: string;
+  birthDate: string;
+  gender: Gender | string;
+  departmentId: string;
+  cityId: string;
+  neighborhoodId: string;
+  role: UserRole | string;
+  status: UserStatus | string;
+  photoUrl: string | null;
+}>;

@@ -1,5 +1,7 @@
-import { Language, Interest, ZodiacSign } from "../enums/searchPreferences.enums";
 import {
+  Language,
+  Interest,
+  ZodiacSign,
   SmokesCigarettes,
   SmokesWeed,
   Alcohol,
@@ -10,7 +12,41 @@ import {
   GuestsFreq,
   MusicUsage,
   GenderPreference,
-} from "../enums";
+  Cooking,
+  Diet,
+  SharePolicy,
+} from "../enums/searchPreferences.enums";
+
+const zodiacOptions = [
+  { value: ZodiacSign.ARIES, label: "Aries" },
+  { value: ZodiacSign.TAURUS, label: "Tauro" },
+  { value: ZodiacSign.GEMINI, label: "Géminis" },
+  { value: ZodiacSign.CANCER, label: "Cáncer" },
+  { value: ZodiacSign.LEO, label: "Leo" },
+  { value: ZodiacSign.VIRGO, label: "Virgo" },
+  { value: ZodiacSign.LIBRA, label: "Libra" },
+  { value: ZodiacSign.SCORPIO, label: "Escorpio" },
+  { value: ZodiacSign.SAGITTARIUS, label: "Sagitario" },
+  { value: ZodiacSign.CAPRICORN, label: "Capricornio" },
+  { value: ZodiacSign.AQUARIUS, label: "Acuario" },
+  { value: ZodiacSign.PISCES, label: "Piscis" },
+];
+
+const interestOptions = [
+  { value: Interest.GAMING, label: "Videojuegos" },
+  { value: Interest.READING, label: "Lectura" },
+  { value: Interest.COOKING, label: "Cocina" },
+  { value: Interest.SPORTS, label: "Deportes" },
+  { value: Interest.MUSIC, label: "Música" },
+  { value: Interest.TRAVEL, label: "Viajes" },
+  { value: Interest.ART, label: "Arte" },
+  { value: Interest.TECHNOLOGY, label: "Tecnología" },
+  { value: Interest.FITNESS, label: "Fitness" },
+  { value: Interest.PHOTOGRAPHY, label: "Fotografía" },
+  { value: Interest.MOVIES, label: "Cine" },
+  { value: Interest.DANCE, label: "Danza" },
+  { value: Interest.OTHER, label: "Otro" },
+];
 
 export const QUESTION_OPTIONS = {
   smoking: [
@@ -34,6 +70,11 @@ export const QUESTION_OPTIONS = {
     { value: PetType.OTHER, label: "Otro" },
     { value: "none", label: "No tengo" },
   ],
+  petsOwned: [
+    { value: PetType.DOG, label: "Perro" },
+    { value: PetType.CAT, label: "Gato" },
+    { value: PetType.OTHER, label: "Otro" },
+  ],
   acceptPets: [
     { value: PetsOk.CATS_DOGS_OK, label: "Sí, me gustan" },
     { value: PetsOk.CATS_OK, label: "Solo gatos" },
@@ -55,12 +96,24 @@ export const QUESTION_OPTIONS = {
     { value: Schedule.NIGHT_OWL, label: "Nocturno" },
     { value: Schedule.MIXED, label: "Flexible" },
   ],
-  workRoutine: [
-    { value: "morning", label: "Mañana" },
-    { value: "afternoon", label: "Tarde" },
-    { value: "evening", label: "Noche" },
-    { value: "mixed", label: "Mixto" },
+  cooking: [
+    { value: Cooking.RARE, label: "Raramente cocino" },
+    { value: Cooking.SOMETIMES, label: "A veces cocino" },
+    { value: Cooking.OFTEN, label: "Cocino seguido" },
   ],
+  diet: [
+    { value: Diet.NONE, label: "Sin restricciones" },
+    { value: Diet.VEGETARIAN, label: "Vegetariano" },
+    { value: Diet.VEGAN, label: "Vegano" },
+    { value: Diet.OTHER, label: "Otra" },
+  ],
+  sharePolicy: [
+    { value: SharePolicy.STRICT, label: "Cada uno lo suyo" },
+    { value: SharePolicy.ASK_FIRST, label: "Preguntar primero" },
+    { value: SharePolicy.BASIC_SHARED, label: "Compartir básicos" },
+  ],
+  interests: interestOptions,
+  zodiacSign: zodiacOptions,
   noCigarettes: [
     { value: "false", label: "Sí acepto" },
     { value: "true", label: "No acepto" },
@@ -129,33 +182,6 @@ export const QUESTION_OPTIONS = {
     { value: Language.ITALIAN, label: "Italiano" },
     { value: Language.GERMAN, label: "Alemán" },
   ],
-  interestsPref: [
-    { value: Interest.GAMING, label: "Videojuegos" },
-    { value: Interest.READING, label: "Lectura" },
-    { value: Interest.COOKING, label: "Cocina" },
-    { value: Interest.SPORTS, label: "Deportes" },
-    { value: Interest.MUSIC, label: "Música" },
-    { value: Interest.TRAVEL, label: "Viajes" },
-    { value: Interest.ART, label: "Arte" },
-    { value: Interest.TECHNOLOGY, label: "Tecnología" },
-    { value: Interest.FITNESS, label: "Fitness" },
-    { value: Interest.PHOTOGRAPHY, label: "Fotografía" },
-    { value: Interest.MOVIES, label: "Cine" },
-    { value: Interest.DANCE, label: "Danza" },
-    { value: Interest.OTHER, label: "Otro" },
-  ],
-  zodiacPref: [
-    { value: ZodiacSign.ARIES, label: "Aries" },
-    { value: ZodiacSign.TAURUS, label: "Tauro" },
-    { value: ZodiacSign.GEMINI, label: "Géminis" },
-    { value: ZodiacSign.CANCER, label: "Cáncer" },
-    { value: ZodiacSign.LEO, label: "Leo" },
-    { value: ZodiacSign.VIRGO, label: "Virgo" },
-    { value: ZodiacSign.LIBRA, label: "Libra" },
-    { value: ZodiacSign.SCORPIO, label: "Escorpio" },
-    { value: ZodiacSign.SAGITTARIUS, label: "Sagitario" },
-    { value: ZodiacSign.CAPRICORN, label: "Capricornio" },
-    { value: ZodiacSign.AQUARIUS, label: "Acuario" },
-    { value: ZodiacSign.PISCES, label: "Piscis" },
-  ],
+  interestsPref: interestOptions,
+  zodiacPref: zodiacOptions,
 };

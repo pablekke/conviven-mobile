@@ -7,7 +7,7 @@ export const mockConversations: Conversation[] = [
       id: "user-federico",
       firstName: "Federico",
       lastName: "",
-      avatar: "https://i.pravatar.cc/300?img=12",
+      photoUrl: "https://i.pravatar.cc/300?img=12",
     },
     lastMessage: {
       id: "msg-3",
@@ -26,7 +26,7 @@ export const mockConversations: Conversation[] = [
       id: "user-fernanda",
       firstName: "Fernanda",
       lastName: "",
-      avatar: "https://i.pravatar.cc/300?img=47",
+      photoUrl: "https://i.pravatar.cc/300?img=47",
     },
     lastMessage: {
       id: "msg-6",
@@ -45,7 +45,7 @@ export const mockConversations: Conversation[] = [
       id: "user-agustin",
       firstName: "Agustin",
       lastName: "",
-      avatar: "https://i.pravatar.cc/300?img=33",
+      photoUrl: "https://i.pravatar.cc/300?img=33",
     },
     lastMessage: {
       id: "msg-9",

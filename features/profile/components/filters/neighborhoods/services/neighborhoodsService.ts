@@ -1,10 +1,21 @@
 import LocationService from "../../../../../../services/locationService";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Neighborhood } from "../../../../../../types/user";
 
 const neighborhoodCache = new Map<string, Neighborhood>();
 const adjacentCache = new Map<string, Neighborhood[]>();
 const pendingRequests = new Map<string, Promise<Neighborhood | null>>();
 const pendingAdjacentRequests = new Map<string, Promise<Neighborhood[]>>();
+
+const ALL_NEIGHBORHOODS_CACHE_KEY = "@neighborhoods:all";
+const ALL_NEIGHBORHOODS_CACHE_EXPIRY_KEY = "@neighborhoods:all:expiry";
+const CACHE_DURATION = 70 * 24 * 60 * 60 * 1000; // 7 días
+
+interface CachedNeighborhoodsData {
+  neighborhoods: Neighborhood[];
+  cityId?: string;
+  timestamp: number;
+}
 
 export const getCachedNeighborhood = (id: string): Neighborhood | null => {
   return neighborhoodCache.get(id) || null;
@@ -26,15 +37,110 @@ export const getCachedNeighborhoods = (ids: string[]): Neighborhood[] => {
  */
 export const neighborhoodsService = {
   /**
-   * Obtiene todos los barrios disponibles
-   * @param cityId - ID de la ciudad para filtrar (opcional)
+   * Carga barrios desde el cache persistente
    */
-  async getAllNeighborhoods(cityId?: string): Promise<Neighborhood[]> {
+  async loadFromCache(cityId?: string): Promise<Neighborhood[] | null> {
     try {
+      const cacheKey = cityId
+        ? `${ALL_NEIGHBORHOODS_CACHE_KEY}:${cityId}`
+        : ALL_NEIGHBORHOODS_CACHE_KEY;
+      const expiryKey = cityId
+        ? `${ALL_NEIGHBORHOODS_CACHE_EXPIRY_KEY}:${cityId}`
+        : ALL_NEIGHBORHOODS_CACHE_EXPIRY_KEY;
+
+      const cachedData = await AsyncStorage.getItem(cacheKey);
+      const cachedExpiry = await AsyncStorage.getItem(expiryKey);
+
+      if (cachedData && cachedExpiry) {
+        const expiry = parseInt(cachedExpiry, 10);
+        if (Date.now() < expiry) {
+          const data: CachedNeighborhoodsData = JSON.parse(cachedData);
+          // Actualizar cache en memoria también
+          data.neighborhoods.forEach(n => {
+            if (n.id) {
+              neighborhoodCache.set(n.id, n);
+            }
+          });
+          return data.neighborhoods;
+        } else {
+          // Cache expirado, limpiar
+          await AsyncStorage.removeItem(cacheKey);
+          await AsyncStorage.removeItem(expiryKey);
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error("Error loading neighborhoods from cache:", error);
+      return null;
+    }
+  },
+
+  /**
+   * Guarda barrios en el cache persistente
+   */
+  async saveToCache(neighborhoods: Neighborhood[], cityId?: string): Promise<void> {
+    try {
+      const cacheKey = cityId
+        ? `${ALL_NEIGHBORHOODS_CACHE_KEY}:${cityId}`
+        : ALL_NEIGHBORHOODS_CACHE_KEY;
+      const expiryKey = cityId
+        ? `${ALL_NEIGHBORHOODS_CACHE_EXPIRY_KEY}:${cityId}`
+        : ALL_NEIGHBORHOODS_CACHE_EXPIRY_KEY;
+
+      const data: CachedNeighborhoodsData = {
+        neighborhoods,
+        cityId,
+        timestamp: Date.now(),
+      };
+
+      const expiry = Date.now() + CACHE_DURATION;
+
+      await AsyncStorage.setItem(cacheKey, JSON.stringify(data));
+      await AsyncStorage.setItem(expiryKey, expiry.toString());
+
+      // Actualizar cache en memoria también
+      neighborhoods.forEach(n => {
+        if (n.id) {
+          neighborhoodCache.set(n.id, n);
+        }
+      });
+    } catch (error) {
+      console.error("Error saving neighborhoods to cache:", error);
+    }
+  },
+
+  /**
+   * Obtiene todos los barrios disponibles (con cache persistente)
+   * @param cityId - ID de la ciudad para filtrar (opcional)
+   * @param forceRefresh - Si es true, ignora el cache y hace fetch
+   */
+  async getAllNeighborhoods(cityId?: string, forceRefresh = false): Promise<Neighborhood[]> {
+    try {
+      // Intentar cargar del cache primero si no es forceRefresh
+      if (!forceRefresh) {
+        const cached = await this.loadFromCache(cityId);
+        if (cached && cached.length > 0) {
+          return cached;
+        }
+      }
+
+      // Si no hay cache o es forceRefresh, hacer fetch
       const neighborhoods = await LocationService.listNeighborhoods(cityId);
-      return neighborhoods || [];
+      const result = neighborhoods || [];
+
+      // Guardar en cache
+      if (result.length > 0) {
+        await this.saveToCache(result, cityId);
+      }
+
+      return result;
     } catch (error) {
       console.error("Error fetching all neighborhoods:", error);
+      // Si hay error, intentar devolver del cache aunque esté expirado
+      const cached = await this.loadFromCache(cityId);
+      if (cached && cached.length > 0) {
+        return cached;
+      }
       throw error;
     }
   },

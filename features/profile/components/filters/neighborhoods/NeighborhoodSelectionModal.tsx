@@ -21,7 +21,9 @@ interface NeighborhoodSelectionModalProps {
   mode?: "main" | "multiple";
   onClose: () => void;
   onConfirm: (selectedIds: string[], mainId?: string | null) => void;
-  excludeNeighborhoodIds?: string[]; // IDs a excluir de la lista
+  excludeNeighborhoodIds?: string[];
+  cityId?: string;
+  isFilterMode?: boolean;
 }
 
 export const NeighborhoodSelectionModal: React.FC<NeighborhoodSelectionModalProps> = ({
@@ -32,6 +34,8 @@ export const NeighborhoodSelectionModal: React.FC<NeighborhoodSelectionModalProp
   onClose,
   onConfirm,
   excludeNeighborhoodIds = [],
+  cityId,
+  isFilterMode = false,
 }) => {
   const { colors } = useTheme();
 
@@ -51,6 +55,7 @@ export const NeighborhoodSelectionModal: React.FC<NeighborhoodSelectionModalProp
     mainNeighborhoodId,
     mode,
     excludeNeighborhoodIds,
+    cityId,
   });
 
   const handleConfirm = () => {
@@ -101,7 +106,7 @@ export const NeighborhoodSelectionModal: React.FC<NeighborhoodSelectionModalProp
             <View style={styles.emptyContainer}>
               <Text style={[styles.emptyText, { color: colors.destructive }]}>{error}</Text>
               <TouchableOpacity
-                onPress={refetch}
+                onPress={() => refetch()}
                 style={[styles.retryButton, { backgroundColor: colors.primary }]}
               >
                 <Text style={[styles.retryButtonText, { color: colors.primaryForeground }]}>
@@ -155,7 +160,7 @@ export const NeighborhoodSelectionModal: React.FC<NeighborhoodSelectionModalProp
                           >
                             {neighborhood.name}
                           </Text>
-                          {isMain && (
+                          {isMain && mode === "main" && (
                             <View style={[styles.mainBadge, { backgroundColor: colors.primary }]}>
                               <Text
                                 style={[styles.mainBadgeText, { color: colors.primaryForeground }]}
@@ -177,9 +182,11 @@ export const NeighborhoodSelectionModal: React.FC<NeighborhoodSelectionModalProp
               </ScrollView>
 
               <View style={styles.footer}>
-                <Text style={[styles.selectedCount, { color: colors.mutedForeground }]}>
-                  Cambiar de barrio eliminará todos los barrios adicionales seleccionados.
-                </Text>
+                {isFilterMode && (
+                  <Text style={[styles.selectedCount, { color: colors.mutedForeground }]}>
+                    Cambiar de barrio eliminará todos los barrios adicionales seleccionados.
+                  </Text>
+                )}
                 <TouchableOpacity
                   style={[
                     styles.confirmButton,

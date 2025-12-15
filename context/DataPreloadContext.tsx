@@ -9,6 +9,7 @@ import React, {
   useEffect,
   ReactNode,
   useCallback,
+  useRef,
 } from "react";
 
 const DataPreloadContext = createContext<DataPreloadContextType>({
@@ -29,6 +30,7 @@ interface DataPreloadProviderProps {
 export const DataPreloadProvider: React.FC<DataPreloadProviderProps> = ({ children }) => {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [state, setState] = useState<DataPreloadState>(defaultState);
+  const lastPreloadedUserIdRef = useRef<string | null>(null);
 
   const { loadChats, loadProfile, loadSearchFilters, preloadAllData } = usePreloadActions(
     setState,
@@ -79,14 +81,20 @@ export const DataPreloadProvider: React.FC<DataPreloadProviderProps> = ({ childr
   }, []);
 
   useEffect(() => {
-    if (user && isAuthenticated && !authLoading) {
+    const userId = user?.id ?? null;
+    if (!userId || !isAuthenticated || authLoading) {
+      return;
+    }
+    if (lastPreloadedUserIdRef.current !== userId) {
+      lastPreloadedUserIdRef.current = userId;
       preloadAllData();
     }
-  }, [user, isAuthenticated, authLoading, preloadAllData]);
+  }, [user?.id, isAuthenticated, authLoading, preloadAllData]);
 
   useEffect(() => {
     if (!isAuthenticated) {
       clearCache();
+      lastPreloadedUserIdRef.current = null;
     }
   }, [isAuthenticated, clearCache]);
 

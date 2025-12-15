@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Image } from "react-native";
-
 import { mapBackendToProfileLike, type MockedBackendUser } from "../mocks/incomingProfile";
 import { useProfileCardData, type ProfileLike } from "./useProfileCardData";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Image } from "react-native";
 
 type SwipeDirection = "like" | "dislike";
 

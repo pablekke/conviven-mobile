@@ -7,14 +7,14 @@ import { useTheme } from "../context/ThemeContext";
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const LOADING_PHRASES = [
-  "Buscando los mejores matches para vos",
-  "Encontrando tu compañero ideal",
-  "Analizando perfiles compatibles",
+  "Buscando los mejores matches para vos...",
+  "Encontrando tu compañero ideal...",
+  "Analizando perfiles compatibles...",
   "Tu próximo roomie está a un swipe de distancia",
-  "Buscando personas que encajen con tu estilo",
-  "Encontrando matches perfectos",
-  "Casi listo, estamos buscando",
-  "Tu compañero ideal te está esperando",
+  "Buscando personas que encajen con tu estilo...",
+  "Encontrando matches perfectos...",
+  "Casi listo, estamos buscando...",
+  "Tu compañero ideal te está esperando...",
 ];
 
 interface LoadingScreenProps {

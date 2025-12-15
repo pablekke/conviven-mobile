@@ -301,6 +301,7 @@ export default function FiltersScreen() {
         selectedNeighborhoodIds={preferredLocations}
         mainNeighborhoodId={mainPreferredNeighborhoodId}
         mode={selectedQuestion === "mainPreferredNeighborhood" ? "main" : "multiple"}
+        isFilterMode
         excludeNeighborhoodIds={
           selectedQuestion === "preferredLocations" && mainPreferredNeighborhoodId
             ? [mainPreferredNeighborhoodId]

@@ -1,5 +1,6 @@
-import { UpdateUserPayload, User } from "../../../types/user";
 import UserService from "../../../services/userService";
+import { apiPatch } from "../../../services/apiHelper";
+import { User } from "../../../types/user";
 
 class ProfileService {
   /**
@@ -16,8 +17,16 @@ class ProfileService {
    * @param payload - Datos a actualizar
    * @returns Usuario actualizado
    */
-  async update(userId: string, payload: UpdateUserPayload): Promise<User> {
+  async update(userId: string, payload: any): Promise<User> {
     return UserService.update(userId, payload);
+  }
+
+  /**
+   * Actualiza el perfil del usuario autenticado (PATCH /api/profiles/me)
+   * Se usa, por ejemplo, para actualizar ubicación dentro del objeto user.
+   */
+  async updateMe(payload: any): Promise<User> {
+    return apiPatch<User>("/profiles/me", payload);
   }
 
   /**

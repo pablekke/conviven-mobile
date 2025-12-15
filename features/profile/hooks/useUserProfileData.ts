@@ -12,11 +12,16 @@ const DEFAULT_PROFILE_DATA: UserProfileData = {
   marijuanaStatus: "",
   alcoholStatus: "",
   hasPets: "",
+  petsOwned: [],
   acceptsPets: "",
   tidinessLevel: "",
   socialLife: "",
-  workSchedule: "",
   sleepTime: "",
+  cooking: "",
+  diet: "",
+  sharePolicy: "",
+  interests: [],
+  zodiacSign: "",
 };
 
 export const useUserProfileData = (): UseUserProfileDataReturn => {
@@ -29,6 +34,7 @@ export const useUserProfileData = (): UseUserProfileDataReturn => {
   const [originalData, setOriginalData] = useState<UserProfileData>(
     cachedProfileData || DEFAULT_PROFILE_DATA,
   );
+
   const [loading, setLoading] = useState(cacheLoading);
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -50,10 +56,21 @@ export const useUserProfileData = (): UseUserProfileDataReturn => {
   }, [cachedProfileData, cacheLoading]);
 
   const updateProfileData = useCallback(
-    (field: keyof UserProfileData, value: string) => {
+    (field: keyof UserProfileData, value: string | string[]) => {
       setProfileData(prev => {
         const newData = { ...prev, [field]: value };
+
+        // Debugging change detection
+        // console.log(`Updating ${field} to`, value);
+        // console.log("Old value:", originalData[field]);
+
+        // Simple JSON comparison might fail if key order differs, but usually consistent for shallow copies
+        // Better: compare specific field change against originalData?
+        // But we need to know if *any* field is different from originalData.
+
         const changed = JSON.stringify(newData) !== JSON.stringify(originalData);
+        // console.log("Has changes?", changed);
+
         setHasChanges(changed);
 
         if (changed) {
@@ -73,28 +90,9 @@ export const useUserProfileData = (): UseUserProfileDataReturn => {
 
     setSaving(true);
     try {
-      const changedFields: Partial<UserProfileData> = {};
-
-      Object.keys(profileData).forEach(key => {
-        const field = key as keyof UserProfileData;
-        if (profileData[field] !== originalData[field]) {
-          changedFields[field] = profileData[field];
-        }
-      });
-
-      if (Object.keys(changedFields).length === 0) {
-        setSaving(false);
-        return;
-      }
-
       const completeProfileData = {
-        ...changedFields,
+        ...profileData,
         ...(fullProfile?.profile && {
-          cooking: fullProfile.profile.cooking,
-          diet: fullProfile.profile.diet,
-          sharePolicy: fullProfile.profile.sharePolicy,
-          interests: fullProfile.profile.interests,
-          zodiacSign: fullProfile.profile.zodiacSign,
           musicUsage: fullProfile.profile.musicUsage,
           quietHoursStart: fullProfile.profile.quietHoursStart,
           quietHoursEnd: fullProfile.profile.quietHoursEnd,

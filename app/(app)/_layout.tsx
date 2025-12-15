@@ -62,6 +62,12 @@ const tabBarStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  iconDump: {
+    width: 36,
+    height: 180,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });
 
 export default function AppLayout() {
@@ -74,8 +80,10 @@ export default function AppLayout() {
       const backgroundColor = focused ? `${primaryColor}22` : "transparent";
 
       return (
-        <View style={[tabBarStyles.iconContainer, { backgroundColor }]}>
-          <Ionicons name={name} size={focused ? size + 2 : size} color={iconColor} />
+        <View style={tabBarStyles.iconDump}>
+          <View style={[tabBarStyles.iconContainer, { backgroundColor }]}>
+            <Ionicons name={name} size={focused ? size + 2 : size} color={iconColor} />
+          </View>
         </View>
       );
     };

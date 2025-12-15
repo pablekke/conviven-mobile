@@ -1,15 +1,18 @@
-import { Feather } from "@expo/vector-icons";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { useState, useMemo } from "react";
-
+import { QUESTION_OPTIONS } from "../constants/questionOptions";
 import { ProfileActionButton } from "./ProfileActionButton";
 import { ProfilePhotoGallery } from "./ProfilePhotoGallery";
+import { findOptionLabel } from "./roommate/hooks";
+import { Feather } from "@expo/vector-icons";
+import { useState, useMemo } from "react";
 
 interface ProfileCardProps {
   avatar?: string;
   userName: string;
   userAge: number;
   progressPercentage: number;
+  birthDate?: string | null;
+  gender?: string | null;
   photos?: string[];
   onEditPress: () => void;
   onSettingsPress?: () => void;
@@ -21,6 +24,8 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
   userName,
   userAge,
   progressPercentage,
+  birthDate,
+  gender,
   photos = [],
   onEditPress,
   onSettingsPress,
@@ -38,6 +43,32 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
     }
     return [];
   }, [photos, avatar]);
+
+  const formatBirthDate = (dateString: string | null | undefined): string => {
+    if (!dateString) return "";
+    try {
+      if (dateString.includes("T")) {
+        const datePart = dateString.split("T")[0];
+        if (datePart.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          const [year, month, day] = datePart.split("-");
+          return `${day}/${month}/${year}`;
+        }
+      }
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "";
+      const year = date.getUTCFullYear();
+      const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+      const day = String(date.getUTCDate()).padStart(2, "0");
+      return `${day}/${month}/${year}`;
+    } catch {
+      return "";
+    }
+  };
+
+  const genderLabel = useMemo(() => {
+    if (!gender) return "";
+    return findOptionLabel(gender, QUESTION_OPTIONS.gender) || "";
+  }, [gender]);
 
   const handleAvatarPress = () => {
     if (allPhotos.length > 0) {
@@ -78,6 +109,23 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
       <Text style={styles.userName}>
         {userName}, {userAge}
       </Text>
+
+      {(birthDate || gender) && (
+        <View style={styles.infoRow}>
+          {birthDate && (
+            <View style={styles.infoItem}>
+              <Text style={styles.infoLabel}>Fecha de nacimiento</Text>
+              <Text style={styles.infoValue}>{formatBirthDate(birthDate)}</Text>
+            </View>
+          )}
+          {gender && (
+            <View style={styles.infoItem}>
+              <Text style={styles.infoLabel}>Género</Text>
+              <Text style={styles.infoValue}>{genderLabel}</Text>
+            </View>
+          )}
+        </View>
+      )}
 
       <View style={styles.divider} />
 
@@ -153,6 +201,26 @@ const styles = StyleSheet.create({
     color: "#1F2937",
     marginTop: 4,
     marginBottom: 12,
+  },
+  infoRow: {
+    flexDirection: "row",
+    width: "100%",
+    gap: 12,
+    marginBottom: 12,
+  },
+  infoItem: {
+    flex: 1,
+  },
+  infoLabel: {
+    fontSize: 12,
+    fontFamily: "Inter-Medium",
+    color: "#6B7280",
+    marginBottom: 4,
+  },
+  infoValue: {
+    fontSize: 14,
+    fontFamily: "Inter-SemiBold",
+    color: "#1F2937",
   },
   divider: {
     width: "100%",

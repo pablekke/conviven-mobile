@@ -3,7 +3,6 @@ export type SelectionType = "department" | "city" | "neighborhood";
 export interface EditForm {
   firstName: string;
   lastName: string;
-  phone: string;
   bio: string;
   location: string;
   departmentId: string;

@@ -11,7 +11,11 @@ export function useAuthNavigation() {
   const router = useRouter();
 
   const getTargetRoute = useCallback(() => {
-    if (!user?.firstName || !user?.lastName || !user?.departmentId || !user?.neighborhoodId) {
+    const hasLocation =
+      Boolean(user?.location?.department?.id) &&
+      Boolean(user?.location?.city?.id) &&
+      Boolean(user?.location?.neighborhood?.id);
+    if (!user?.firstName || !user?.lastName || !hasLocation) {
       return "/";
     }
     return "/";
@@ -29,7 +33,6 @@ export function useAuthNavigation() {
     } else if (isAuthenticated && inAuthGroup) {
       router.replace(getTargetRoute());
     }
-    // No redirigir si ya está en app - evita loops
   }, [isAuthenticated, segments, isLoading, router, getTargetRoute]);
 
   useEffect(() => {

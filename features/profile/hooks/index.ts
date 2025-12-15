@@ -30,6 +30,7 @@ export type { UseCachedProfileReturn } from "./useCachedProfile";
 
 export { useEditProfileLogic } from "./useEditProfileLogic";
 export { useEditFiltersLogic } from "./useEditFiltersLogic";
+export { useOtherTabsSelectionModal } from "./useOtherTabsSelectionModal";
 
 export { useProfileScreen } from "./useProfileScreen";
 

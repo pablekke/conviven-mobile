@@ -47,7 +47,7 @@ export const usePreloadActions = (
     }));
 
     try {
-      const timeoutPromise = createTimeoutPromise("Preload timeout", 10000);
+      const timeoutPromise = createTimeoutPromise("Preload timeout", 20000);
 
       await Promise.race([
         Promise.allSettled([

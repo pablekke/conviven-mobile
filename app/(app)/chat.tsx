@@ -71,7 +71,7 @@ export default function ChatScreen() {
               <View className="flex-1 bg-background rounded-t-[32px]">
                 <ChatSearchBar value={searchQuery} onChangeText={setSearchQuery} />
                 <View className="flex-1 overflow-hidden">
-                <ChatList chats={filteredChats} />
+                  <ChatList chats={filteredChats} />
                 </View>
               </View>
             </>

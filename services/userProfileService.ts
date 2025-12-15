@@ -1,6 +1,6 @@
-import { UserProfile, UserSearchPreferences } from "../types/user";
-import { resilientRequest } from "./apiClient";
+import { UserProfile, UserPreferences } from "../types/user";
 import { HttpMethod } from "@/core/enums/http.enums";
+import { resilientRequest } from "./apiClient";
 
 function resolveMethod(method?: string | null): HttpMethod {
   if (!method) {
@@ -42,7 +42,7 @@ class UserProfileService {
   async getFullUserProfile(): Promise<{
     user?: any;
     profile?: UserProfile;
-    searchPreferences?: UserSearchPreferences;
+    searchPreferences?: UserPreferences;
     filters?: any;
   }> {
     try {

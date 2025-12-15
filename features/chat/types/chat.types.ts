@@ -4,7 +4,7 @@ export interface UserShort {
   id: string;
   firstName: string;
   lastName: string;
-  avatar?: string;
+  photoUrl?: string | null;
 }
 
 export interface ChatUser {

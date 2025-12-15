@@ -154,7 +154,7 @@ export const useProfilePhotos = (): UseProfilePhotosReturn => {
 
       // Actualizar el avatar del usuario en el contexto
       if (user && uploadedPhoto?.url) {
-        await updateUser({ avatar: uploadedPhoto.url });
+        await updateUser({ photoUrl: uploadedPhoto.url });
         await refreshUser();
       }
 
@@ -231,11 +231,9 @@ export const useProfilePhotos = (): UseProfilePhotosReturn => {
         const updatedPhotos = await ProfilePhotoService.getAll();
         await refreshPhotos();
 
-        // Actualizar el avatar del usuario en el contexto con la nueva foto principal
         const newPrimaryPhoto = updatedPhotos.find(p => p.id === photoId);
         if (user && newPrimaryPhoto?.url) {
-          await updateUser({ avatar: newPrimaryPhoto.url });
-          // También refrescar el usuario completo para asegurar sincronización
+          await updateUser({ photoUrl: newPrimaryPhoto.url });
           await refreshUser();
         }
 
@@ -283,7 +281,7 @@ export const useProfilePhotos = (): UseProfilePhotosReturn => {
                     await ProfilePhotoService.setPrimary(nextPrimary.id);
                     // Actualizar el avatar del usuario con la nueva foto principal
                     if (user && nextPrimary.url) {
-                      await updateUser({ avatar: nextPrimary.url });
+                      await updateUser({ photoUrl: nextPrimary.url });
                       await refreshUser();
                     }
                   }

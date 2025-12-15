@@ -33,19 +33,19 @@ export function useDeckController<T>(items: readonly T[]) {
       Animated.parallel([
         Animated.timing(nextScale, {
           toValue: 1,
-          duration: 200,
+          duration: 1000,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
         Animated.timing(nextTranslateY, {
           toValue: 0,
-          duration: 200,
+          duration: 350,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
         Animated.timing(revealProgress, {
           toValue: 1,
-          duration: 200,
+          duration: 1000,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: false, // usamos para opacidades y props no transform
         }),

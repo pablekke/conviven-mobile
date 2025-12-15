@@ -48,10 +48,12 @@ function CardDeckComponent({
   const translationY = useSharedValue(0);
 
   const [currentPrimaryId, setCurrentPrimaryId] = useState(buildCardIdentity(primary));
+  const [isPrimaryReady, setIsPrimaryReady] = useState(true);
 
   useEffect(() => {
     const newId = buildCardIdentity(primary);
     if (newId !== currentPrimaryId) {
+      setIsPrimaryReady(false);
       translationX.value = 0;
       translationY.value = 0;
       setCurrentPrimaryId(newId);
@@ -62,6 +64,7 @@ function CardDeckComponent({
 
   const handleSwipeComplete = useCallback(
     (direction: "like" | "dislike") => {
+      setIsPrimaryReady(false);
       if (onSwipeComplete) {
         onSwipeComplete(direction);
       }
@@ -209,7 +212,13 @@ function CardDeckComponent({
           <Animated.View style={[styles.primaryLayer, frontCardStyle]}>
             {primary.photos && primary.photos.length > 0 ? (
               <>
-                <PrimaryCard {...primary} enableLocationToggle showScrollCue />
+                <PrimaryCard
+                  {...primary}
+                  enableLocationToggle
+                  showScrollCue
+                  onHeroImageLoadEnd={() => setIsPrimaryReady(true)}
+                  heroPlaceholderEnabled={!isPrimaryReady}
+                />
 
                 {/* Like Tint (Blue) */}
                 <Animated.View
