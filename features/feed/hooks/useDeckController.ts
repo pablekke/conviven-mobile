@@ -29,27 +29,33 @@ export function useDeckController<T>(items: readonly T[]) {
 
   const playPromote = useCallback(
     (onEnd?: () => void) => {
-      // Promueve la "next": le quita blur/tinte y la lleva a escala/posición final
+      // Promueve la carta de "next" (la de atrás) para que pase a ser la visible.
+      // Lo hacemos en paralelo: mientras se acomoda en escala/posición, también avanzamos el "reveal".
       Animated.parallel([
+        // 1) Ajuste visual del "stack": la carta de atrás  crece a tamaño final.
         Animated.timing(nextScale, {
           toValue: 1,
-          duration: 1000,
+          duration: 200,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
+        // 2) Sube desde abajo para quedar alineada con la carta principal.
         Animated.timing(nextTranslateY, {
           toValue: 0,
-          duration: 350,
+          duration: 300,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
+        // 3) Progreso del reveal (0→1): se usa para apagar blur/tinte gradualmente.
+        // No usamos native driver porque típicamente este valor alimenta opacidades/props no-transform.
         Animated.timing(revealProgress, {
           toValue: 1,
-          duration: 1000,
+          duration: 200,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: false, // usamos para opacidades y props no transform
         }),
       ]).start(() => {
+        // Cuando terminan TODAS las animaciones, avisamos para que el caller haga el swap de índices.
         onEnd?.();
       });
     },

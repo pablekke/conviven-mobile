@@ -161,6 +161,7 @@ function FeedScreen() {
         ) : (
           <>
             <CardDeck
+              key={`${primaryCard.galleryPhotos?.[0] ?? ""}|${primaryCard.headline}|${primaryCard.budgetLabel}`}
               screenWidth={screenWidth}
               scrollRef={mainRef}
               primary={{

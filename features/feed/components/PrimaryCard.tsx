@@ -1,4 +1,14 @@
 import { memo, useContext, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Animated,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+  StyleProp,
+  ViewStyle,
+  Text,
+  TextStyle,
+} from "react-native";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { FEED_CONSTANTS } from "../constants/feed.constants";
 import { FeedScrollContext } from "../context/ScrollContext";
@@ -10,16 +20,6 @@ import { Image as ExpoImage } from "expo-image";
 import { LocationChip } from "./LocationChip";
 import HeroScrollCue from "./HeroScrollCue";
 import { BlurView } from "expo-blur";
-import {
-  Animated,
-  StyleSheet,
-  View,
-  useWindowDimensions,
-  StyleProp,
-  ViewStyle,
-  Text,
-  TextStyle,
-} from "react-native";
 
 export type PrimaryCardProps = {
   photos: string[];
@@ -28,8 +28,6 @@ export type PrimaryCardProps = {
   headline: string;
   budget: string;
   basicInfo: readonly string[];
-  onHeroImageLoadEnd?: () => void;
-  heroPlaceholderEnabled?: boolean;
   blurOverlayStyle?: StyleProp<ViewStyle>;
   enableLocationToggle?: boolean;
   showScrollCue?: boolean;
@@ -47,8 +45,6 @@ function PrimaryCardComponent({
   headline,
   budget,
   basicInfo,
-  onHeroImageLoadEnd,
-  heroPlaceholderEnabled = false,
   blurOverlayStyle,
   enableLocationToggle = true,
   showScrollCue = true,
@@ -124,32 +120,14 @@ function PrimaryCardComponent({
       /> */}
 
       {mainPhoto ? (
-        <View style={[styles.heroImageShell, { height: cardHeight }]}>
-          <ExpoImage
-            source={{ uri: mainPhoto }}
-            style={[StyleSheet.absoluteFillObject, styles.heroImage]}
-            contentFit="cover"
-            cachePolicy="memory-disk"
-            recyclingKey={mainPhoto}
-            transition={0}
-            onLoadEnd={onHeroImageLoadEnd}
-          />
-
-          {heroPlaceholderEnabled ? (
-            <View pointerEvents="none" style={styles.heroPlaceholderOverlay}>
-              <ExpoImage
-                source={{ uri: mainPhoto }}
-                style={[StyleSheet.absoluteFillObject, styles.heroImage]}
-                contentFit="cover"
-                cachePolicy="memory-disk"
-                recyclingKey={mainPhoto}
-                transition={0}
-                onLoadEnd={onHeroImageLoadEnd}
-              />
-              <View pointerEvents="none" style={styles.heroPlaceholderTint} />
-            </View>
-          ) : null}
-        </View>
+        <ExpoImage
+          source={{ uri: mainPhoto }}
+          style={[styles.heroImage, { height: cardHeight }]}
+          contentFit="cover"
+          cachePolicy="memory-disk"
+          recyclingKey={mainPhoto}
+          transition={0}
+        />
       ) : null}
 
       {enableLocationToggle ? (
@@ -232,26 +210,8 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
   },
-  heroImageShell: {
-    width: "100%",
-    backgroundColor: "rgb(10, 16, 28)",
-  },
   heroImage: {
     width: "100%",
-  },
-  heroPlaceholderOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  heroPlaceholderLogo: {
-    width: 96,
-    height: 96,
-    opacity: 0.22,
-  },
-  heroPlaceholderTint: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(10, 16, 28, 0.0)",
   },
   blurOverlay: {
     position: "absolute",

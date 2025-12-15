@@ -1,11 +1,12 @@
 import { FEED_CONSTANTS, computeHeroImageHeight } from "../constants/feed.constants";
 import { StyleSheet, View, useWindowDimensions, Dimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CardDeckCardProps, CardDeckProps } from "../types";
-import { memo, useCallback, useEffect, useState } from "react";
 import { FeedScrollContext } from "../context/ScrollContext";
 import { BackgroundCard } from "./BackgroundCard";
 import { EmptyFeedCard } from "./EmptyFeedCard";
+import { Image as ExpoImage } from "expo-image";
 import { PrimaryCard } from "./PrimaryCard";
 import { SwipeLabel } from "./SwipeLabel";
 import { BlurView } from "expo-blur";
@@ -48,26 +49,57 @@ function CardDeckComponent({
   const translationY = useSharedValue(0);
 
   const [currentPrimaryId, setCurrentPrimaryId] = useState(buildCardIdentity(primary));
-  const [isPrimaryReady, setIsPrimaryReady] = useState(true);
+  const [isSwipeLocked, setIsSwipeLocked] = useState(false);
+  const swipeUnlockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const secondaryId = useMemo(() => buildCardIdentity(secondary), [secondary]);
 
   useEffect(() => {
     const newId = buildCardIdentity(primary);
     if (newId !== currentPrimaryId) {
-      setIsPrimaryReady(false);
       translationX.value = 0;
       translationY.value = 0;
       setCurrentPrimaryId(newId);
     }
   }, [primary, currentPrimaryId, translationX, translationY]);
 
+  useEffect(() => {
+    return () => {
+      if (swipeUnlockTimerRef.current) {
+        clearTimeout(swipeUnlockTimerRef.current);
+        swipeUnlockTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  const prefetchSecondary = useCallback(() => {
+    const urls = (secondary.photos ?? []).filter(Boolean);
+    if (urls.length === 0) return;
+    // Prefetch en background (no bloquea el swap).
+    ExpoImage.prefetch(urls, { cachePolicy: "memory-disk" }).catch(() => undefined);
+  }, [secondary.photos]);
+
+  // Prefetch cada vez que cambia la carta que está por detrás.
+  useEffect(() => {
+    prefetchSecondary();
+  }, [prefetchSecondary, secondaryId]);
+
   const { onSwipeComplete } = primary;
 
   const handleSwipeComplete = useCallback(
     (direction: "like" | "dislike") => {
-      setIsPrimaryReady(false);
+      // Swap inmediato: NO esperamos el prefetch, porque eso deja visible la carta de atrás.
       if (onSwipeComplete) {
         onSwipeComplete(direction);
       }
+
+      if (swipeUnlockTimerRef.current) {
+        clearTimeout(swipeUnlockTimerRef.current);
+      }
+      swipeUnlockTimerRef.current = setTimeout(() => {
+        setIsSwipeLocked(false);
+        swipeUnlockTimerRef.current = null;
+      }, 700);
     },
     [onSwipeComplete],
   );
@@ -77,12 +109,19 @@ function CardDeckComponent({
     .activeOffsetX([-10, 10])
     .failOffsetY([-10, 10])
     .onUpdate(event => {
+      if (isSwipeLocked) return;
       translationX.value = event.translationX;
     })
     .onEnd(event => {
+      if (isSwipeLocked) return;
       if (Math.abs(event.translationX) > SWIPE_THRESHOLD) {
         const direction = event.translationX > 0 ? "like" : "dislike";
         const targetX = direction === "like" ? SCREEN_WIDTH * 1.5 : -SCREEN_WIDTH * 1.5;
+
+        // Arrancamos el prefetch mientras corre la animación de swipe.
+        runOnJS(prefetchSecondary)();
+
+        runOnJS(setIsSwipeLocked)(true);
 
         translationX.value = withTiming(targetX, { duration: 700 }, finished => {
           if (finished) {
@@ -90,7 +129,7 @@ function CardDeckComponent({
           }
         });
       } else {
-        translationX.value = withTiming(0, { duration: 220 });
+        translationX.value = withTiming(0, { duration: 320 });
       }
     });
 
@@ -212,13 +251,7 @@ function CardDeckComponent({
           <Animated.View style={[styles.primaryLayer, frontCardStyle]}>
             {primary.photos && primary.photos.length > 0 ? (
               <>
-                <PrimaryCard
-                  {...primary}
-                  enableLocationToggle
-                  showScrollCue
-                  onHeroImageLoadEnd={() => setIsPrimaryReady(true)}
-                  heroPlaceholderEnabled={!isPrimaryReady}
-                />
+                <PrimaryCard {...primary} enableLocationToggle showScrollCue />
 
                 {/* Like Tint (Blue) */}
                 <Animated.View
@@ -276,6 +309,8 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
     overflow: "hidden",
+    // Fondo opaco para evitar que se vea la carta de atrás en frames intermedios
+    backgroundColor: "rgb(10, 16, 28)",
   },
   tintLayer: {
     ...StyleSheet.absoluteFillObject,
