@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { feedService } from "../services";
-import { FEED_CONSTANTS } from "../constants";
-import { MatchActionType } from "../../../core/enums";
-import type { Roomie } from "../types";
 import { FeedState, MatchAction } from "../types/feed.types";
+import { feedService, swipeService } from "../services";
+import { MatchActionType } from "../../../core/enums";
+import { FEED_CONSTANTS } from "../constants";
+import type { Roomie } from "../types";
 
 export interface UseFeedReturn {
   roomies: Roomie[];
@@ -75,9 +75,13 @@ export function useFeed(): UseFeedReturn {
       };
 
       try {
-        const result = await feedService.sendMatchAction(matchAction);
+        const swipeAction = matchAction.type === MatchActionType.PASS ? "pass" : "like";
+        await swipeService.createSwipe({
+          toUserId: matchAction.roomieId,
+          action: swipeAction,
+        });
 
-        if (result.success) {
+        {
           // Avanzar al siguiente roomie
           setState(prev => {
             const newIndex = prev.currentIndex + 1;

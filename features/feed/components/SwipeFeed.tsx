@@ -1,6 +1,10 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { View, StyleSheet, Dimensions, ActivityIndicator, Text } from "react-native";
 import { Gesture, GestureDetector, GestureHandlerRootView } from "react-native-gesture-handler";
+import { View, StyleSheet, Dimensions, ActivityIndicator, Text } from "react-native";
+import React, { useCallback, useEffect, useState } from "react";
+import swipeService from "../services/swipeService";
+import feedService from "../services/feedService";
+import { UserCard } from "./UserCard";
+import { Roomie } from "../types";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -9,9 +13,6 @@ import Animated, {
   interpolate,
   Extrapolation,
 } from "react-native-reanimated";
-import { UserCard } from "./UserCard";
-import feedService from "../services/feedService";
-import { Roomie } from "../types";
 
 const { width, height } = Dimensions.get("window");
 const SWIPE_THRESHOLD = width * 0.3;
@@ -44,10 +45,9 @@ export const SwipeFeed: React.FC = () => {
   const handleSwipeComplete = (direction: "left" | "right") => {
     const currentUser = users[currentIndex];
     if (currentUser) {
-      feedService.sendMatchAction({
-        type: direction === "right" ? "like" : "pass",
-        roomieId: currentUser.id,
-        timestamp: new Date(),
+      void swipeService.createSwipe({
+        toUserId: currentUser.id,
+        action: direction === "right" ? "like" : "pass",
       });
     }
 

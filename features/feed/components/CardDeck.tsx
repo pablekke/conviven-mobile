@@ -117,8 +117,6 @@ function CardDeckComponent({
       if (Math.abs(event.translationX) > SWIPE_THRESHOLD) {
         const direction = event.translationX > 0 ? "like" : "dislike";
         const targetX = direction === "like" ? SCREEN_WIDTH * 1.5 : -SCREEN_WIDTH * 1.5;
-
-        // Arrancamos el prefetch mientras corre la animación de swipe.
         runOnJS(prefetchSecondary)();
 
         runOnJS(setIsSwipeLocked)(true);
@@ -309,7 +307,6 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
     overflow: "hidden",
-    // Fondo opaco para evitar que se vea la carta de atrás en frames intermedios
     backgroundColor: "rgb(10, 16, 28)",
   },
   tintLayer: {

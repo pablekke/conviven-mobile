@@ -8,8 +8,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { prefetchRoomiesImages } from "../utils/prefetchImages";
 import { FEED_CONSTANTS } from "../constants/feed.constants";
 import { useProfileDeck } from "../hooks/useProfileDeck";
+import { feedService, swipeService } from "../services";
 import { FEED_USE_MOCK } from "../../../config/env";
-import { feedService } from "../services";
+import Toast from "react-native-toast-message";
 import {
   incomingProfilesMock,
   MockedBackendUser,
@@ -124,13 +125,33 @@ function FeedScreen() {
 
   const handleSwipeComplete = useCallback(
     (direction: "like" | "dislike") => {
+      // Mapeo: dislike -> pass (backend).
+      if (!FEED_USE_MOCK) {
+        const toUserId =
+          primaryBackend?.profile?.userId ?? primaryBackend?.filters?.userId ?? undefined;
+
+        if (toUserId) {
+          const action = direction === "like" ? "like" : "pass";
+          swipeService.createSwipe({ toUserId, action }).catch(() => {
+            Toast.show({
+              type: "error",
+              text1: "No se pudo enviar la acción",
+              text2: "Reintentá en unos segundos.",
+              position: "bottom",
+            });
+          });
+        } else {
+          console.warn("[FeedScreen] No se pudo resolver toUserId para enviar swipe.");
+        }
+      }
+
       scrollToTop();
       const advanced = advance(direction);
       if (!advanced) {
         setNoMoreProfiles(true);
       }
     },
-    [advance, scrollToTop],
+    [advance, primaryBackend, scrollToTop],
   );
 
   useEffect(() => {
