@@ -7,6 +7,7 @@ interface UseFiltersSaveProps {
   searchFiltersHasChanges: boolean;
   saveSearchFilters: (overrideValues?: Partial<SearchFiltersFormData>) => Promise<void>;
   resetSearchFilters: () => void;
+  reloadSearchFiltersFromContext: () => void;
   minAge: string;
   maxAge: string;
   budgetMin: string;
@@ -19,6 +20,7 @@ export const useFiltersSave = ({
   searchFiltersHasChanges,
   saveSearchFilters,
   resetSearchFilters,
+  reloadSearchFiltersFromContext,
   minAge,
   maxAge,
   budgetMin,
@@ -118,10 +120,13 @@ export const useFiltersSave = ({
   }, [searchFiltersHasChanges, router]);
 
   const handleDiscardChanges = useCallback(() => {
-    if (searchFiltersHasChanges) resetSearchFilters();
+    if (searchFiltersHasChanges) {
+      resetSearchFilters();
+      reloadSearchFiltersFromContext();
+    }
     setUnsavedChangesModalVisible(false);
-    router.back();
-  }, [searchFiltersHasChanges, resetSearchFilters, router]);
+    router.replace("/(app)/profile");
+  }, [searchFiltersHasChanges, resetSearchFilters, reloadSearchFiltersFromContext, router]);
 
   const canNavigate = !isSaving && !searchFiltersLoading;
 

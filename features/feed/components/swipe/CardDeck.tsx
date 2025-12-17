@@ -1,40 +1,24 @@
 import { FEED_CONSTANTS, computeHeroImageHeight } from "../../constants/feed.constants";
-import { StyleSheet, View, useWindowDimensions, Dimensions } from "react-native";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import type { CardDeckCardProps, CardDeckProps } from "../../types";
+import { StyleSheet, View, useWindowDimensions } from "react-native";
+import Animated, { useSharedValue } from "react-native-reanimated";
 import { FeedScrollContext } from "../../context/ScrollContext";
+import { useSwipeAnimations } from "./hooks/useSwipeAnimations";
+import { GestureDetector } from "react-native-gesture-handler";
+import { useCardDeckState } from "./hooks/useCardDeckState";
+import { useSwipeGesture } from "./hooks/useSwipeGesture";
 import { BackgroundCard } from "../cards/BackgroundCard";
 import { EmptyFeedCard } from "../cards/EmptyFeedCard";
-import { Image as ExpoImage } from "expo-image";
 import { PrimaryCard } from "../cards/PrimaryCard";
+import type { CardDeckProps } from "../../types";
 import { SwipeLabel } from "./SwipeLabel";
+import { memo, useCallback } from "react";
 import { BlurView } from "expo-blur";
-import Animated, {
-  Extrapolation,
-  interpolate,
-  runOnJS,
-  useAnimatedStyle,
-  useDerivedValue,
-  useSharedValue,
-  withTiming,
-  useAnimatedProps,
-} from "react-native-reanimated";
 
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
-const SCREEN_WIDTH = Dimensions.get("window").width;
-const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25;
-const ROTATION_DEG = 15;
-
-const buildCardIdentity = (card: CardDeckCardProps) => {
-  const firstPhoto = card.photos?.[0] ?? "";
-  return `${firstPhoto}|${card.headline}|${card.budget}`;
-};
-
 function CardDeckComponent({
   scrollRef,
-  className = "relative w-full",
+  className = "relative w-[96%] mx-auto",
   style,
   primary,
   secondary,
@@ -48,41 +32,12 @@ function CardDeckComponent({
   const translationX = useSharedValue(0);
   const translationY = useSharedValue(0);
 
-  const [currentPrimaryId, setCurrentPrimaryId] = useState(buildCardIdentity(primary));
-  const [isSwipeLocked, setIsSwipeLocked] = useState(false);
-  const swipeUnlockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const secondaryId = useMemo(() => buildCardIdentity(secondary), [secondary]);
-
-  useEffect(() => {
-    const newId = buildCardIdentity(primary);
-    if (newId !== currentPrimaryId) {
-      translationX.value = 0;
-      translationY.value = 0;
-      setCurrentPrimaryId(newId);
-    }
-  }, [primary, currentPrimaryId, translationX, translationY]);
-
-  useEffect(() => {
-    return () => {
-      if (swipeUnlockTimerRef.current) {
-        clearTimeout(swipeUnlockTimerRef.current);
-        swipeUnlockTimerRef.current = null;
-      }
-    };
-  }, []);
-
-  const prefetchSecondary = useCallback(() => {
-    const urls = (secondary.photos ?? []).filter(Boolean);
-    if (urls.length === 0) return;
-    // Prefetch en background (no bloquea el swap).
-    ExpoImage.prefetch(urls, { cachePolicy: "memory-disk" }).catch(() => undefined);
-  }, [secondary.photos]);
-
-  // Prefetch cada vez que cambia la carta que está por detrás.
-  useEffect(() => {
-    prefetchSecondary();
-  }, [prefetchSecondary, secondaryId]);
+  const { isSwipeLocked, setIsSwipeLocked, prefetchSecondary, unlockSwipe } = useCardDeckState(
+    primary,
+    secondary,
+    translationX,
+    translationY,
+  );
 
   const { onSwipeComplete } = primary;
 
@@ -91,132 +46,28 @@ function CardDeckComponent({
       if (onSwipeComplete) {
         onSwipeComplete(direction);
       }
-
-      if (swipeUnlockTimerRef.current) {
-        clearTimeout(swipeUnlockTimerRef.current);
-      }
-      swipeUnlockTimerRef.current = setTimeout(() => {
-        setIsSwipeLocked(false);
-        swipeUnlockTimerRef.current = null;
-      }, 700);
+      unlockSwipe();
     },
-    [onSwipeComplete],
+    [onSwipeComplete, unlockSwipe],
   );
 
-  // Gesture
-  const panGesture = Gesture.Pan()
-    .activeOffsetX([-10, 10])
-    .failOffsetY([-10, 10])
-    .onUpdate(event => {
-      if (isSwipeLocked) return;
-      translationX.value = event.translationX;
-    })
-    .onEnd(event => {
-      if (isSwipeLocked) return;
-      if (Math.abs(event.translationX) > SWIPE_THRESHOLD) {
-        const direction = event.translationX > 0 ? "like" : "dislike";
-        const targetX = direction === "like" ? SCREEN_WIDTH * 1.5 : -SCREEN_WIDTH * 1.5;
-        runOnJS(prefetchSecondary)();
-
-        runOnJS(setIsSwipeLocked)(true);
-
-        translationX.value = withTiming(targetX, { duration: 700 }, finished => {
-          if (finished) {
-            runOnJS(handleSwipeComplete)(direction);
-          }
-        });
-      } else {
-        translationX.value = withTiming(0, { duration: 320 });
-      }
-    });
-
-  // Derived Values for Animations
-  const rotate = useDerivedValue(() => {
-    return interpolate(
-      translationX.value,
-      [-SCREEN_WIDTH, 0, SCREEN_WIDTH],
-      [-ROTATION_DEG, 0, ROTATION_DEG],
-      Extrapolation.CLAMP,
-    );
+  const panGesture = useSwipeGesture({
+    translationX,
+    isSwipeLocked,
+    setIsSwipeLocked,
+    onSwipeComplete: handleSwipeComplete,
+    prefetchSecondary,
   });
 
-  const likeOpacity = useDerivedValue(() => {
-    return interpolate(translationX.value, [0, SCREEN_WIDTH / 4], [0, 1], Extrapolation.CLAMP);
-  });
-
-  const dislikeOpacity = useDerivedValue(() => {
-    return interpolate(translationX.value, [-SCREEN_WIDTH / 4, 0], [1, 0], Extrapolation.CLAMP);
-  });
-
-  const likeLabelOpacity = useDerivedValue(() => {
-    return interpolate(translationX.value, [0, SCREEN_WIDTH / 6], [0, 1], Extrapolation.CLAMP);
-  });
-
-  const dislikeLabelOpacity = useDerivedValue(() => {
-    return interpolate(translationX.value, [-SCREEN_WIDTH / 6, 0], [1, 0], Extrapolation.CLAMP);
-  });
-
-  const likeLabelScale = useDerivedValue(() => {
-    return interpolate(translationX.value, [0, SCREEN_WIDTH / 4], [0.8, 1], Extrapolation.CLAMP);
-  });
-
-  const dislikeLabelScale = useDerivedValue(() => {
-    return interpolate(translationX.value, [-SCREEN_WIDTH / 4, 0], [1, 0.8], Extrapolation.CLAMP);
-  });
-
-  const nextCardScale = useDerivedValue(() => {
-    return interpolate(
-      Math.abs(translationX.value),
-      [0, SCREEN_WIDTH],
-      [0.95, 1],
-      Extrapolation.CLAMP,
-    );
-  });
-
-  const blurIntensity = useDerivedValue(() => {
-    return interpolate(
-      Math.abs(translationX.value),
-      [0, SCREEN_WIDTH],
-      [60, 0],
-      Extrapolation.CLAMP,
-    );
-  });
-
-  const blurProps = useAnimatedProps(() => {
-    return {
-      intensity: blurIntensity.value,
-    };
-  });
-
-  // Animated Styles
-  const frontCardStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: translationX.value },
-      { rotate: `${rotate.value}deg` },
-    ],
-  }));
-
-  const likeTintStyle = useAnimatedStyle(() => ({
-    opacity: likeOpacity.value,
-  }));
-
-  const dislikeTintStyle = useAnimatedStyle(() => ({
-    opacity: dislikeOpacity.value,
-  }));
-
-  const likeLabelStyle = useAnimatedStyle(() => ({
-    opacity: likeLabelOpacity.value,
-    transform: [{ scale: likeLabelScale.value }],
-  }));
-
-  const dislikeLabelStyle = useAnimatedStyle(() => ({
-    opacity: dislikeLabelOpacity.value,
-    transform: [{ scale: dislikeLabelScale.value }],
-  }));
-
-  const backCardStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: nextCardScale.value }],
-  }));
+  const {
+    frontCardStyle,
+    likeTintStyle,
+    dislikeTintStyle,
+    likeLabelStyle,
+    dislikeLabelStyle,
+    backCardStyle,
+    blurProps,
+  } = useSwipeAnimations({ translationX });
 
   return (
     <View className={className} style={[{ height: heroImageHeight }, style]}>
@@ -295,29 +146,25 @@ const styles = StyleSheet.create({
   secondaryLayer: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 50,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+    borderRadius: 24,
     overflow: "hidden",
   },
   primaryLayer: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 100,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+    borderRadius: 24,
     overflow: "hidden",
-    backgroundColor: "rgb(10, 16, 28)",
+    backgroundColor: "transparent",
   },
   tintLayer: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 110,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+    borderRadius: 24,
   },
   likeTint: {
     backgroundColor: "rgba(96, 165, 250, 0.15)",
   },
   dislikeTint: {
-    backgroundColor: "rgba(248, 113, 113, 0.1)", // More subtle red
+    backgroundColor: "rgba(248, 113, 113, 0.1)",
   },
 });
-

@@ -1,17 +1,19 @@
 import { Image, Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useProfileScreen, useProfilePhotos } from "../../features/profile/hooks";
-import AnimatedHeaderBackground from "../../components/AnimatedHeaderBackground";
 import { ProfileCard } from "../../features/profile/components";
 import { SafeAreaView } from "react-native-safe-area-context";
 import TabTransition from "../../components/TabTransition";
 import { useRouter, useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
+import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import Spinner from "../../components/Spinner";
-import { LoadingModal } from "@/components";
+import { GlassBackground, LoadingModal } from "@/components";
+import { StatusBar } from "expo-status-bar";
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const { user, userName, userAge, progressPercentage } = useProfileScreen();
   const { logout, isLogoutInProgress, refreshUser } = useAuth();
   const { photos, loadPhotos } = useProfilePhotos();
@@ -52,7 +54,9 @@ export default function ProfileScreen() {
   return (
     <TabTransition>
       <View style={styles.container}>
-        <AnimatedHeaderBackground style={styles.headerGradient} />
+        <StatusBar style="light" />
+        <View style={[styles.headerGradient, { backgroundColor: colors.conviven.blue }]} />
+        <GlassBackground intensity={90} style={styles.glassBackground} />
         <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
           <View style={styles.contentWrapper}>
             <View>
@@ -152,9 +156,11 @@ const styles = StyleSheet.create({
     height: 280,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
+    zIndex: 1,
   },
   safeArea: {
     flex: 1,
+    zIndex: 2,
   },
   contentWrapper: {
     flex: 1,
@@ -292,5 +298,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: "Inter-SemiBold",
     color: "#FFFFFF",
+  },
+  glassBackground: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 0,
   },
 });

@@ -1,8 +1,7 @@
 import { FlatList, StyleSheet } from "react-native";
-
-import { ChatPreview } from "../types";
 import { ChatPreviewItem } from "./ChatPreviewItem";
 import { EmptyChatState } from "./EmptyChatState";
+import { ChatPreview } from "../types";
 
 export interface ChatListProps {
   chats: ChatPreview[];
@@ -17,11 +16,16 @@ export const ChatList: React.FC<ChatListProps> = ({ chats, onChatPress }) => {
       contentContainerStyle={chats.length === 0 ? styles.emptyContent : styles.listContent}
       renderItem={({ item }) => <ChatPreviewItem chat={item} onPress={onChatPress} />}
       ListEmptyComponent={<EmptyChatState />}
+      style={styles.list}
+      showsVerticalScrollIndicator={false}
     />
   );
 };
 
 const styles = StyleSheet.create({
+  list: {
+    flex: 1,
+  },
   listContent: {
     paddingHorizontal: 24,
     paddingVertical: 12,

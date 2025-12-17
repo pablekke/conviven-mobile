@@ -1,16 +1,15 @@
-import { useRouter } from "expo-router";
-import { LinearGradient } from "expo-linear-gradient";
-import { StatusBar } from "expo-status-bar";
-
-import React from "react";
-import { StyleSheet, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-
-import Spinner from "../../components/Spinner";
-import TabTransition from "../../components/TabTransition";
-import { useTheme } from "../../context/ThemeContext";
 import { ChatHeader, ChatList, ChatSearchBar, MatchesList } from "../../features/chat/components";
 import { useCachedChats, useMatches } from "../../features/chat/hooks";
+import { GlassBackground } from "../../components/GlassBackground";
+import { SafeAreaView } from "react-native-safe-area-context";
+import TabTransition from "../../components/TabTransition";
+import { LinearGradient } from "expo-linear-gradient";
+import { useTheme } from "../../context/ThemeContext";
+import { StyleSheet, View } from "react-native";
+import Spinner from "../../components/Spinner";
+import { StatusBar } from "expo-status-bar";
+import { useRouter } from "expo-router";
+import React from "react";
 
 export default function ChatScreen() {
   const { colors } = useTheme();
@@ -68,7 +67,8 @@ export default function ChatScreen() {
                 <MatchesList matches={matches} onMatchPress={handleMatchPress} />
               </View>
 
-              <View className="flex-1 bg-background rounded-t-[32px]">
+              <View className="flex-1 bg-background rounded-t-[32px]" style={styles.chatsContainer}>
+                <GlassBackground />
                 <ChatSearchBar value={searchQuery} onChangeText={setSearchQuery} />
                 <View className="flex-1 overflow-hidden">
                   <ChatList chats={filteredChats} />
@@ -95,5 +95,9 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+  },
+  chatsContainer: {
+    position: "relative",
+    overflow: "hidden",
   },
 });

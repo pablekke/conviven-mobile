@@ -1,11 +1,11 @@
-import { memo } from "react";
-import { StyleSheet, View, useWindowDimensions } from "react-native";
-import { Image as ExpoImage } from "expo-image";
 import Animated, { useAnimatedStyle, SharedValue } from "react-native-reanimated";
-import { BlurView } from "expo-blur";
-
-import { PrimaryCard, PrimaryCardProps } from "./PrimaryCard";
+import { StyleSheet, View, useWindowDimensions } from "react-native";
 import { FEED_CONSTANTS } from "../../constants/feed.constants";
+import { Image as ExpoImage } from "expo-image";
+import type { PrimaryCardProps } from "./types";
+import { PrimaryCard } from "./PrimaryCard";
+import { BlurView } from "expo-blur";
+import { memo } from "react";
 
 type BackgroundCardProps = Pick<
   PrimaryCardProps,
@@ -95,8 +95,7 @@ function BackgroundCardComponent({
 const styles = StyleSheet.create({
   wrapper: {
     overflow: "hidden",
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+    borderRadius: 24,
   },
   tintOverlay: {
     backgroundColor: "rgba(4, 10, 22, 0.2)",
@@ -104,4 +103,3 @@ const styles = StyleSheet.create({
 });
 
 export const BackgroundCard = memo(BackgroundCardComponent);
-

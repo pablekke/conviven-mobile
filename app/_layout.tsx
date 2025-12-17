@@ -24,14 +24,14 @@ LogBox.ignoreLogs(["SafeAreaView has been deprecated"]);
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 function AuthRoot() {
-  const { colors, theme } = useTheme();
+  const { colors, isDark } = useTheme();
   const { showLoading, shouldSlideOut, handleAnimationComplete } = useLoadingScreenTransition();
 
   useAuthNavigation();
 
   return (
     <>
-      <StatusBar style={theme === "dark" ? "light" : "dark"} backgroundColor={colors.background} />
+      <StatusBar style={isDark ? "light" : "dark"} backgroundColor={colors.background} />
       <Stack
         screenOptions={{
           headerStyle: {

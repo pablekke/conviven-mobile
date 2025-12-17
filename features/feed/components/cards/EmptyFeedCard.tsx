@@ -1,7 +1,11 @@
-import { memo } from "react";
-import { View, Text, StyleSheet, useWindowDimensions } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { FEED_CONSTANTS, computeHeroImageHeight } from "../../constants/feed.constants";
+import { View, Text, StyleSheet, useWindowDimensions } from "react-native";
+import { useTheme } from "../../../../context/ThemeContext";
+import { useMatches } from "../../../chat/hooks";
+import { ActionButton } from "../ui/ActionButton";
+import { Feather } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { memo } from "react";
 
 function EmptyFeedCardComponent() {
   const { height: winH } = useWindowDimensions();
@@ -9,24 +13,57 @@ function EmptyFeedCardComponent() {
   const heroHeight = Math.max(0, winH + tabBarHeight);
   const heroBottomSpacing = tabBarHeight + FEED_CONSTANTS.HERO_BOTTOM_EXTRA;
   const heroImageHeight = computeHeroImageHeight(heroHeight, heroBottomSpacing);
+  const router = useRouter();
+  const { colors } = useTheme();
+  const { matches } = useMatches();
+  const hasMatches = matches && matches.length > 0;
+
+  const handleGoToFilters = () => {
+    router.push("/(app)/edit-profile/filters");
+  };
+
+  const handleGoToMatches = () => {
+    router.push("/(app)/chat");
+  };
 
   return (
-    <View style={[styles.container, { height: heroImageHeight }]} pointerEvents="none">
-      <LinearGradient
-        colors={["#1a1a2e", "#16213e", "#0f3460"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradient}
-      >
-        <View style={styles.content}>
-          <Text style={styles.emoji}>🎉</Text>
-          <Text style={styles.title}>¡Has visto todos los perfiles!</Text>
-          <Text style={styles.subtitle}>
-            No hay más personas disponibles por ahora.{"\n"}
-            Vuelve más tarde para descubrir nuevos perfiles.
-          </Text>
+    <View style={[styles.container, { height: heroImageHeight }]}>
+      <View style={styles.content}>
+        <View style={styles.iconContainer}>
+          <Feather name="search" size={48} color={colors.primary} />
         </View>
-      </LinearGradient>
+        <Text style={[styles.title, { color: colors.foreground }]}>
+          No hay más perfiles disponibles
+        </Text>
+
+        <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
+          Modificá tus filtros para descubrir más personas que coincidan con tus preferencias.
+        </Text>
+        <View style={styles.buttonsContainer}>
+          <ActionButton
+            text="Modificar filtros"
+            icon="sliders"
+            onPress={handleGoToFilters}
+            variant="primary"
+            style={styles.buttonPrimary}
+          />
+        </View>
+
+        {hasMatches && (
+          <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
+            O dale otra oportunidad a tus roomies... no roomies 😏
+          </Text>
+        )}
+        <View style={styles.buttonsContainer}>
+          <ActionButton
+            text="Ver roomies"
+            icon="message-circle"
+            onPress={handleGoToMatches}
+            variant="secondary"
+            style={styles.buttonSecondary}
+          />
+        </View>
+      </View>
     </View>
   );
 }
@@ -36,36 +73,50 @@ export const EmptyFeedCard = memo(EmptyFeedCardComponent);
 const styles = StyleSheet.create({
   container: {
     width: "100%",
-    overflow: "hidden",
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-  },
-  gradient: {
-    flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 24,
+    paddingHorizontal: 24,
   },
   content: {
     alignItems: "center",
-    gap: 16,
-    maxWidth: 320,
+    gap: 20,
   },
-  emoji: {
-    fontSize: 64,
+  iconContainer: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: "rgba(37, 99, 235, 0.1)",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 8,
   },
   title: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: "700",
-    color: "white",
     textAlign: "center",
+    fontFamily: "Inter-SemiBold",
   },
   subtitle: {
-    fontSize: 16,
-    color: "rgba(255,255,255,0.7)",
+    fontSize: 15,
     textAlign: "center",
-    lineHeight: 24,
+    lineHeight: 22,
+    fontFamily: "Inter-Regular",
+  },
+  buttonsContainer: {
+    width: "80%",
+    flexDirection: "row",
+    gap: 12,
+    justifyContent: "center",
+    flexWrap: "wrap",
+  },
+  singleButtonContainer: {
+    width: "80%",
+  },
+  buttonPrimary: {
+    width: "100%",
+  },
+  buttonSecondary: {
+    flex: 1,
+    minWidth: 140,
   },
 });
-

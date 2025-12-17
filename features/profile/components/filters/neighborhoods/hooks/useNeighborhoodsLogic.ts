@@ -22,6 +22,8 @@ export const useNeighborhoodsLogic = ({
       if (selectedQuestion === "mainPreferredNeighborhood") {
         if (mainId) {
           updateSearchFilters("mainPreferredNeighborhoodId", mainId);
+          updateSearchFilters("includeAdjacentNeighborhoods", false);
+          updateSearchFilters("preferredLocations", []);
         }
       } else {
         updateSearchFilters("preferredLocations", selectedIds);

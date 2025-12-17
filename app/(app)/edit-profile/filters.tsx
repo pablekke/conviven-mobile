@@ -1,13 +1,10 @@
 import { QUESTION_TITLES, QUESTION_OPTIONS } from "../../../features/profile/constants";
-import { useEditFiltersLogic } from "../../../features/profile/hooks";
+import { useFiltersScreen, useEditFiltersLogic } from "../../../features/profile/hooks";
 import { SafeAreaView } from "react-native-safe-area-context";
 import TabTransition from "../../../components/TabTransition";
-import { Animated, StyleSheet, View } from "react-native";
-import Toast from "react-native-toast-message";
+import { GlassBackground, LoadingModal } from "@/components";
+import { Animated, StyleSheet, View, Dimensions } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import { LoadingModal } from "@/components";
-import { useState, useRef } from "react";
-import { useRouter } from "expo-router";
 import {
   SelectionModal,
   DataTab,
@@ -18,19 +15,7 @@ import {
 } from "../../../features/profile/components";
 
 export default function FiltersScreen() {
-  const router = useRouter();
-  const [modalVisible, setModalVisible] = useState(false);
-  const [unsavedChangesModalVisible, setUnsavedChangesModalVisible] = useState(false);
-  const [neighborhoodModalVisible, setNeighborhoodModalVisible] = useState(false);
-  const [selectedQuestion, setSelectedQuestion] = useState("");
-  const [selectedValue, setSelectedValue] = useState("");
-  const scrollViewRef = useRef<any>(null);
-  const scrollY = useRef(new Animated.Value(0)).current;
-  const currentScrollYRef = useRef(0);
-
   const {
-    selectedAnswers,
-    setSelectedAnswers,
     minAge,
     setMinAge,
     maxAge,
@@ -39,200 +24,35 @@ export default function FiltersScreen() {
     setBudgetMin,
     budgetMax,
     setBudgetMax,
-    searchFiltersHasChanges,
-    saveSearchFilters,
-    resetSearchFilters,
-    reloadSearchFiltersFromContext,
     updateSearchFilters,
-    searchFiltersSaving,
-    handleUpdate,
+    searchFiltersLoading,
+    isSaving,
+    modalVisible,
+    neighborhoodModalVisible,
+    selectedQuestion,
+    selectedValue,
+    openSelectionModal,
+    closeModal,
+    confirmSelection,
+    closeNeighborhoodModal,
+    setSelectedValue,
     getSelectedLabel,
+    unsavedChangesModalVisible,
+    setUnsavedChangesModalVisible,
+    handleSave,
+    handleSaveAndExit,
+    handleBack,
+    handleDiscardChanges,
+    scrollViewRef,
+    scrollY,
+    handleScroll,
+    handleExpandHeader,
+    handleNeighborhoodConfirm,
     preferredLocations,
     mainPreferredNeighborhoodId,
-    searchFiltersData,
-    searchFiltersLoading,
-  } = useEditFiltersLogic();
+  } = useFiltersScreen();
 
-  const openSelectionModal = (questionKey: string) => {
-    if (isSaving) return;
-
-    if (questionKey === "preferredLocations" || questionKey === "mainPreferredNeighborhood") {
-      setNeighborhoodModalVisible(true);
-      setSelectedQuestion(questionKey);
-      return;
-    }
-    setSelectedQuestion(questionKey);
-    const selectedLabel = selectedAnswers[questionKey];
-    const options = QUESTION_OPTIONS[questionKey as keyof typeof QUESTION_OPTIONS];
-    const selectedOption = options?.find(option => option.label === selectedLabel);
-    setSelectedValue(selectedOption?.value ?? "");
-    setModalVisible(true);
-  };
-
-  const closeModal = () => {
-    setModalVisible(false);
-    setSelectedQuestion("");
-    setSelectedValue("");
-  };
-
-  const confirmSelection = () => {
-    const options = QUESTION_OPTIONS[selectedQuestion as keyof typeof QUESTION_OPTIONS] ?? [];
-    const selectedOption = options.find(option => option.value === selectedValue);
-    const selectedLabel = selectedOption?.label ?? "";
-
-    setSelectedAnswers(prev => ({ ...prev, [selectedQuestion]: selectedLabel }));
-    handleUpdate(selectedQuestion, selectedValue);
-    closeModal();
-  };
-
-  const hasAnyUnsavedChanges = searchFiltersHasChanges;
-
-  const handleBack = () => {
-    if (hasAnyUnsavedChanges) {
-      setUnsavedChangesModalVisible(true);
-    } else {
-      router.replace("/(app)/profile");
-    }
-  };
-
-  const handleDiscardChanges = () => {
-    if (searchFiltersHasChanges) {
-      resetSearchFilters();
-      reloadSearchFiltersFromContext();
-    }
-    setUnsavedChangesModalVisible(false);
-    router.replace("/(app)/profile");
-  };
-
-  const handleSaveAndExit = async () => {
-    try {
-      if (searchFiltersHasChanges) {
-        const overrideValues: Partial<any> = {};
-        if (minAge && !isNaN(parseInt(minAge, 10))) {
-          overrideValues.minAge = parseInt(minAge, 10);
-        }
-        if (maxAge && !isNaN(parseInt(maxAge, 10))) {
-          overrideValues.maxAge = parseInt(maxAge, 10);
-        }
-        if (budgetMin && !isNaN(parseInt(budgetMin, 10))) {
-          overrideValues.budgetMin = parseInt(budgetMin, 10);
-        }
-        if (budgetMax && !isNaN(parseInt(budgetMax, 10))) {
-          overrideValues.budgetMax = parseInt(budgetMax, 10);
-        }
-
-        await saveSearchFilters(
-          Object.keys(overrideValues).length > 0 ? overrideValues : undefined,
-        );
-      }
-
-      Toast.show({
-        type: "success",
-        text1: "¡Listo!",
-        text2: "Tu perfil se actualizó correctamente",
-        position: "bottom",
-        visibilityTime: 3000,
-      });
-
-      setUnsavedChangesModalVisible(false);
-      router.replace("/(app)/profile");
-    } catch (error) {
-      console.error("❌ Error:", error);
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: error instanceof Error ? error.message : "No se pudo guardar",
-        position: "bottom",
-        visibilityTime: 4000,
-      });
-    }
-  };
-
-  const handleSave = async () => {
-    try {
-      if (!searchFiltersHasChanges) {
-        Toast.show({
-          type: "info",
-          text1: "Sin cambios",
-          text2: "No hay cambios para guardar",
-          position: "bottom",
-          visibilityTime: 2000,
-        });
-        return;
-      }
-
-      const overrideValues: Partial<any> = {};
-      if (minAge && !isNaN(parseInt(minAge, 10))) {
-        overrideValues.minAge = parseInt(minAge, 10);
-      }
-      if (maxAge && !isNaN(parseInt(maxAge, 10))) {
-        overrideValues.maxAge = parseInt(maxAge, 10);
-      }
-      if (budgetMin && !isNaN(parseInt(budgetMin, 10))) {
-        overrideValues.budgetMin = parseInt(budgetMin, 10);
-      }
-      if (budgetMax && !isNaN(parseInt(budgetMax, 10))) {
-        overrideValues.budgetMax = parseInt(budgetMax, 10);
-      }
-
-      await saveSearchFilters(Object.keys(overrideValues).length > 0 ? overrideValues : undefined);
-
-      Toast.show({
-        type: "success",
-        text1: "¡Listo!",
-        text2: "Tu perfil se actualizó correctamente",
-        position: "bottom",
-        visibilityTime: 3000,
-      });
-      router.replace("/(app)/profile");
-    } catch (error) {
-      console.error("❌ Error:", error);
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: error instanceof Error ? error.message : "No se pudo guardar",
-        position: "bottom",
-        visibilityTime: 4000,
-      });
-    }
-  };
-
-  const isSaving = searchFiltersSaving;
-
-  const handleScroll = Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
-    useNativeDriver: true,
-    listener: (event: any) => {
-      currentScrollYRef.current = event.nativeEvent.contentOffset.y;
-    },
-  });
-
-  const handleExpandHeader = () => {
-    const currentScrollY = currentScrollYRef.current;
-
-    if (currentScrollY === 0) return;
-
-    const duration = 800;
-    let startTime: number | null = null;
-
-    const animate = (timestamp: number) => {
-      if (!startTime) startTime = timestamp;
-      const elapsed = timestamp - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-
-      const easedProgress = 1 - Math.pow(1 - progress, 3);
-      const targetY = currentScrollY * (1 - easedProgress);
-
-      scrollViewRef.current?.scrollTo({ y: targetY, animated: false });
-
-      if (progress < 1) {
-        requestAnimationFrame(animate);
-      } else {
-        scrollViewRef.current?.scrollTo({ y: 0, animated: false });
-      }
-    };
-
-    requestAnimationFrame(animate);
-  };
+  const { searchFiltersData } = useEditFiltersLogic();
 
   return (
     <TabTransition>
@@ -258,8 +78,11 @@ export default function FiltersScreen() {
             onScroll={handleScroll}
             scrollEventThrottle={16}
             scrollEnabled={!isSaving}
+            bounces={false}
+            alwaysBounceVertical={false}
           >
             <View style={styles.contentContainer}>
+              <GlassBackground intensity={90} />
               <DataTab
                 getSelectedLabel={getSelectedLabel}
                 openSelectionModal={openSelectionModal}
@@ -307,24 +130,14 @@ export default function FiltersScreen() {
             ? [mainPreferredNeighborhoodId]
             : []
         }
-        onClose={() => {
-          setNeighborhoodModalVisible(false);
-          setSelectedQuestion("");
-        }}
-        onConfirm={(selectedIds, mainId) => {
-          if (selectedQuestion === "mainPreferredNeighborhood") {
-            // Cuando cambia el barrio principal, resetear adyacentes y limpiar barrios adicionales
-            updateSearchFilters("mainPreferredNeighborhoodId", mainId || "");
-            updateSearchFilters("includeAdjacentNeighborhoods", false);
-            updateSearchFilters("preferredLocations", []);
-          } else {
-            updateSearchFilters("preferredLocations", selectedIds);
-          }
-        }}
+        onClose={closeNeighborhoodModal}
+        onConfirm={handleNeighborhoodConfirm}
       />
     </TabTransition>
   );
 }
+
+const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 const styles = StyleSheet.create({
   container: {
@@ -335,8 +148,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
+    minHeight: SCREEN_HEIGHT - 120,
     paddingTop: 50,
-    paddingBottom: 20,
+    paddingBottom: 40,
   },
   contentContainer: {
     backgroundColor: "#F8F9FA",

@@ -1,16 +1,20 @@
-import { View, ScrollView, useWindowDimensions, StatusBar, StyleSheet } from "react-native";
+import { ProfilePhotoGallery } from "../../../profile/components/ProfilePhotoGallery";
 import { CardDeck, UserInfoCard, EmptyFeedCard, FeedLoadingCard } from "../index";
+import { View, ScrollView, useWindowDimensions, StyleSheet } from "react-native";
 import { mapBackendItemToMockedUser } from "../../adapters/backendToMockedUser";
 import { useFeedPrefetchHydrator } from "../../hooks/useFeedPrefetchHydrator";
+import { GlassBackground } from "../../../../components/GlassBackground";
 import { useDataPreload } from "../../../../context/DataPreloadContext";
-import { useAuth } from "../../../../context/AuthContext";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { prefetchRoomiesImages } from "../../utils/prefetchImages";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { FEED_CONSTANTS } from "../../constants/feed.constants";
 import { useProfileDeck } from "../../hooks/useProfileDeck";
 import { feedService, swipeService } from "../../services";
+import { useAuth } from "../../../../context/AuthContext";
 import { FEED_USE_MOCK } from "../../../../config/env";
 import Toast from "react-native-toast-message";
+import { FeedHeader } from "./FeedHeader";
 import {
   incomingProfilesMock,
   MockedBackendUser,
@@ -18,9 +22,10 @@ import {
   mapBackendLocationToUi,
   mapBackendProfileToUiProfile,
 } from "../../mocks/incomingProfile";
-// -------------------- Pantalla --------------------
+
 function FeedScreen() {
   const { width: screenWidth } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
 
   const [profiles, setProfiles] = useState<MockedBackendUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,6 +34,10 @@ function FeedScreen() {
   const { hydratePrefetchedFeed } = useFeedPrefetchHydrator();
   const { isPreloading, preloadCompleted } = useDataPreload();
   const { isAuthenticated } = useAuth();
+
+  const [locationOpen, setLocationOpen] = useState(false);
+  const [activeLocationIndex, setActiveLocationIndex] = useState(0);
+  const [galleryVisible, setGalleryVisible] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -114,6 +123,11 @@ function FeedScreen() {
   const deck = useProfileDeck(profiles);
   const { primaryCard, secondaryCard, primaryBackend, advance, total } = deck;
 
+  useEffect(() => {
+    setActiveLocationIndex(0);
+    setLocationOpen(false);
+  }, [primaryCard.headline]);
+
   const scrollToTop = useCallback(() => {
     const scrollView = mainRef.current;
     if (!scrollView) return;
@@ -125,7 +139,6 @@ function FeedScreen() {
 
   const handleSwipeComplete = useCallback(
     (direction: "like" | "dislike") => {
-      // Mapeo: dislike -> pass (backend).
       if (!FEED_USE_MOCK) {
         const toUserId =
           primaryBackend?.profile?.userId ?? primaryBackend?.filters?.userId ?? undefined;
@@ -162,13 +175,22 @@ function FeedScreen() {
 
   return (
     <View className="flex-1" style={styles.screenShell}>
-      <StatusBar barStyle="light-content" />
+      <GlassBackground intensity={90} />
+
+      {deck.primaryProfile && primaryCard.galleryPhotos && primaryCard.galleryPhotos.length > 0 && (
+        <ProfilePhotoGallery
+          visible={galleryVisible}
+          photos={primaryCard.galleryPhotos}
+          initialIndex={0}
+          onClose={() => setGalleryVisible(false)}
+        />
+      )}
 
       <ScrollView
         ref={mainRef}
         className="flex-1"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent]}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 8 }]}
         bounces={false}
         alwaysBounceVertical={false}
         overScrollMode="never"
@@ -181,10 +203,29 @@ function FeedScreen() {
           <EmptyFeedCard />
         ) : (
           <>
+            {deck.primaryProfile && !noMoreProfiles && total > 0 && !isLoading && (
+              <FeedHeader
+                locations={primaryCard.locationStrings ?? ["Sin ubicación"]}
+                activeLocationIndex={activeLocationIndex}
+                activeLocation={
+                  primaryCard.locationStrings?.[activeLocationIndex] ??
+                  primaryCard.locationStrings?.[0] ??
+                  ""
+                }
+                locationOpen={locationOpen}
+                onToggleLocation={() => setLocationOpen(v => !v)}
+                onSelectLocation={(_loc, index) => {
+                  setActiveLocationIndex(index);
+                }}
+                photosCount={primaryCard.galleryPhotos?.length ?? 0}
+                onPhotosPress={() => setGalleryVisible(true)}
+              />
+            )}
             <CardDeck
               key={`${primaryCard.galleryPhotos?.[0] ?? ""}|${primaryCard.headline}|${primaryCard.budgetLabel}`}
               screenWidth={screenWidth}
               scrollRef={mainRef}
+              hideLocationChip
               primary={{
                 photos: primaryCard.galleryPhotos,
                 locationStrings: primaryCard.locationStrings,
@@ -230,4 +271,3 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
 });
-

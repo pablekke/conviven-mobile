@@ -45,7 +45,7 @@ export const SearchFiltersSection: React.FC<SearchFiltersSectionProps> = ({
 
   return (
     <View style={styles.section}>
-      <SectionHeader icon="filter" title="Filtros de Búsqueda" />
+      <SectionHeader icon="sliders" title="Filtros de Búsqueda" />
 
       <QuestionRow
         question="Preferencia de género"

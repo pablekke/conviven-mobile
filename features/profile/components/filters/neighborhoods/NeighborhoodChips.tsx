@@ -1,8 +1,9 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import { useNeighborhoodsByIds } from "./hooks/useNeighborhoodsByIds";
-import { useTheme } from "../../../../../context/ThemeContext";
+import { NeighborhoodChip } from "./components/NeighborhoodChip";
+import { ChipsEmptyState } from "./components/ChipsEmptyState";
+import { ChipsErrorState } from "./components/ChipsErrorState";
+import { ScrollView, StyleSheet } from "react-native";
 import { SkeletonChips } from "./SkeletonChips";
-import { Feather } from "@expo/vector-icons";
 import React from "react";
 
 interface NeighborhoodChipsProps {
@@ -18,7 +19,6 @@ export const NeighborhoodChips: React.FC<NeighborhoodChipsProps> = ({
   editable = true,
   cachedFilters,
 }) => {
-  const { colors } = useTheme();
   const { neighborhoods, loading, error } = useNeighborhoodsByIds({
     neighborhoodIds,
     cachedFilters,
@@ -35,21 +35,11 @@ export const NeighborhoodChips: React.FC<NeighborhoodChipsProps> = ({
   }
 
   if (error) {
-    return (
-      <View style={styles.container}>
-        <Text style={[styles.errorText, { color: colors.destructive }]}>{error}</Text>
-      </View>
-    );
+    return <ChipsErrorState error={error} />;
   }
 
   if (neighborhoods.length === 0) {
-    return (
-      <View style={styles.container}>
-        <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-          No hay barrios seleccionados
-        </Text>
-      </View>
-    );
+    return <ChipsEmptyState />;
   }
 
   return (
@@ -59,69 +49,21 @@ export const NeighborhoodChips: React.FC<NeighborhoodChipsProps> = ({
       contentContainerStyle={styles.chipsContainer}
     >
       {neighborhoods.map(neighborhood => (
-        <View
+        <NeighborhoodChip
           key={neighborhood.id}
-          style={[
-            styles.chip,
-            {
-              backgroundColor: colors.card,
-              borderColor: colors.border,
-            },
-          ]}
-        >
-          <Text style={[styles.chipText, { color: colors.foreground }]} numberOfLines={1}>
-            {neighborhood.name}
-          </Text>
-          {editable && onNeighborhoodsChange && (
-            <TouchableOpacity
-              onPress={() => handleRemove(neighborhood.id)}
-              style={styles.removeButton}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Feather name="x" size={14} color={colors.mutedForeground} />
-            </TouchableOpacity>
-          )}
-        </View>
+          name={neighborhood.name}
+          onRemove={() => handleRemove(neighborhood.id)}
+          editable={editable && !!onNeighborhoodsChange}
+        />
       ))}
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    marginVertical: 8,
-  },
   chipsContainer: {
     flexDirection: "row",
     gap: 8,
     paddingVertical: 4,
-  },
-  chip: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    gap: 6,
-    maxWidth: 200,
-  },
-  chipText: {
-    fontSize: 13,
-    fontFamily: "Inter-Medium",
-    flexShrink: 1,
-  },
-  removeButton: {
-    marginLeft: 2,
-    padding: 2,
-  },
-  emptyText: {
-    fontSize: 13,
-    fontFamily: "Inter-Regular",
-    fontStyle: "italic",
-  },
-  errorText: {
-    fontSize: 13,
-    fontFamily: "Inter-Regular",
   },
 });

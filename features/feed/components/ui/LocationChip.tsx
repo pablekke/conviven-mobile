@@ -10,14 +10,17 @@ interface LocationChipProps {
   isOpen: boolean;
   onToggle: () => void;
   onSelect?: (location: string, index: number) => void;
+  inline?: boolean;
 }
 
 export function LocationChip({
   locations,
   activeLabel,
+  width,
   isOpen,
   onToggle,
   onSelect,
+  inline = false,
 }: LocationChipProps) {
   if (!locations.length) return null;
 
@@ -25,10 +28,11 @@ export function LocationChip({
     <LocationChipInner
       locations={locations}
       activeLabel={activeLabel}
-      width={350}
+      width={width ?? 350}
       isOpen={isOpen}
       onToggle={onToggle}
       onSelect={onSelect}
+      inline={inline}
     />
   );
 }
@@ -36,9 +40,11 @@ export function LocationChip({
 function LocationChipInner({
   locations,
   activeLabel,
+  width = 350,
   isOpen,
   onToggle,
   onSelect,
+  inline = false,
 }: LocationChipProps) {
   const insets = useSafeAreaInsets();
   const hasMultipleLocations = locations.length > 1;
@@ -55,14 +61,25 @@ function LocationChipInner({
     },
   });
 
+  const containerStyle = inline
+    ? { alignItems: "center" as const }
+    : {
+        position: "absolute" as const,
+        left: 0,
+        right: 0,
+        top: insets.top + 8,
+        zIndex: 30,
+        alignItems: "center" as const,
+      };
+
   return (
-    <View className="absolute left-0 right-0 z-30 items-center" style={{ top: insets.top + 8 }}>
+    <View style={containerStyle}>
       {!isOpen ? (
         <Pressable
           onPress={hasMultipleLocations ? onToggle : undefined}
           disabled={!hasMultipleLocations}
         >
-          <View style={[styles.closedChip, shadow, { width: 350 }]}>
+          <View style={[styles.closedChip, shadow, { width }]}>
             <BlurView intensity={90} tint="extraLight" style={StyleSheet.absoluteFillObject} />
             <View style={styles.closedChipContent}>
               <Text numberOfLines={1} style={styles.closedChipText}>
@@ -73,7 +90,7 @@ function LocationChipInner({
           </View>
         </Pressable>
       ) : (
-        <View style={{ width: 350 }}>
+        <View style={{ width }}>
           <View style={[styles.openContainer, shadow]}>
             <BlurView intensity={90} tint="extraLight" style={StyleSheet.absoluteFillObject} />
             {locations.map((location, i) => {
@@ -123,7 +140,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 8,
   },
   closedChipText: {
     flex: 1,
@@ -167,4 +184,3 @@ const styles = StyleSheet.create({
     color: "#1d4ed8",
   },
 });
-

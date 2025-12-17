@@ -1,18 +1,14 @@
+import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { NeighborhoodOption } from "./components/NeighborhoodOption";
 import { useTheme } from "../../../../../context/ThemeContext";
-import { NeighborhoodSkeleton } from "./NeighborhoodSkeleton";
+import { LoadingState } from "./components/LoadingState";
+import { ModalHeader } from "./components/ModalHeader";
+import { ModalFooter } from "./components/ModalFooter";
+import { ErrorState } from "./components/ErrorState";
+import { EmptyState } from "./components/EmptyState";
 import { useNeighborhoodSelection } from "./hooks";
-import { Feather } from "@expo/vector-icons";
 import { SearchBar } from "./SearchBar";
 import React from "react";
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
 
 interface NeighborhoodSelectionModalProps {
   visible: boolean;
@@ -78,42 +74,15 @@ export const NeighborhoodSelectionModal: React.FC<NeighborhoodSelectionModalProp
         <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
           <View style={[styles.modalHandle, { backgroundColor: colors.muted }]} />
 
-          <View style={styles.modalHeader}>
-            <TouchableOpacity
-              onPress={onClose}
-              style={[styles.closeButton, { backgroundColor: colors.muted }]}
-            >
-              <Feather name="x" size={20} color={colors.foreground} />
-            </TouchableOpacity>
-            <Text style={[styles.modalTitle, { color: colors.foreground }]}>
-              {mode === "main" ? "Seleccionar Barrio Principal" : "Seleccionar Barrios"}
-            </Text>
-            <View style={styles.placeholder} />
-          </View>
+          <ModalHeader
+            title={mode === "main" ? "Seleccionar Barrio Principal" : "Seleccionar Barrios"}
+            onClose={onClose}
+          />
 
           {loading ? (
-            <>
-              <SearchBar value="" onChangeText={() => {}} placeholder="Buscar barrio..." />
-              <ScrollView style={styles.optionsContainer} showsVerticalScrollIndicator={false}>
-                <NeighborhoodSkeleton count={8} />
-              </ScrollView>
-              <View style={styles.footer}>
-                <View style={[styles.skeletonText, { backgroundColor: colors.muted }]} />
-                <View style={[styles.skeletonButton, { backgroundColor: colors.muted }]} />
-              </View>
-            </>
+            <LoadingState />
           ) : error ? (
-            <View style={styles.emptyContainer}>
-              <Text style={[styles.emptyText, { color: colors.destructive }]}>{error}</Text>
-              <TouchableOpacity
-                onPress={() => refetch()}
-                style={[styles.retryButton, { backgroundColor: colors.primary }]}
-              >
-                <Text style={[styles.retryButtonText, { color: colors.primaryForeground }]}>
-                  Reintentar
-                </Text>
-              </TouchableOpacity>
-            </View>
+            <ErrorState error={error} onRetry={() => refetch()} />
           ) : (
             <>
               <SearchBar
@@ -123,11 +92,7 @@ export const NeighborhoodSelectionModal: React.FC<NeighborhoodSelectionModalProp
               />
               <ScrollView style={styles.optionsContainer} showsVerticalScrollIndicator={false}>
                 {filteredNeighborhoods.length === 0 ? (
-                  <View style={styles.emptyContainer}>
-                    <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-                      {searchQuery ? "No se encontraron barrios" : "No hay barrios disponibles"}
-                    </Text>
-                  </View>
+                  <EmptyState hasSearchQuery={!!searchQuery} />
                 ) : (
                   filteredNeighborhoods.map(neighborhood => {
                     const isSelected =
@@ -136,85 +101,23 @@ export const NeighborhoodSelectionModal: React.FC<NeighborhoodSelectionModalProp
                         : selectedIds.includes(neighborhood.id);
                     const isMain = mode === "main" && selectedMainId === neighborhood.id;
                     return (
-                      <TouchableOpacity
+                      <NeighborhoodOption
                         key={neighborhood.id}
-                        style={[
-                          styles.optionButton,
-                          isMain && styles.optionButtonMain,
-                          {
-                            backgroundColor: isSelected ? colors.primary + "20" : colors.muted,
-                            borderColor: isSelected ? colors.primary : colors.border,
-                          },
-                        ]}
+                        name={neighborhood.name}
+                        isSelected={isSelected}
+                        isMain={isMain}
                         onPress={() => toggleSelection(neighborhood.id)}
-                      >
-                        <View style={styles.optionContent}>
-                          <Text
-                            style={[
-                              styles.optionText,
-                              isSelected && styles.optionTextSelected,
-                              {
-                                color: isSelected ? colors.primary : colors.foreground,
-                              },
-                            ]}
-                          >
-                            {neighborhood.name}
-                          </Text>
-                          {isMain && mode === "main" && (
-                            <View style={[styles.mainBadge, { backgroundColor: colors.primary }]}>
-                              <Text
-                                style={[styles.mainBadgeText, { color: colors.primaryForeground }]}
-                              >
-                                Principal
-                              </Text>
-                            </View>
-                          )}
-                        </View>
-                        {isSelected && (
-                          <View style={[styles.checkIcon, { backgroundColor: colors.primary }]}>
-                            <Feather name="check" size={16} color={colors.primaryForeground} />
-                          </View>
-                        )}
-                      </TouchableOpacity>
+                      />
                     );
                   })
                 )}
               </ScrollView>
 
-              <View style={styles.footer}>
-                {isFilterMode && (
-                  <Text style={[styles.selectedCount, { color: colors.mutedForeground }]}>
-                    Cambiar de barrio eliminará todos los barrios adicionales seleccionados.
-                  </Text>
-                )}
-                <TouchableOpacity
-                  style={[
-                    styles.confirmButton,
-                    {
-                      backgroundColor:
-                        mode === "main" && !selectedMainId && !mainNeighborhoodId
-                          ? colors.muted
-                          : colors.primary,
-                    },
-                  ]}
-                  onPress={handleConfirm}
-                  disabled={mode === "main" && !selectedMainId && !mainNeighborhoodId}
-                >
-                  <Text
-                    style={[
-                      styles.confirmButtonText,
-                      {
-                        color:
-                          mode === "main" && !selectedMainId && !mainNeighborhoodId
-                            ? colors.mutedForeground
-                            : colors.primaryForeground,
-                      },
-                    ]}
-                  >
-                    LISTO
-                  </Text>
-                </TouchableOpacity>
-              </View>
+              <ModalFooter
+                isFilterMode={isFilterMode}
+                isDisabled={mode === "main" && !selectedMainId && !mainNeighborhoodId}
+                onConfirm={handleConfirm}
+              />
             </>
           )}
         </View>
@@ -252,138 +155,9 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 16,
   },
-  modalHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    marginBottom: 16,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F0F0F0",
-  },
-  closeButton: {
-    padding: 4,
-    borderRadius: 20,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-  },
-  placeholder: {
-    width: 32,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 60,
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    fontFamily: "Inter-Regular",
-  },
   optionsContainer: {
     paddingHorizontal: 20,
     maxHeight: 400,
     flexGrow: 1,
-  },
-  optionButton: {
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    marginBottom: 10,
-    borderWidth: 1.5,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  optionButtonMain: {
-    borderWidth: 2,
-  },
-  optionContent: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  optionText: {
-    fontSize: 15,
-    flex: 1,
-    fontWeight: "500",
-  },
-  optionTextSelected: {
-    fontWeight: "600",
-  },
-  mainBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  mainBadgeText: {
-    fontSize: 10,
-    fontFamily: "Inter-SemiBold",
-  },
-  checkIcon: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  emptyContainer: {
-    paddingVertical: 60,
-    alignItems: "center",
-  },
-  emptyText: {
-    fontSize: 14,
-    fontFamily: "Inter-Regular",
-  },
-  retryButton: {
-    marginTop: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  retryButtonText: {
-    fontSize: 14,
-    fontFamily: "Inter-SemiBold",
-  },
-  footer: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: "#F0F0F0",
-  },
-  selectedCount: {
-    fontSize: 13,
-    fontFamily: "Inter-Medium",
-    marginBottom: 12,
-    textAlign: "center",
-  },
-  confirmButton: {
-    borderRadius: 12,
-    paddingVertical: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  confirmButtonText: {
-    fontSize: 16,
-    fontWeight: "700",
-    textAlign: "center",
-    letterSpacing: 0.5,
-  },
-  skeletonText: {
-    height: 16,
-    borderRadius: 8,
-  },
-  skeletonButton: {
-    height: 50,
-    borderRadius: 12,
-    marginTop: 12,
   },
 });

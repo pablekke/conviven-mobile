@@ -79,6 +79,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
 
   return (
     <View style={styles.profileCard}>
+      
       <View style={styles.avatarContainer}>
         <TouchableOpacity
           activeOpacity={0.8}
@@ -130,7 +131,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
       <View style={styles.divider} />
 
       <View style={styles.actionButtons}>
-        <ProfileActionButton icon="filter" label="Filtros" onPress={onSettingsPress} />
+        <ProfileActionButton icon="sliders" label="Filtros" onPress={onSettingsPress} />
         <ProfileActionButton icon="edit-3" label="Editar" variant="primary" onPress={onEditPress} />
         <ProfileActionButton icon="camera" label="Fotos" showPlusBadge onPress={onPhotosPress} />
       </View>

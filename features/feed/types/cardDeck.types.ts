@@ -1,7 +1,6 @@
-import type { RefObject } from "react";
+import type { PrimaryCardProps } from "../components/cards/types";
 import type { ScrollView, ViewStyle } from "react-native";
-
-import type { PrimaryCardProps } from "../components/PrimaryCard";
+import type { RefObject } from "react";
 
 export type CardDeckCardProps = Pick<
   PrimaryCardProps,
@@ -17,6 +16,7 @@ export type CardDeckProps = {
   scrollRef: RefObject<ScrollView | null>;
   className?: string;
   style?: ViewStyle;
+  hideLocationChip?: boolean;
   primary: CardDeckPrimaryProps;
   secondary: CardDeckCardProps;
 };

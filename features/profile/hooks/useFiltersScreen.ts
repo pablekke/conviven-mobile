@@ -54,6 +54,7 @@ export const useFiltersScreen = () => {
     searchFiltersHasChanges,
     saveSearchFilters,
     resetSearchFilters,
+    reloadSearchFiltersFromContext,
     minAge,
     maxAge,
     budgetMin,

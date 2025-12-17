@@ -19,8 +19,9 @@ export const useAdjacentNeighborhoods = ({
   preferredRef.current = preferredLocations;
 
   const handleToggleChange = async (newValue: boolean) => {
+    onToggleChange(newValue);
+
     if (!mainPreferredNeighborhoodId) {
-      onToggleChange(newValue);
       return;
     }
 
@@ -46,11 +47,10 @@ export const useAdjacentNeighborhoods = ({
           onNeighborhoodsUpdate(filteredNeighborhoods);
         }
       }
-
-      onToggleChange(newValue);
     } catch (error) {
       console.error("Error handling adjacent neighborhoods:", error);
-      onToggleChange(newValue);
+      // Revertir el estado si hay error
+      onToggleChange(!newValue);
     } finally {
       setLoadingAdjacents(false);
     }
