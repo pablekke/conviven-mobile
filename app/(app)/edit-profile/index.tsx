@@ -14,6 +14,8 @@ import React, { useCallback, useMemo, useRef, useState } from "react";
 import Toast from "react-native-toast-message";
 import { LoadingModal } from "@/components";
 import { StatusBar } from "expo-status-bar";
+import Icon from "react-native-ico-flags";
+import { getFlagIconNameForLanguage } from "../../../utils/languageFlags";
 import {
   SelectionModal,
   PersonalDataTab,
@@ -332,6 +334,17 @@ export default function EditProfileScreen() {
                 roommateTabModal.isArrayField(roommateTabModal.selectedQuestion)
                   ? roommateTabModal.modalSelectedValues
                   : []
+              }
+              renderOptionLeft={
+                roommateTabModal.selectedQuestion === "languagesPref"
+                  ? option => (
+                      <Icon
+                        name={getFlagIconNameForLanguage(option.value || option.label)}
+                        width={18}
+                        height={18}
+                      />
+                    )
+                  : undefined
               }
             />
           )}

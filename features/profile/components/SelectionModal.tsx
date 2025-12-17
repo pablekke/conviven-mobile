@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import React from "react";
 
 interface SelectionModalProps {
   visible: boolean;
@@ -19,6 +20,7 @@ interface SelectionModalProps {
   onConfirm: () => void;
   isMultiSelect?: boolean;
   selectedValues?: string[];
+  renderOptionLeft?: (option: { value: string; label: string }) => React.ReactNode;
 }
 
 export const SelectionModal: React.FC<SelectionModalProps> = ({
@@ -31,6 +33,7 @@ export const SelectionModal: React.FC<SelectionModalProps> = ({
   onConfirm,
   isMultiSelect = false,
   selectedValues = [],
+  renderOptionLeft,
 }) => {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -52,6 +55,7 @@ export const SelectionModal: React.FC<SelectionModalProps> = ({
               const isSelected = isMultiSelect
                 ? selectedValues.includes(option.value)
                 : selectedValue === option.value;
+              const left = renderOptionLeft?.(option);
               return (
                 <TouchableOpacity
                   key={option.value}
@@ -59,6 +63,7 @@ export const SelectionModal: React.FC<SelectionModalProps> = ({
                   onPress={() => onSelect(option.value)}
                 >
                   <View style={styles.optionContent}>
+                    <View style={styles.leftSlot}>{left ? left : null}</View>
                     <Text style={[styles.optionText, isSelected && styles.selectedOptionText]}>
                       {option.label}
                     </Text>
@@ -155,8 +160,8 @@ const styles = StyleSheet.create({
   optionText: {
     fontSize: 15,
     color: "#555555",
-    textAlign: "center",
     fontWeight: "500",
+    flex: 1,
   },
   selectedOptionText: {
     color: "#007BFF",
@@ -166,6 +171,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+  },
+  leftSlot: {
+    width: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
   },
   checkIcon: {
     marginLeft: 8,

@@ -81,27 +81,24 @@ export function useFeed(): UseFeedReturn {
           action: swipeAction,
         });
 
-        {
-          // Avanzar al siguiente roomie
-          setState(prev => {
-            const newIndex = prev.currentIndex + 1;
+        setState(prev => {
+          const newIndex = prev.currentIndex + 1;
 
-            // Si no hay más roomies, cargar más
-            if (newIndex >= prev.roomies.length - 1 && prev.hasMore) {
-              // Cargar más roomies de forma asíncrona
-              setTimeout(() => {
-                const nextPage =
-                  Math.floor(prev.roomies.length / FEED_CONSTANTS.ROOMIES_PER_PAGE) + 1;
-                loadRoomies(nextPage, false);
-              }, 0);
-            }
+          // Si no hay más roomies, cargar más
+          if (newIndex >= prev.roomies.length - 1 && prev.hasMore) {
+            // Cargar más roomies de forma asíncrona
+            setTimeout(() => {
+              const nextPage =
+                Math.floor(prev.roomies.length / FEED_CONSTANTS.ROOMIES_PER_PAGE) + 1;
+              loadRoomies(nextPage, false);
+            }, 0);
+          }
 
-            return {
-              ...prev,
-              currentIndex: newIndex,
-            };
-          });
-        }
+          return {
+            ...prev,
+            currentIndex: newIndex,
+          };
+        });
       } catch (error) {
         console.error("Error sending match action:", error);
       }
