@@ -42,18 +42,16 @@ export const AdjacentNeighborhoodsToggle = memo(
               Buscar también en barrios cercanos
             </Text>
           </View>
-          <View style={styles.switchContainer}>
-            <Switch
-              value={value}
-              onValueChange={onValueChange}
-              trackColor={{
-                false: colors.muted,
-                true: colors.primary + "80",
-              }}
-              thumbColor={value ? colors.primary : colors.mutedForeground}
-              disabled={disabled}
-            />
-          </View>
+          <Switch
+            value={value}
+            onValueChange={onValueChange}
+            trackColor={{
+              false: colors.muted,
+              true: colors.primary + "80",
+            }}
+            thumbColor={value ? colors.primary : colors.mutedForeground}
+            disabled={disabled}
+          />
         </TouchableOpacity>
       </View>
     );

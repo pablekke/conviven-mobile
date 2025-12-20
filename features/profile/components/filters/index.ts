@@ -1,3 +1,3 @@
-export { NeighborhoodsSection } from "./NeighborhoodsSection";
-export { DataTab, SearchFiltersSection } from "./components";
+export { SearchFiltersSection } from "./components";
+export { FiltersTab } from "./FiltersTab";
 export * from "./neighborhoods";

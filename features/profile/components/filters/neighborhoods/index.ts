@@ -1,5 +1,8 @@
-export { NeighborhoodChips } from "./NeighborhoodChips";
-export { MainNeighborhoodCard } from "./MainNeighborhoodCard";
+export { AdditionalNeighborhoodsSelectionModal } from "./AdditionalNeighborhoodsSelectionModal";
+export { MainNeighborhoodSelectionModal } from "./MainNeighborhoodSelectionModal";
 export { NeighborhoodSelectionModal } from "./NeighborhoodSelectionModal";
-export { SearchBar } from "./SearchBar";
+export { MainNeighborhoodCard } from "./MainNeighborhoodCard";
 export { NeighborhoodSkeleton } from "./NeighborhoodSkeleton";
+export { NeighborhoodsSection } from "./NeighborhoodsSection";
+export { NeighborhoodChips } from "./NeighborhoodChips";
+export { SearchBar } from "./SearchBar";

@@ -1,74 +1,52 @@
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { QUESTION_OPTIONS } from "../constants/questionOptions";
+import { useProfileScreen, useProfilePhotos } from "../hooks";
 import { ProfileActionButton } from "./ProfileActionButton";
 import { ProfilePhotoGallery } from "./ProfilePhotoGallery";
-import { findOptionLabel } from "./roommate/hooks";
+import { useAuth } from "../../../context/AuthContext";
 import { Feather } from "@expo/vector-icons";
 import { useState, useMemo } from "react";
+import { useRouter } from "expo-router";
 
-interface ProfileCardProps {
-  avatar?: string;
-  userName: string;
-  userAge: number;
-  progressPercentage: number;
-  birthDate?: string | null;
-  gender?: string | null;
-  photos?: string[];
-  onEditPress: () => void;
-  onSettingsPress?: () => void;
-  onPhotosPress?: () => void;
-}
+export const ProfileCard: React.FC = () => {
+  const router = useRouter();
+  const { user } = useAuth();
+  const { userName, userAge, progressPercentage } = useProfileScreen();
+  const { photos } = useProfilePhotos();
 
-export const ProfileCard: React.FC<ProfileCardProps> = ({
-  avatar,
-  userName,
-  userAge,
-  progressPercentage,
-  birthDate,
-  gender,
-  photos = [],
-  onEditPress,
-  onSettingsPress,
-  onPhotosPress,
-}) => {
+  const avatar = user?.photoUrl ?? undefined;
+
+  const allPhotoUrls = useMemo(() => {
+    if (photos && photos.length > 0) {
+      const sortedPhotos = [...photos].sort((a, b) => {
+        if (a.isPrimary) return -1;
+        if (b.isPrimary) return 1;
+        return 0;
+      });
+      const photoUrls = sortedPhotos.map(photo => photo.url);
+
+      if (user?.photoUrl && !photoUrls.includes(user.photoUrl)) {
+        return [user.photoUrl, ...photoUrls];
+      }
+
+      return photoUrls;
+    }
+    if (user?.photoUrl) {
+      return [user.photoUrl];
+    }
+    return [];
+  }, [photos, user?.photoUrl]);
   const [galleryVisible, setGalleryVisible] = useState(false);
   const [initialPhotoIndex, setInitialPhotoIndex] = useState(0);
 
   const allPhotos = useMemo(() => {
-    if (photos && photos.length > 0) {
-      return photos;
+    if (allPhotoUrls && allPhotoUrls.length > 0) {
+      return allPhotoUrls;
     }
     if (avatar) {
       return [avatar];
     }
     return [];
-  }, [photos, avatar]);
-
-  const formatBirthDate = (dateString: string | null | undefined): string => {
-    if (!dateString) return "";
-    try {
-      if (dateString.includes("T")) {
-        const datePart = dateString.split("T")[0];
-        if (datePart.match(/^\d{4}-\d{2}-\d{2}$/)) {
-          const [year, month, day] = datePart.split("-");
-          return `${day}/${month}/${year}`;
-        }
-      }
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return "";
-      const year = date.getUTCFullYear();
-      const month = String(date.getUTCMonth() + 1).padStart(2, "0");
-      const day = String(date.getUTCDate()).padStart(2, "0");
-      return `${day}/${month}/${year}`;
-    } catch {
-      return "";
-    }
-  };
-
-  const genderLabel = useMemo(() => {
-    if (!gender) return "";
-    return findOptionLabel(gender, QUESTION_OPTIONS.gender) || "";
-  }, [gender]);
+  }, [allPhotoUrls, avatar]);
 
   const handleAvatarPress = () => {
     if (allPhotos.length > 0) {
@@ -79,7 +57,6 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
 
   return (
     <View style={styles.profileCard}>
-      
       <View style={styles.avatarContainer}>
         <TouchableOpacity
           activeOpacity={0.8}
@@ -111,29 +88,26 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
         {userName}, {userAge}
       </Text>
 
-      {(birthDate || gender) && (
-        <View style={styles.infoRow}>
-          {birthDate && (
-            <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Fecha de nacimiento</Text>
-              <Text style={styles.infoValue}>{formatBirthDate(birthDate)}</Text>
-            </View>
-          )}
-          {gender && (
-            <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Género</Text>
-              <Text style={styles.infoValue}>{genderLabel}</Text>
-            </View>
-          )}
-        </View>
-      )}
-
       <View style={styles.divider} />
 
       <View style={styles.actionButtons}>
-        <ProfileActionButton icon="sliders" label="Filtros" onPress={onSettingsPress} />
-        <ProfileActionButton icon="edit-3" label="Editar" variant="primary" onPress={onEditPress} />
-        <ProfileActionButton icon="camera" label="Fotos" showPlusBadge onPress={onPhotosPress} />
+        <ProfileActionButton
+          icon="sliders"
+          label="Filtros"
+          onPress={() => router.push("./profile/filters")}
+        />
+        <ProfileActionButton
+          icon="edit-3"
+          label="Editar"
+          variant="primary"
+          onPress={() => router.push("./profile/edit-profile")}
+        />
+        <ProfileActionButton
+          icon="camera"
+          label="Fotos"
+          showPlusBadge
+          onPress={() => router.push("./profile/photos")}
+        />
       </View>
     </View>
   );

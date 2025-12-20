@@ -12,7 +12,9 @@
     "build": "npx tsc",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "clean": "rm -rf node_modules && rm -rf .expo && npm cache clean --force",
+    "reset": "npm run clean && npm install"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
@@ -87,10 +89,10 @@
     ]
   },
   "overrides": {
-    "react-native-svg": "15.12.1",
-    "react-svg-main": {
-      "react-native-svg": "15.12.1"
-    }
+    "react-native-svg": "15.12.1"
+  },
+  "resolutions": {
+    "react-native-svg": "15.12.1"
   },
   "private": true
 }

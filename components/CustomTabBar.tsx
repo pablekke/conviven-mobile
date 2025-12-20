@@ -11,7 +11,9 @@ export function CustomTabBar(props: BottomTabBarProps) {
   const { isDark } = useTheme();
   const shouldHideTabBar =
     currentRoute.includes("conversation") ||
-    currentRoute.includes("edit-profile") ||
+    currentRoute.includes("profile/edit-profile") ||
+    currentRoute.includes("profile/filters") ||
+    currentRoute.includes("profile/photos") ||
     currentRoute.includes("settings");
 
   if (shouldHideTabBar) {

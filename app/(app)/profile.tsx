@@ -1,51 +1,26 @@
 import { Image, Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { useProfileScreen, useProfilePhotos } from "../../features/profile/hooks";
 import { ProfileCard } from "../../features/profile/components";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { GlassBackground, LoadingModal } from "@/components";
 import TabTransition from "../../components/TabTransition";
 import { useRouter, useFocusEffect } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import Spinner from "../../components/Spinner";
-import { GlassBackground, LoadingModal } from "@/components";
+import { useCallback, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { user, userName, userAge, progressPercentage } = useProfileScreen();
-  const { logout, isLogoutInProgress, refreshUser } = useAuth();
-  const { photos, loadPhotos } = useProfilePhotos();
+  const { user, logout, isLogoutInProgress, refreshUser } = useAuth();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       refreshUser().catch(() => {});
-      loadPhotos().catch(() => {});
-    }, [refreshUser, loadPhotos]),
+    }, [refreshUser]),
   );
-
-  const allPhotoUrls = useMemo(() => {
-    if (photos && photos.length > 0) {
-      const sortedPhotos = [...photos].sort((a, b) => {
-        if (a.isPrimary) return -1;
-        if (b.isPrimary) return 1;
-        return 0;
-      });
-      const photoUrls = sortedPhotos.map(photo => photo.url);
-
-      if (user?.photoUrl && !photoUrls.includes(user.photoUrl)) {
-        return [user.photoUrl, ...photoUrls];
-      }
-
-      return photoUrls;
-    }
-    if (user?.photoUrl) {
-      return [user.photoUrl];
-    }
-    return [];
-  }, [photos, user?.photoUrl]);
 
   if (!user) {
     return <LoadingModal visible={!user} />;
@@ -61,16 +36,7 @@ export default function ProfileScreen() {
           <View style={styles.contentWrapper}>
             <View>
               <View style={styles.headerSpacer} />
-              <ProfileCard
-                avatar={user.photoUrl ?? undefined}
-                userName={userName}
-                userAge={userAge}
-                progressPercentage={progressPercentage}
-                photos={allPhotoUrls}
-                onEditPress={() => router.push("./edit-profile")}
-                onSettingsPress={() => router.push("./edit-profile/filters")}
-                onPhotosPress={() => router.push("./edit-profile/photos")}
-              />
+              <ProfileCard />
 
               <View style={styles.actionsContainer}>
                 <TouchableOpacity

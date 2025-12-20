@@ -1,18 +1,19 @@
-import { QUESTION_TITLES, QUESTION_OPTIONS } from "../../../features/profile/constants";
-import { useFiltersScreen, useEditFiltersLogic } from "../../../features/profile/hooks";
-import { SafeAreaView } from "react-native-safe-area-context";
-import TabTransition from "../../../components/TabTransition";
-import { GlassBackground, LoadingModal } from "@/components";
+import { QUESTION_TITLES, QUESTION_OPTIONS } from "../../../../features/profile/constants";
+import { useFiltersScreen, useEditFiltersLogic } from "../../../../features/profile/hooks";
 import { Animated, StyleSheet, View, Dimensions } from "react-native";
+import TabTransition from "../../../../components/TabTransition";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { GlassBackground, LoadingModal } from "@/components";
 import { StatusBar } from "expo-status-bar";
 import {
   SelectionModal,
-  DataTab,
+  FiltersTab,
   ExpandableTab,
   EditProfileHeaderSection,
   UnsavedChangesModal,
-  NeighborhoodSelectionModal,
-} from "../../../features/profile/components";
+  MainNeighborhoodSelectionModal,
+  AdditionalNeighborhoodsSelectionModal,
+} from "../../../../features/profile/components";
 
 export default function FiltersScreen() {
   const {
@@ -83,7 +84,7 @@ export default function FiltersScreen() {
           >
             <View style={styles.contentContainer}>
               <GlassBackground intensity={90} />
-              <DataTab
+              <FiltersTab
                 getSelectedLabel={getSelectedLabel}
                 openSelectionModal={openSelectionModal}
                 minAge={minAge}
@@ -119,20 +120,29 @@ export default function FiltersScreen() {
         onCancel={() => setUnsavedChangesModalVisible(false)}
         isSaving={isSaving}
       />
-      <NeighborhoodSelectionModal
-        visible={neighborhoodModalVisible && !isSaving}
-        selectedNeighborhoodIds={preferredLocations}
-        mainNeighborhoodId={mainPreferredNeighborhoodId}
-        mode={selectedQuestion === "mainPreferredNeighborhood" ? "main" : "multiple"}
-        isFilterMode
-        excludeNeighborhoodIds={
-          selectedQuestion === "preferredLocations" && mainPreferredNeighborhoodId
-            ? [mainPreferredNeighborhoodId]
-            : []
-        }
-        onClose={closeNeighborhoodModal}
-        onConfirm={handleNeighborhoodConfirm}
-      />
+      {selectedQuestion === "mainPreferredNeighborhood" ? (
+        <MainNeighborhoodSelectionModal
+          visible={neighborhoodModalVisible && !isSaving}
+          mainNeighborhoodId={mainPreferredNeighborhoodId}
+          isFilterMode
+          onClose={closeNeighborhoodModal}
+          onConfirm={mainId => handleNeighborhoodConfirm([], mainId)}
+        />
+      ) : (
+        <AdditionalNeighborhoodsSelectionModal
+          visible={neighborhoodModalVisible && !isSaving}
+          selectedNeighborhoodIds={preferredLocations}
+          mainNeighborhoodId={mainPreferredNeighborhoodId}
+          isFilterMode
+          excludeNeighborhoodIds={
+            selectedQuestion === "preferredLocations" && mainPreferredNeighborhoodId
+              ? [mainPreferredNeighborhoodId]
+              : []
+          }
+          onClose={closeNeighborhoodModal}
+          onConfirm={selectedIds => handleNeighborhoodConfirm(selectedIds)}
+        />
+      )}
     </TabTransition>
   );
 }
@@ -150,7 +160,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     minHeight: SCREEN_HEIGHT - 120,
     paddingTop: 50,
-    paddingBottom: 40,
   },
   contentContainer: {
     backgroundColor: "#F8F9FA",

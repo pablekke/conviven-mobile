@@ -27,7 +27,12 @@ export type { ChecklistItemProps } from "./ChecklistItem";
 
 export { AboutTab } from "./about";
 export { DataTab as PersonalDataTab } from "./data";
-export { DataTab, NeighborhoodSelectionModal } from "./filters";
+export { FiltersTab } from "./filters";
+export {
+  NeighborhoodSelectionModal,
+  MainNeighborhoodSelectionModal,
+  AdditionalNeighborhoodsSelectionModal,
+} from "./filters/neighborhoods";
 export { RoommateTab } from "./roommate";
 export { QuestionRow } from "./QuestionRow";
 export { SelectionModal } from "./SelectionModal";

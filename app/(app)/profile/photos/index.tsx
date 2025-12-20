@@ -1,7 +1,8 @@
-import { PhotoUploadScreen } from "../../../features/profile/components";
-import { View, ActivityIndicator, StyleSheet } from "react-native";
-import { useProfilePhotos } from "../../../features/profile/hooks";
-import { useTheme } from "../../../context/ThemeContext";
+import { PhotoUploadScreen } from "../../../../features/profile/components";
+import { useProfilePhotos } from "../../../../features/profile/hooks";
+import { useTheme } from "../../../../context/ThemeContext";
+import Spinner from "../../../../components/Spinner";
+import { View, StyleSheet } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 import { useEffect } from "react";
@@ -26,7 +27,7 @@ export default function PhotosScreen() {
       <>
         <StatusBar style="light" />
         <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <Spinner size={24} color={colors.primary} />
         </View>
       </>
     );

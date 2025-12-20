@@ -1,3 +1,5 @@
+export { useAdditionalNeighborhoodsSelection } from "./useAdditionalNeighborhoodsSelection";
+export { useMainNeighborhoodSelection } from "./useMainNeighborhoodSelection";
 export { useIsMontevideoNeighborhood } from "./useIsMontevideoNeighborhood";
 export { useAdjacentNeighborhoods } from "./useAdjacentNeighborhoods";
 export { useNeighborhoodSelection } from "./useNeighborhoodSelection";

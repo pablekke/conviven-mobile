@@ -19,7 +19,7 @@ function EmptyFeedCardComponent() {
   const hasMatches = matches && matches.length > 0;
 
   const handleGoToFilters = () => {
-    router.push("/(app)/edit-profile/filters");
+    router.push("/(app)/profile/filters/index");
   };
 
   const handleGoToMatches = () => {

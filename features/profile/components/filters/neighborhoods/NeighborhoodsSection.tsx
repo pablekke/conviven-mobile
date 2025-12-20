@@ -1,9 +1,9 @@
-import { AdditionalNeighborhoodsSection } from "./components/AdditionalNeighborhoodsSection";
-import { useNeighborhoodsSection } from "./neighborhoods/hooks/useNeighborhoodsSection";
-import { AdjacentNeighborhoodsToggle } from "./components/AdjacentNeighborhoodsToggle";
-import { NeighborhoodsSectionHeader } from "./components/NeighborhoodsSectionHeader";
-import { SearchFiltersFormData } from "../../services/searchFiltersService";
-import { MainNeighborhoodCard } from "./neighborhoods";
+import { AdditionalNeighborhoodsSection } from "../components/AdditionalNeighborhoodsSection";
+import { AdjacentNeighborhoodsToggle } from "../components/AdjacentNeighborhoodsToggle";
+import { NeighborhoodsSectionHeader } from "../components/NeighborhoodsSectionHeader";
+import { SearchFiltersFormData } from "../../../services/searchFiltersService";
+import { useNeighborhoodsSection } from "./hooks/useNeighborhoodsSection";
+import { MainNeighborhoodCard } from "./MainNeighborhoodCard";
 import { View } from "react-native";
 import React from "react";
 

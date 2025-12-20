@@ -1,9 +1,9 @@
-import { SearchFiltersFormData } from "../../../services/searchFiltersService";
-import { NeighborhoodsSection } from "../NeighborhoodsSection";
-import { SearchFiltersSection } from "./SearchFiltersSection";
+import { SearchFiltersFormData } from "../../services/searchFiltersService";
+import { SearchFiltersSection } from "./components/SearchFiltersSection";
+import { NeighborhoodsSection } from "./neighborhoods";
 import { StyleSheet, ScrollView } from "react-native";
 
-interface DataTabProps {
+interface FiltersTabProps {
   getSelectedLabel: (key: string) => string;
   openSelectionModal: (key: string) => void;
   minAge: string;
@@ -18,7 +18,7 @@ interface DataTabProps {
   formData: SearchFiltersFormData;
 }
 
-export const DataTab: React.FC<DataTabProps> = ({
+export const FiltersTab: React.FC<FiltersTabProps> = ({
   getSelectedLabel,
   openSelectionModal,
   minAge,
@@ -62,6 +62,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 16,
     paddingTop: 24,
-    paddingBottom: 50,
+    paddingBottom: 150,
   },
 });
