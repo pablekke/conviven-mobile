@@ -1,9 +1,9 @@
 import { QUESTION_TITLES, QUESTION_OPTIONS } from "../../../../features/profile/constants";
 import { getFlagIconNameForLanguage } from "../../../../utils/languageFlags";
+import { useEditProfileScreen } from "../../../../features/profile/hooks";
 import TabTransition from "../../../../components/TabTransition";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Animated, StyleSheet, View } from "react-native";
-import { useEditProfileScreen } from "./hooks";
 import { LoadingModal } from "@/components";
 import { StatusBar } from "expo-status-bar";
 import Icon from "react-native-ico-flags";

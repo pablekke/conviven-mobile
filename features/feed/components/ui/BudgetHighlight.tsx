@@ -18,4 +18,3 @@ function BudgetHighlightComponent({ value, style, ...rest }: BudgetHighlightProp
 export const BudgetHighlight = memo(BudgetHighlightComponent);
 
 export default BudgetHighlight;
-

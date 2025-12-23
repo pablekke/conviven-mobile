@@ -2,7 +2,7 @@ export const FEED_CONSTANTS = {
   // Paginación
   ROOMIES_PER_PAGE: 20, // Coincide con el backend
   MAX_ROOMIES_CACHE: 50,
-  HERO_BOTTOM_EXTRA: 250,
+  HERO_BOTTOM_EXTRA: 350,
   HERO_IMAGE_EXTRA: 0,
   TAB_BAR_HEIGHT: 50,
   HERO_BLUR_OVERHANG: 80,

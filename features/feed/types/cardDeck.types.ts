@@ -9,6 +9,8 @@ export type CardDeckCardProps = Pick<
 
 export type CardDeckPrimaryProps = CardDeckCardProps & {
   onSwipeComplete?: (direction: "like" | "dislike") => void;
+  photosCount?: number;
+  onPhotosPress?: () => void;
 };
 
 export type CardDeckProps = {

@@ -13,8 +13,7 @@ export type PrimaryCardProps = {
   showScrollCue?: boolean;
   locationChipStyle?: StyleProp<ViewStyle>;
   locationChipTextStyle?: StyleProp<TextStyle>;
-  headlineStyle?: TextStyle;
-  budgetStyle?: TextStyle;
-  infoWrapperStyle?: StyleProp<ViewStyle>;
   style?: StyleProp<ViewStyle>;
+  photosCount?: number;
+  onPhotosPress?: () => void;
 };

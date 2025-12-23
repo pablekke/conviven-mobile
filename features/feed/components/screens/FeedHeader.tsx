@@ -1,5 +1,4 @@
 import { View, StyleSheet, useWindowDimensions } from "react-native";
-import { PhotoGalleryButton } from "../cards/PhotoGalleryButton";
 import { LocationChip } from "../ui/LocationChip";
 import { memo } from "react";
 
@@ -10,8 +9,6 @@ interface FeedHeaderProps {
   locationOpen: boolean;
   onToggleLocation: () => void;
   onSelectLocation: (location: string, index: number) => void;
-  photosCount: number;
-  onPhotosPress: () => void;
 }
 
 export const FeedHeader = memo(
@@ -21,14 +18,21 @@ export const FeedHeader = memo(
     locationOpen,
     onToggleLocation,
     onSelectLocation,
-    photosCount,
-    onPhotosPress,
   }: FeedHeaderProps) => {
     const { width } = useWindowDimensions();
-    const locationChipMaxWidth = width * 0.8 - 32;
+    const locationChipMaxWidth = width - 16 //* 0.8 - 32;
 
     return (
-      <View style={styles.header}>
+      <View
+        style={[
+          styles.header,
+          // eslint-disable-next-line react-native/no-inline-styles
+          {
+            zIndex: locationOpen ? 9999 : 1,
+            elevation: locationOpen ? 9999 : 0,
+          },
+        ]}
+      >
         <View style={styles.leftSection}>
           <LocationChip
             locations={locations}
@@ -39,9 +43,6 @@ export const FeedHeader = memo(
             width={locationChipMaxWidth}
             inline
           />
-        </View>
-        <View style={styles.rightSection}>
-          <PhotoGalleryButton photosCount={photosCount} top={0} onPress={onPhotosPress} />
         </View>
       </View>
     );
@@ -54,17 +55,15 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    justifyContent: "center",
+    // justifyContent: "space-between",
+    paddingHorizontal: 7,
     marginBottom: 12,
+    width: "100%",
   },
   leftSection: {
-    flex: 0.8,
-    alignItems: "flex-start",
-  },
-  rightSection: {
-    flex: 0.2,
-    alignItems: "flex-end",
+    flex: 1,
+    alignItems: "center",
+    width: "100%",
   },
 });

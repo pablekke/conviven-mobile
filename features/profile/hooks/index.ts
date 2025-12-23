@@ -41,3 +41,6 @@ export { useFiltersScreen } from "./useFiltersScreen";
 export { useFiltersModals } from "./useFiltersModals";
 export { useFiltersSave } from "./useFiltersSave";
 export { useFiltersScroll } from "./useFiltersScroll";
+export { useEditProfileScroll } from "./useEditProfileScroll";
+export { useEditProfileSave } from "./useEditProfileSave";
+export { useEditProfileScreen } from "./useEditProfileScreen";

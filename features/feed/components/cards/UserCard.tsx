@@ -1,8 +1,8 @@
-import React from "react";
 import { View, Text, Image, StyleSheet, Dimensions } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Roomie } from "../../types";
 import { BlurView } from "expo-blur";
+import React from "react";
 
 const { width, height } = Dimensions.get("window");
 const CARD_WIDTH = width * 0.95;

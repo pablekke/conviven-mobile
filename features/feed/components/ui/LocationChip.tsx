@@ -1,5 +1,6 @@
 import { View, Text, Pressable, Platform, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTheme } from "../../../../context/ThemeContext";
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 
@@ -40,13 +41,14 @@ export function LocationChip({
 function LocationChipInner({
   locations,
   activeLabel,
-  width = 350,
+  width = 400,
   isOpen,
   onToggle,
   onSelect,
   inline = false,
 }: LocationChipProps) {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const hasMultipleLocations = locations.length > 1;
 
   const shadow = Platform.select({
@@ -62,7 +64,7 @@ function LocationChipInner({
   });
 
   const containerStyle = inline
-    ? { alignItems: "center" as const }
+    ? { alignItems: "center" as const, zIndex: isOpen ? 100 : 1 }
     : {
         position: "absolute" as const,
         left: 0,
@@ -74,23 +76,29 @@ function LocationChipInner({
 
   return (
     <View style={containerStyle}>
-      {!isOpen ? (
+      {/* eslint-disable-next-line react-native/no-inline-styles */}
+      <View style={{ opacity: isOpen ? 0 : 1 }}>
         <Pressable
           onPress={hasMultipleLocations ? onToggle : undefined}
-          disabled={!hasMultipleLocations}
+          disabled={!hasMultipleLocations || isOpen}
         >
           <View style={[styles.closedChip, shadow, { width }]}>
             <BlurView intensity={90} tint="extraLight" style={StyleSheet.absoluteFillObject} />
             <View style={styles.closedChipContent}>
-              <Text numberOfLines={1} style={styles.closedChipText}>
+              <Text numberOfLines={1} style={[styles.closedChipText, { color: colors.primary }]}>
                 {activeLabel}
               </Text>
-              {hasMultipleLocations && <Feather name="chevron-down" size={14} color="#1d4ed8" />}
+              {hasMultipleLocations && (
+                <Feather name="chevron-down" size={14} color={colors.primary} />
+              )}
             </View>
           </View>
         </Pressable>
-      ) : (
-        <View style={{ width }}>
+      </View>
+
+      {isOpen && (
+        // eslint-disable-next-line react-native/no-inline-styles
+        <View style={{ position: "absolute", top: 0, width }}>
           <View style={[styles.openContainer, shadow]}>
             <BlurView intensity={90} tint="extraLight" style={StyleSheet.absoluteFillObject} />
             {locations.map((location, i) => {
@@ -110,14 +118,11 @@ function LocationChipInner({
                 >
                   <Text
                     numberOfLines={1}
-                    style={[
-                      styles.openOptionText,
-                      isActive ? styles.openOptionTextActive : styles.openOptionTextDefault,
-                    ]}
+                    style={[styles.openOptionText, { color: colors.primary }]}
                   >
                     {location}
                   </Text>
-                  {i === 0 ? <Feather name="chevron-up" size={14} color="#1d4ed8" /> : null}
+                  {i === 0 ? <Feather name="chevron-up" size={14} color={colors.primary} /> : null}
                 </Pressable>
               );
             })}
@@ -132,7 +137,8 @@ const styles = StyleSheet.create({
   closedChip: {
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: "rgba(37, 99, 235, 0.002)",
+    borderColor: "rgba(37, 99, 235, 0.2)",
+    shadowColor: "#1d4ed8",
     overflow: "hidden",
   },
   closedChipContent: {
@@ -176,11 +182,5 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 13,
     fontWeight: "600",
-  },
-  openOptionTextDefault: {
-    color: "#1d4ed8",
-  },
-  openOptionTextActive: {
-    color: "#1d4ed8",
   },
 });

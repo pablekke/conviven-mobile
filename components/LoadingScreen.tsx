@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
 import { Animated, StyleSheet, Dimensions, Text } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { StatusBar } from "expo-status-bar";
 
 import Spinner from "./Spinner";
 import { useTheme } from "../context/ThemeContext";
@@ -63,6 +64,7 @@ export default function LoadingScreen({
         },
       ]}
     >
+      <StatusBar style="light" />
       <Spinner size={52} color="#FFFFFF" trackColor="rgba(255,255,255,0.15)" thickness={5} />
       <Text style={styles.phrase}>{currentPhrase}</Text>
     </Animated.View>

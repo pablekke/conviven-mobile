@@ -1,6 +1,6 @@
-import { useScrollCueAnimation } from "../../hooks/useScrollCueAnimation";
-import { Animated, StyleSheet, useWindowDimensions } from "react-native";
+import { Animated, StyleSheet, useWindowDimensions, View } from "react-native";
 import { FEED_CONSTANTS } from "../../constants/feed.constants";
+import { PhotoGalleryButton } from "./PhotoGalleryButton";
 import type { PrimaryCardProps } from "./types";
 import { BlurOverlay } from "./BlurOverlay";
 import { CardCallout } from "./CardCallout";
@@ -13,11 +13,9 @@ function PrimaryCardComponent({
   budget,
   basicInfo,
   blurOverlayStyle,
-  showScrollCue = true,
-  headlineStyle,
-  budgetStyle,
-  infoWrapperStyle,
   style,
+  photosCount,
+  onPhotosPress,
 }: PrimaryCardProps) {
   const { height: winH } = useWindowDimensions();
   const tabBarHeight = FEED_CONSTANTS.TAB_BAR_HEIGHT;
@@ -28,7 +26,6 @@ function PrimaryCardComponent({
     computedHeroHeight - heroBottomSpacing + FEED_CONSTANTS.HERO_IMAGE_EXTRA,
   );
   const mainPhoto = photos?.[0];
-  const arrowTranslate = useScrollCueAnimation(showScrollCue);
 
   return (
     <Animated.View style={[styles.cardContainer, { height: cardHeight }, style]}>
@@ -36,17 +33,15 @@ function PrimaryCardComponent({
 
       <BlurOverlay cardHeight={cardHeight} style={blurOverlayStyle} />
 
-      <CardCallout
-        headline={headline}
-        budget={budget}
-        basicInfo={basicInfo}
-        cardHeight={cardHeight}
-        showScrollCue={showScrollCue}
-        arrowTranslate={arrowTranslate}
-        headlineStyle={headlineStyle}
-        budgetStyle={budgetStyle}
-        infoWrapperStyle={infoWrapperStyle}
-      />
+      <View style={styles.contentOverlay} pointerEvents="box-none">
+        <CardCallout headline={headline} budget={budget} basicInfo={basicInfo} />
+      </View>
+
+      {photosCount !== undefined && photosCount > 0 && onPhotosPress && (
+        <View style={styles.photoButtonContainer} pointerEvents="box-none">
+          <PhotoGalleryButton photosCount={photosCount} onPress={onPhotosPress} />
+        </View>
+      )}
     </Animated.View>
   );
 }
@@ -56,7 +51,20 @@ export const PrimaryCard = memo(PrimaryCardComponent);
 const styles = StyleSheet.create({
   cardContainer: {
     width: "100%",
+    position: "relative",
     overflow: "hidden",
     borderRadius: 24,
+  },
+  contentOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "flex-end",
+    paddingBottom: 5,
+    zIndex: 100,
+  },
+  photoButtonContainer: {
+    position: "absolute",
+    top: 16,
+    right: 16,
+    zIndex: 101,
   },
 });

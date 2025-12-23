@@ -19,7 +19,7 @@ function EmptyFeedCardComponent() {
   const hasMatches = matches && matches.length > 0;
 
   const handleGoToFilters = () => {
-    router.push("/(app)/profile/filters/index");
+    router.push("/(app)/profile/filters");
   };
 
   const handleGoToMatches = () => {
@@ -78,8 +78,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   content: {
+    flex: 1,
     alignItems: "center",
+    justifyContent: "center",
     gap: 20,
+    width: "100%",
   },
   iconContainer: {
     width: 96,

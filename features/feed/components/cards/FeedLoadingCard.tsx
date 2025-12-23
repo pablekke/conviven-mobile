@@ -1,8 +1,9 @@
 import { FEED_CONSTANTS, computeHeroImageHeight } from "../../constants/feed.constants";
 import { View, Text, StyleSheet, useWindowDimensions } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { memo, useState, useEffect } from "react";
 import Spinner from "../../../../components/Spinner";
+import { memo, useState, useEffect } from "react";
+import { StatusBar } from "expo-status-bar";
 
 const LOADING_PHRASES = [
   "Buscando los mejores matches para vos",
@@ -37,6 +38,7 @@ function FeedLoadingCardComponent() {
 
   return (
     <View style={[styles.container, { height: heroImageHeight }]} pointerEvents="none">
+      <StatusBar style="light" />
       <LinearGradient
         colors={["#1a1a2e", "#16213e", "#0f3460"]}
         start={{ x: 0, y: 0 }}
@@ -81,4 +83,3 @@ const styles = StyleSheet.create({
     fontFamily: "Inter-Medium",
   },
 });
-

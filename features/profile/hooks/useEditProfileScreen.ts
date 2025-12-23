@@ -1,12 +1,12 @@
-import { useRoommateTabModal } from "../../../../../features/profile/components/roommate/hooks/useRoommateTabModal";
-import { useOtherTabsSelectionModal } from "../../../../../features/profile/hooks/useOtherTabsSelectionModal";
-import { useEditProfileLogic } from "../../../../../features/profile/hooks/useEditProfileLogic";
-import type { TabType } from "../../../../../features/profile/components";
+import { useRoommateTabModal } from "../components/roommate/hooks/useRoommateTabModal";
+import { useOtherTabsSelectionModal } from "./useOtherTabsSelectionModal";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useEditProfileScroll } from "./useEditProfileScroll";
-import { useAuth } from "../../../../../context/AuthContext";
+import { useEditProfileLogic } from "./useEditProfileLogic";
 import { useEditProfileSave } from "./useEditProfileSave";
+import { useAuth } from "../../../context/AuthContext";
 import { useFocusEffect } from "expo-router";
+import type { TabType } from "../components";
 
 export const useEditProfileScreen = () => {
   const { user } = useAuth();

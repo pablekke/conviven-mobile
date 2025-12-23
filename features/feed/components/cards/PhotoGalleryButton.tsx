@@ -1,4 +1,5 @@
 import { StyleSheet, Text, TouchableOpacity } from "react-native";
+import { useTheme } from "../../../../context/ThemeContext";
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { memo } from "react";
@@ -10,6 +11,8 @@ interface PhotoGalleryButtonProps {
 }
 
 export const PhotoGalleryButton = memo(({ photosCount, top, onPress }: PhotoGalleryButtonProps) => {
+  const { colors } = useTheme();
+
   return (
     <TouchableOpacity
       style={[styles.photoGalleryButton, top !== undefined && { top }]}
@@ -17,8 +20,10 @@ export const PhotoGalleryButton = memo(({ photosCount, top, onPress }: PhotoGall
       activeOpacity={0.8}
     >
       <BlurView intensity={90} tint="extraLight" style={styles.photoGalleryButtonBlur}>
-        <Feather name="image" size={18} color="#1d4ed8" />
-        <Text style={styles.photoGalleryButtonText}>{photosCount}</Text>
+        <Feather name="image" size={18} color={colors.primary} />
+        <Text style={[styles.photoGalleryButtonText, { color: colors.primary }]}>
+          {photosCount}
+        </Text>
       </BlurView>
     </TouchableOpacity>
   );
@@ -42,7 +47,6 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   photoGalleryButtonText: {
-    color: "#1d4ed8",
     fontSize: 14,
     fontWeight: "700",
     fontFamily: "Inter-SemiBold",
