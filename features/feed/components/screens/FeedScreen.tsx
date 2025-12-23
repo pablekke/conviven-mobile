@@ -154,7 +154,7 @@ function FeedScreen() {
           {showScrollCue && (
             <View
               className="items-center shadow-slate-200 shadow-lg rounded-2xl p-2"
-              onLayout={event => {
+              onLayout={() => {
                 setScrollTarget(720);
               }}
             >

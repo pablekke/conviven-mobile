@@ -20,7 +20,7 @@ export const FeedHeader = memo(
     onSelectLocation,
   }: FeedHeaderProps) => {
     const { width } = useWindowDimensions();
-    const locationChipMaxWidth = width - 16 //* 0.8 - 32;
+    const locationChipMaxWidth = width - 16;
 
     return (
       <View
@@ -64,6 +64,7 @@ const styles = StyleSheet.create({
   leftSection: {
     flex: 1,
     alignItems: "center",
+    justifyContent: "center",
     width: "100%",
   },
 });

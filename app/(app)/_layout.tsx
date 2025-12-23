@@ -29,6 +29,7 @@ export default function AppLayout() {
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.mutedForeground,
+        lazy: false,
         tabBarLabelStyle: {
           fontSize: 12,
           fontFamily: "Inter-Medium",
