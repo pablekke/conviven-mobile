@@ -64,7 +64,7 @@ export default function LoadingScreen({
         },
       ]}
     >
-      <StatusBar style="light" />
+      <StatusBar style="light" translucent backgroundColor="transparent" />
       <Spinner size={52} color="#FFFFFF" trackColor="rgba(255,255,255,0.15)" thickness={5} />
       <Text style={styles.phrase}>{currentPhrase}</Text>
     </Animated.View>

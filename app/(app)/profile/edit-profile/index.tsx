@@ -3,7 +3,7 @@ import { getFlagIconNameForLanguage } from "../../../../utils/languageFlags";
 import { useEditProfileScreen } from "../../../../features/profile/hooks";
 import TabTransition from "../../../../components/TabTransition";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Animated, StyleSheet, View } from "react-native";
+import { Animated, StyleSheet, View, KeyboardAvoidingView, Platform } from "react-native";
 import { LoadingModal } from "@/components";
 import { StatusBar } from "expo-status-bar";
 import Icon from "react-native-ico-flags";
@@ -54,53 +54,60 @@ export default function EditProfileScreen() {
           isSaving={isSaving}
         />
         <SafeAreaView style={styles.safeArea} edges={["top"]}>
-          {/* Tab Content */}
-          <Animated.ScrollView
-            ref={scrollViewRef}
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-            onScroll={handleScroll}
-            scrollEventThrottle={16}
-            scrollEnabled={!isSaving}
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={styles.keyboardView}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
           >
-            <View style={styles.contentContainer}>
-              {activeTab === "data" && (
-                <PersonalDataTab
-                  getSelectedLabel={getSelectedLabel}
-                  openSelectionModal={openSelectionModal}
-                  firstName={data.firstName}
-                  lastName={data.lastName}
-                  bio={data.bio}
-                  occupation={data.occupation}
-                  education={data.education}
-                  birthDate={data.birthDate}
-                  user={user}
-                  draftLocation={data.draftLocation}
-                  locationModalVisible={data.locationModalVisible}
-                  setLocationModalVisible={data.setLocationModalVisible}
-                  setFirstName={data.setFirstName}
-                  setLastName={data.setLastName}
-                  setBio={data.setBio}
-                  setOccupation={data.setOccupation}
-                  setEducation={data.setEducation}
-                  setBirthDate={data.setBirthDate}
-                  handleLocationConfirm={data.handleLocationConfirm}
-                />
-              )}
-              {activeTab === "about" && (
-                <AboutTab
-                  getSelectedLabel={getSelectedLabel}
-                  openSelectionModal={openSelectionModal}
-                />
-              )}
-              {activeTab === "roommate" && (
-                <RoommateTab
-                  getSelectedLabel={getSelectedLabel}
-                  openSelectionModal={openSelectionModal}
-                />
-              )}
-            </View>
-          </Animated.ScrollView>
+            {/* Tab Content */}
+            <Animated.ScrollView
+              ref={scrollViewRef}
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={false}
+              onScroll={handleScroll}
+              scrollEventThrottle={16}
+              scrollEnabled={!isSaving}
+              keyboardShouldPersistTaps="handled"
+            >
+              <View style={styles.contentContainer}>
+                {activeTab === "data" && (
+                  <PersonalDataTab
+                    getSelectedLabel={getSelectedLabel}
+                    openSelectionModal={openSelectionModal}
+                    firstName={data.firstName}
+                    lastName={data.lastName}
+                    bio={data.bio}
+                    occupation={data.occupation}
+                    education={data.education}
+                    birthDate={data.birthDate}
+                    user={user}
+                    draftLocation={data.draftLocation}
+                    locationModalVisible={data.locationModalVisible}
+                    setLocationModalVisible={data.setLocationModalVisible}
+                    setFirstName={data.setFirstName}
+                    setLastName={data.setLastName}
+                    setBio={data.setBio}
+                    setOccupation={data.setOccupation}
+                    setEducation={data.setEducation}
+                    setBirthDate={data.setBirthDate}
+                    handleLocationConfirm={data.handleLocationConfirm}
+                  />
+                )}
+                {activeTab === "about" && (
+                  <AboutTab
+                    getSelectedLabel={getSelectedLabel}
+                    openSelectionModal={openSelectionModal}
+                  />
+                )}
+                {activeTab === "roommate" && (
+                  <RoommateTab
+                    getSelectedLabel={getSelectedLabel}
+                    openSelectionModal={openSelectionModal}
+                  />
+                )}
+              </View>
+            </Animated.ScrollView>
+          </KeyboardAvoidingView>
 
           {/* Modal para roomie */}
           {activeTab === "roommate" && (
@@ -185,6 +192,9 @@ const styles = StyleSheet.create({
     zIndex: 9999,
   },
   safeArea: {
+    flex: 1,
+  },
+  keyboardView: {
     flex: 1,
   },
   scrollContent: {

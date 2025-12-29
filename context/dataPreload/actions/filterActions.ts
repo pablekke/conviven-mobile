@@ -11,7 +11,7 @@ export const loadSearchFiltersAction = async (
   setState(prev => ({ ...prev, searchFiltersLoading: true, searchFiltersError: null }));
 
   try {
-    const timeoutPromise = createTimeoutPromise("Search filters timeout", 5000);
+    const timeoutPromise = createTimeoutPromise("Search filters timeout", 10000);
 
     const searchFilters = (await Promise.race([
       searchFiltersService.getSearchFilters(),
@@ -28,38 +28,21 @@ export const loadSearchFiltersAction = async (
     }
 
     setState(prev => {
-      const prevParams = prev.searchFilters as any;
-      const prevLocations = prevParams?.preferredLocations;
-      const prevNeighborhoods = prev.searchFilters?.preferredLocations;
-
-      const hasPrevLocations = Array.isArray(prevLocations) && prevLocations.length > 0;
-      const hasPrevNeighborhoods = Array.isArray(prevNeighborhoods) && prevNeighborhoods.length > 0;
-
-      const newParams = searchFilters as any;
-      const newLocations = newParams.preferredLocations;
-      const newNeighborhoods = searchFilters.preferredLocations;
-
+      const newLocations = searchFilters.preferredLocations;
       const hasNewLocations = Array.isArray(newLocations) && newLocations.length > 0;
-      const hasNewNeighborhoods =
-        Array.isArray(newNeighborhoods) && (newNeighborhoods as any[]).length > 0;
 
-      const apiHasData = hasNewLocations || hasNewNeighborhoods;
+      const prevLocations = prev.searchFilters?.preferredLocations;
+      const hasPrevLocations = Array.isArray(prevLocations) && prevLocations.length > 0;
 
-      let finalPreferredLocations = newLocations;
-      let finalpreferredLocations = newNeighborhoods;
+      let finalLocations = newLocations;
 
-      if (!apiHasData) {
-        if (hasPrevLocations) {
-          finalPreferredLocations = prevLocations;
-        }
-        if (hasPrevNeighborhoods) {
-          finalpreferredLocations = prevNeighborhoods;
-        }
+      if (!hasNewLocations && hasPrevLocations) {
+        finalLocations = prevLocations;
       }
 
       const mergedFilters = {
         ...searchFilters,
-        preferredLocations: finalpreferredLocations,
+        preferredLocations: finalLocations,
       };
 
       return {

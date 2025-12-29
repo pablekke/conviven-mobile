@@ -7,6 +7,7 @@ export type Swipe = {
   fromUserId: string;
   toUserId: string;
   action: SwipeAction;
+  match?: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -23,14 +24,19 @@ function normalizeApiResponse<T = unknown>(response: unknown): T {
   return response as T;
 }
 
+export interface SwipeResponse {
+  swipe: Swipe;
+  isMatch: boolean;
+}
+
 class SwipeService {
   /**
    * POST /api/swipes
    * Body: { toUserId, action: "like" | "pass" }
    */
-  async createSwipe(input: { toUserId: string; action: SwipeAction }): Promise<Swipe> {
+  async createSwipe(input: { toUserId: string; action: SwipeAction }): Promise<SwipeResponse> {
     const raw = await apiPost("/swipes", input);
-    return normalizeApiResponse<Swipe>(raw);
+    return normalizeApiResponse<SwipeResponse>(raw);
   }
 
   /**

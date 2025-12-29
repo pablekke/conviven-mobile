@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { queueEmitter } from "./state";
 import { NonGetHttpMethod } from "@/core/enums/http.enums";
+import { NetworkError } from "../http";
 
 const QUEUE_KEY = "@resilience/queue";
 
@@ -79,7 +80,9 @@ export class PersistentRequestQueue {
           await this.persist();
           queueEmitter.emit({ pending: this.queue.length });
         } catch (error) {
-          console.warn("queue:flush:error", error);
+          if (!(error instanceof NetworkError)) {
+            console.warn("queue:flush:error", error);
+          }
           break;
         }
       }

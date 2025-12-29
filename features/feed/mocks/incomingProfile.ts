@@ -28,6 +28,7 @@ type CompleteLocation = {
 };
 
 type MockedBackendUser = BackendUser & {
+  userId?: string;
   profile: BackendUserProfile;
   filters: BackendUserFilters & {
     mainPreferredLocation: CompleteLocation;

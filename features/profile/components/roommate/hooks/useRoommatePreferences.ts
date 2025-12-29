@@ -135,13 +135,9 @@ export const useRoommatePreferences = (): UseRoommatePreferencesReturn => {
     (field: keyof RoommatePreferencesFormData, value: any) => {
       setFormData(prev => {
         const newData = { ...prev, [field]: value };
+        // Detectar cambios comparando con los datos iniciales
         const changed = JSON.stringify(newData) !== JSON.stringify(initialData);
         setHasChanges(changed);
-
-        if (changed) {
-          setCachedValue("@roommatePrefs/draft", newData).catch(() => {});
-        }
-
         return newData;
       });
     },

@@ -1,4 +1,10 @@
+import { AuthState, LoginCredentials, RegisterCredentials, User } from "../types/user";
+import { useFeedPrefetch } from "@/features/feed/hooks/useFeedPrefetch";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { authSession } from "../services/auth/sessionManager";
+import AuthService from "../services/authService";
+import { NetworkError } from "../services/http";
+import Toast from "react-native-toast-message";
 import { Alert } from "react-native";
 import React, {
   createContext,
@@ -10,13 +16,6 @@ import React, {
   useRef,
 } from "react";
 
-import AuthService from "../services/authService";
-import { AuthState, LoginCredentials, RegisterCredentials, User } from "../types/user";
-import { NetworkError } from "../services/http";
-import { authSession } from "../services/auth/sessionManager";
-import Toast from "react-native-toast-message";
-import { useFeedPrefetch } from "@/features/feed/hooks";
-
 interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (credentials: RegisterCredentials) => Promise<void>;
@@ -25,7 +24,7 @@ interface AuthContextType extends AuthState {
   refreshUser: () => Promise<User | null>;
   updateUser: (updates: Partial<User>) => Promise<void>;
   setUser: (user: User | null) => Promise<void>;
-  isManualLogin: boolean; // Flag para indicar si fue login manual
+  isManualLogin: boolean;
   isLogoutInProgress: boolean;
 }
 

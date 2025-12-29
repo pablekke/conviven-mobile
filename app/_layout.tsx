@@ -1,25 +1,23 @@
-import { Stack } from "expo-router";
-import { StatusBar } from "expo-status-bar";
-import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
-import { View, Text as RNText, StyleSheet, LogBox } from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import MaintenanceScreen from "../components/MaintenanceScreen";
+import { View, Text as RNText, StyleSheet } from "react-native";
 import LoadingScreen from "../components/LoadingScreen";
 import CustomToast from "../components/CustomToast";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useFonts } from "expo-font";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
 
-import { AuthProvider } from "../context/AuthContext";
-import { ThemeProvider, useTheme } from "../context/ThemeContext";
-import { DataPreloadProvider } from "../context/DataPreloadContext";
 import { ResilienceProvider, useResilience } from "../context/ResilienceContext";
 import { useAuthNavigation, useLoadingScreenTransition } from "../hooks";
-
+import { DataPreloadProvider } from "../context/DataPreloadContext";
+import { ThemeProvider, useTheme } from "../context/ThemeContext";
 import OfflineBanner from "../components/OfflineBanner";
-import MaintenanceScreen from "../components/MaintenanceScreen";
+import { AuthProvider } from "../context/AuthContext";
 
+import * as SplashScreen from "expo-splash-screen";
+import { StatusBar } from "expo-status-bar";
+import { Stack } from "expo-router";
+import { useEffect, useRef } from "react";
 import "../global.css";
-LogBox.ignoreLogs(["SafeAreaView has been deprecated"]);
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
@@ -31,7 +29,7 @@ function AuthRoot() {
 
   return (
     <>
-      <StatusBar style={isDark ? "light" : "dark"} backgroundColor={colors.background} />
+      <StatusBar style={isDark ? "light" : "dark"} />
       <Stack
         screenOptions={{
           headerStyle: {
@@ -98,9 +96,13 @@ export default function RootLayout() {
     "Inter-Bold": { uri: "https://rsms.me/inter/font-files/Inter-Bold.ttf" },
   });
 
+  const isSplashScreenHidden = useRef(false);
+
   useEffect(() => {
-    if (fontsLoaded || fontError) {
-      SplashScreen.hideAsync().catch(() => undefined);
+    if ((fontsLoaded || fontError) && !isSplashScreenHidden.current) {
+      isSplashScreenHidden.current = true;
+      SplashScreen.hideAsync().catch(() => {
+      });
     }
   }, [fontError, fontsLoaded]);
 

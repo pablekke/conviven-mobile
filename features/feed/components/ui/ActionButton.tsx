@@ -1,5 +1,6 @@
 import { TouchableOpacity, Text, StyleSheet, StyleProp, ViewStyle, TextStyle } from "react-native";
 import { useTheme } from "../../../../context/ThemeContext";
+import Spinner from "../../../../components/Spinner";
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { memo } from "react";
@@ -14,6 +15,7 @@ interface ActionButtonProps {
   textStyle?: StyleProp<TextStyle>;
   iconColor?: string;
   iconSize?: number;
+  loading?: boolean;
 }
 
 export const ActionButton = memo(
@@ -27,6 +29,7 @@ export const ActionButton = memo(
     textStyle,
     iconColor,
     iconSize = 18,
+    loading = false,
   }: ActionButtonProps) => {
     const { colors, isDark } = useTheme();
 
@@ -53,9 +56,19 @@ export const ActionButton = memo(
         ]}
         onPress={onPress}
         activeOpacity={0.8}
+        disabled={loading}
       >
         <BlurView intensity={20} tint={isDark ? "dark" : "light"} style={styles.buttonBlur}>
-          <Feather name={icon} size={iconSize} color={iconColor ?? textColor} style={styles.icon} />
+          {loading ? (
+            <Spinner size={iconSize} color={textColor} thickness={2} style={styles.icon} />
+          ) : (
+            <Feather
+              name={icon}
+              size={iconSize}
+              color={iconColor ?? textColor}
+              style={styles.icon}
+            />
+          )}
           <Text
             style={[
               styles.buttonText,

@@ -103,13 +103,15 @@ export const useEditProfileSave = ({
   const handleSave = useCallback(() => runSave({ exit: false }), [runSave]);
 
   const handleBack = useCallback(() => {
-    const hasAnyUnsavedChanges = profileHasChanges || searchPrefsHasChanges;
+    // Solo verificar los flags de cambios, NO llamar a buildSavePromises ya que eso ejecuta las funciones
+    const hasAnyUnsavedChanges = aboutHasChanges || userFieldsChanged || searchPrefsHasChanges;
+
     if (hasAnyUnsavedChanges) {
       setUnsavedChangesModalVisible(true);
     } else {
       router.replace("/(app)/profile");
     }
-  }, [profileHasChanges, searchPrefsHasChanges, router]);
+  }, [aboutHasChanges, userFieldsChanged, searchPrefsHasChanges, router]);
 
   const handleDiscardChanges = useCallback(async () => {
     if (profileHasChanges) resetToUserData();

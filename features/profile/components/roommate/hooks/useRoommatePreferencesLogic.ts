@@ -39,17 +39,19 @@ const INTEREST_CODE_MAP: Record<string, Interest> = {
 const normalizeLanguage = (value: string): Language => {
   const lower = value.toLowerCase();
   if (LANGUAGE_CODE_MAP[lower]) return LANGUAGE_CODE_MAP[lower];
-  // Si ya es un valor del enum, devolverlo
-  if (Object.values(Language).includes(value as Language)) return value as Language;
-  return value as Language;
+  // Buscar por valor exacto (ignorando case) en el enum
+  const enumValues = Object.values(Language);
+  const matched = enumValues.find(v => v.toLowerCase() === lower);
+  return (matched || value) as Language;
 };
 
 const normalizeInterest = (value: string): Interest => {
   const lower = value.toLowerCase();
   if (INTEREST_CODE_MAP[lower]) return INTEREST_CODE_MAP[lower];
-  // Si ya es un valor del enum, devolverlo
-  if (Object.values(Interest).includes(value as Interest)) return value as Interest;
-  return value as Interest;
+  // Buscar por valor exacto (ignorando case) en el enum
+  const enumValues = Object.values(Interest);
+  const matched = enumValues.find(v => v.toLowerCase() === lower);
+  return (matched || value) as Interest;
 };
 
 export const findOptionLabel = (
@@ -133,25 +135,35 @@ export const useRoommatePreferencesLogic = (
       findOptionLabel(petsValue, QUESTION_OPTIONS.petsPreference) || "Seleccionar";
 
     if (roommatePrefsData.tidinessMin) {
-      mapped.tidinessMin =
-        findOptionLabel(roommatePrefsData.tidinessMin, QUESTION_OPTIONS.tidinessMin) ||
-        "Seleccionar";
+      const val = roommatePrefsData.tidinessMin;
+      const option = QUESTION_OPTIONS.tidinessMin.find(
+        opt => opt.value === val || opt.value.toLowerCase() === val.toLowerCase(),
+      );
+      mapped.tidinessMin = option?.label || "Seleccionar";
     }
 
     if (roommatePrefsData.schedulePref) {
-      mapped.schedulePref =
-        findOptionLabel(roommatePrefsData.schedulePref, QUESTION_OPTIONS.schedulePref) ||
-        "Seleccionar";
+      const val = roommatePrefsData.schedulePref;
+      const option = QUESTION_OPTIONS.schedulePref.find(
+        opt => opt.value === val || opt.value.toLowerCase() === val.toLowerCase(),
+      );
+      mapped.schedulePref = option?.label || "Seleccionar";
     }
 
     if (roommatePrefsData.guestsMax) {
-      mapped.guestsMax =
-        findOptionLabel(roommatePrefsData.guestsMax, QUESTION_OPTIONS.guestsMax) || "Seleccionar";
+      const val = roommatePrefsData.guestsMax;
+      const option = QUESTION_OPTIONS.guestsMax.find(
+        opt => opt.value === val || opt.value.toLowerCase() === val.toLowerCase(),
+      );
+      mapped.guestsMax = option?.label || "Seleccionar";
     }
 
     if (roommatePrefsData.musicMax) {
-      mapped.musicMax =
-        findOptionLabel(roommatePrefsData.musicMax, QUESTION_OPTIONS.musicMax) || "Seleccionar";
+      const val = roommatePrefsData.musicMax;
+      const option = QUESTION_OPTIONS.musicMax.find(
+        opt => opt.value === val || opt.value.toLowerCase() === val.toLowerCase(),
+      );
+      mapped.musicMax = option?.label || "Seleccionar";
     }
 
     // Nice-to-have - mapear arrays a strings separados por comas
@@ -182,10 +194,10 @@ export const useRoommatePreferencesLogic = (
         .map(zodiac => {
           // Normalizar zodiac signs (pueden venir en diferentes formatos)
           const upper = zodiac.toUpperCase();
-          if (Object.values(ZodiacSign).includes(upper as ZodiacSign)) {
-            return SEARCH_ZODIAC_LABELS[upper as ZodiacSign] || zodiac;
-          }
-          return SEARCH_ZODIAC_LABELS[zodiac as ZodiacSign] || zodiac;
+          const enumValues = Object.values(ZodiacSign);
+          const matched = enumValues.find(v => v.toUpperCase() === upper);
+          const finalValue = matched || zodiac;
+          return SEARCH_ZODIAC_LABELS[finalValue as ZodiacSign] || finalValue;
         })
         .join(", ");
     } else {

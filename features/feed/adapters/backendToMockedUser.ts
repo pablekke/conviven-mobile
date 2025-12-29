@@ -204,6 +204,7 @@ export function mapBackendItemToMockedUser(item: BackendFeedItem): MockedBackend
       profileCompletionRate: null,
       lastActiveDays: null,
     }),
+    userId: item.userId,
     preferences: user?.preferences ?? null,
     filters,
     profile,

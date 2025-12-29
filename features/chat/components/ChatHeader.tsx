@@ -10,7 +10,7 @@ export interface ChatHeaderProps {
   description?: string;
 }
 
-export const ChatHeader: React.FC<ChatHeaderProps> = ({ subtitle = "Charlá, coordiná y fluí" }) => {
+export const ChatHeader: React.FC<ChatHeaderProps> = ({ subtitle}) => {
   return (
     <View className="px-6 pt-2 pb-1">
       <Text className="text-xl font-conviven-bold text-white mt-1">{subtitle}</Text>

@@ -1,20 +1,20 @@
-import { useLocalSearchParams } from "expo-router";
-
+import { ConversationHeader, MessageInput, MessagesList } from "@/features/chat/components";
+import { useLocalSearchParams, useFocusEffect } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useChatConversation } from "@/features/chat/hooks";
+import { useTheme } from "@/context/ThemeContext";
+import { useAuth } from "@/context/AuthContext";
+import Spinner from "@/components/Spinner";
+import { useCallback } from "react";
 import {
   Keyboard,
   KeyboardAvoidingView,
   Platform,
+  StatusBar,
   StyleSheet,
   TouchableWithoutFeedback,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-
-import Spinner from "@/components/Spinner";
-import { useAuth } from "@/context/AuthContext";
-import { useTheme } from "@/context/ThemeContext";
-import { ConversationHeader, MessageInput, MessagesList } from "@/features/chat/components";
-import { useChatConversation } from "@/features/chat/hooks";
 
 export default function ConversationScreen() {
   const {
@@ -39,17 +39,25 @@ export default function ConversationScreen() {
     }
   };
 
-  // Determinar el avatar y nombre del usuario
-  const displayName = name ?? "Usuario";
+  const displayName = name!;
   const displayAvatar =
     avatar ??
     `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=2563EB&color=fff`;
+
+  // Actualizar StatusBar cuando esta pantalla está enfocada
+  useFocusEffect(
+    useCallback(() => {
+      StatusBar.setBarStyle("dark-content", true);
+      return () => {};
+    }, []),
+  );
 
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
       edges={["top"]}
     >
+      <StatusBar barStyle="dark-content" />
       <ConversationHeader userName={displayName} userAvatar={displayAvatar} />
 
       <KeyboardAvoidingView

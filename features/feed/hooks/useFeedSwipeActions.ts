@@ -4,11 +4,15 @@ import { FEED_USE_MOCK } from "@/config/env";
 import { swipeService } from "../services";
 import { useCallback } from "react";
 
+// Flag para testing: si es true, fuerza que salga la pantalla de match al dar LIKE
+const DEBUG_FORCE_MATCH = true;
+
 export interface UseFeedSwipeActionsParams {
   primaryBackend: MockedBackendUser | null;
   onAdvance: (direction: "like" | "dislike") => boolean;
   onNoMoreProfiles: () => void;
   onScrollToTop: () => void;
+  onMatch?: (profile: MockedBackendUser) => void;
 }
 
 export interface UseFeedSwipeActionsReturn {
@@ -20,25 +24,54 @@ export function useFeedSwipeActions({
   onAdvance,
   onNoMoreProfiles,
   onScrollToTop,
+  onMatch,
 }: UseFeedSwipeActionsParams): UseFeedSwipeActionsReturn {
   const handleSwipeComplete = useCallback(
     (direction: "like" | "dislike") => {
       if (!FEED_USE_MOCK) {
         const toUserId =
-          primaryBackend?.profile?.userId ?? primaryBackend?.filters?.userId ?? undefined;
+          primaryBackend?.userId ??
+          primaryBackend?.profile?.userId ??
+          primaryBackend?.filters?.userId ??
+          undefined;
 
         if (toUserId) {
           const action = direction === "like" ? "like" : "pass";
-          swipeService.createSwipe({ toUserId, action }).catch(() => {
-            Toast.show({
-              type: "error",
-              text1: "No se pudo enviar la acción",
-              text2: "Reintentá en unos segundos.",
-              position: "bottom",
+
+          // Si estamos forzando match, lo disparamos inmediatamente para una respuesta instantánea
+          if (DEBUG_FORCE_MATCH && action === "like" && onMatch && primaryBackend) {
+            onMatch(primaryBackend);
+          }
+
+          swipeService
+            .createSwipe({ toUserId, action })
+            .then(response => {
+              // Solo disparamos si NO lo forzamos arriba y el backend confirma el match real
+              if (
+                !DEBUG_FORCE_MATCH &&
+                response.isMatch &&
+                action === "like" &&
+                onMatch &&
+                primaryBackend
+              ) {
+                onMatch(primaryBackend);
+              }
+            })
+            .catch(() => {
+              Toast.show({
+                type: "error",
+                text1: "No se pudo enviar la acción",
+                text2: "Reintentá en unos segundos.",
+                position: "bottom",
+              });
             });
-          });
         } else {
           console.warn("[useFeedSwipeActions] No se pudo resolver toUserId para enviar swipe.");
+        }
+      } else {
+        const isMatchMock = Math.random() > 0.7 || DEBUG_FORCE_MATCH;
+        if (direction === "like" && isMatchMock && onMatch && primaryBackend) {
+          onMatch(primaryBackend);
         }
       }
 
@@ -48,7 +81,7 @@ export function useFeedSwipeActions({
         onNoMoreProfiles();
       }
     },
-    [primaryBackend, onAdvance, onNoMoreProfiles, onScrollToTop],
+    [primaryBackend, onAdvance, onNoMoreProfiles, onScrollToTop, onMatch],
   );
 
   return {

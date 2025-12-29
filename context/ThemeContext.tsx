@@ -74,9 +74,9 @@ const LIGHT_COLORS: ThemeColors = {
   sidebarBorder: "#E5E7EB",
   sidebarRing: "#2563EB",
   conviven: {
-    orange: "#F4A261",
-    peach: "#FDE8D7",
-    blue: "#2563EB",
+    orange: "#FEC6A1",
+    peach: "#FDE1D3",
+    blue: "#007BFF",
   },
 };
 
@@ -104,9 +104,9 @@ const DARK_COLORS: ThemeColors = {
   sidebarBorder: "#333333",
   sidebarRing: "#60a5fa",
   conviven: {
-    orange: "#F4A261",
-    peach: "#FDE8D7",
-    blue: "#60A5FA",
+    orange: "#FEC6A1",
+    peach: "#FDE1D3",
+    blue: "#3B82F6", // Lighter blue for dark mode that still feels like the brand blue
   },
 };
 

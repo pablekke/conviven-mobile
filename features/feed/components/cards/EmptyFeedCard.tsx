@@ -1,13 +1,18 @@
 import { FEED_CONSTANTS, computeHeroImageHeight } from "../../constants/feed.constants";
 import { View, Text, StyleSheet, useWindowDimensions } from "react-native";
 import { useTheme } from "../../../../context/ThemeContext";
-import { useMatches } from "../../../chat/hooks";
 import { ActionButton } from "../ui/ActionButton";
+import { useMatches } from "../../../chat/hooks";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { memo } from "react";
 
-function EmptyFeedCardComponent() {
+interface EmptyFeedCardProps {
+  onReload?: () => void;
+  isLoading?: boolean;
+}
+
+function EmptyFeedCardComponent({ onReload, isLoading }: EmptyFeedCardProps) {
   const { height: winH } = useWindowDimensions();
   const tabBarHeight = FEED_CONSTANTS.TAB_BAR_HEIGHT;
   const heroHeight = Math.max(0, winH + tabBarHeight);
@@ -47,6 +52,17 @@ function EmptyFeedCardComponent() {
             variant="primary"
             style={styles.buttonPrimary}
           />
+
+          {onReload && (
+            <ActionButton
+              text="Recargar"
+              icon="refresh-cw"
+              onPress={onReload}
+              variant="secondary"
+              style={styles.buttonSecondary}
+              loading={isLoading}
+            />
+          )}
         </View>
 
         {hasMatches && (

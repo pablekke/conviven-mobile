@@ -42,6 +42,39 @@ export interface UseDataPreferencesLogicReturn {
 
 export const useDataPreferencesLogic = (): UseDataPreferencesLogicReturn => {
   const { user, updateUser } = useAuth();
+
+  const normalizeBirthDate = (dateString: string | null | undefined): string => {
+    if (!dateString) return "";
+    if (dateString.includes("T")) {
+      return dateString.split("T")[0];
+    }
+    return dateString;
+  };
+
+  const originalDataRef = useRef<{
+    firstName: string;
+    lastName: string;
+    birthDate: string;
+    gender: string;
+    occupation: string;
+    education: string;
+    bio: string;
+    neighborhoodId: string | null;
+    cityId: string | null;
+    departmentId: string | null;
+  }>({
+    firstName: user?.firstName || "",
+    lastName: user?.lastName || "",
+    birthDate: normalizeBirthDate(user?.birthDate) || "",
+    gender: user?.gender || "",
+    occupation: user?.profile?.occupation || "",
+    education: user?.profile?.education || "",
+    bio: user?.profile?.bio || "",
+    neighborhoodId: user?.location?.neighborhood?.id || null,
+    cityId: user?.location?.city?.id || null,
+    departmentId: user?.location?.department?.id || null,
+  });
+
   const [firstName, setFirstNameState] = useState(user?.firstName || "");
   const [lastName, setLastNameState] = useState(user?.lastName || "");
   const [bio, setBioState] = useState(user?.profile?.bio || "");
@@ -60,40 +93,9 @@ export const useDataPreferencesLogic = (): UseDataPreferencesLogicReturn => {
   // Draft de género (solo se guarda cuando se presiona "guardar")
   const [draftGender, setDraftGender] = useState<string | null>(null);
 
-  const originalDataRef = useRef<{
-    firstName: string;
-    lastName: string;
-    birthDate: string;
-    gender: string;
-    occupation: string;
-    education: string;
-    bio: string;
-    neighborhoodId: string | null;
-    cityId: string | null;
-    departmentId: string | null;
-  }>({
-    firstName: "",
-    lastName: "",
-    birthDate: "",
-    gender: "",
-    occupation: "",
-    education: "",
-    bio: "",
-    neighborhoodId: null,
-    cityId: null,
-    departmentId: null,
-  });
-
-  const normalizeBirthDate = (dateString: string | null | undefined): string => {
-    if (!dateString) return "";
-    if (dateString.includes("T")) {
-      return dateString.split("T")[0];
-    }
-    return dateString;
-  };
-
   useEffect(() => {
     if (user) {
+      const normalizedBirthDate = normalizeBirthDate(user.birthDate);
       setFirstNameState(user.firstName || "");
       setLastNameState(user.lastName || "");
       setBioState(user.profile?.bio || "");
@@ -104,7 +106,7 @@ export const useDataPreferencesLogic = (): UseDataPreferencesLogicReturn => {
       originalDataRef.current = {
         firstName: user.firstName || "",
         lastName: user.lastName || "",
-        birthDate: normalizeBirthDate(user.birthDate) || "",
+        birthDate: normalizedBirthDate,
         gender: user.gender || "",
         occupation: user.profile?.occupation || "",
         education: user.profile?.education || "",
@@ -116,15 +118,22 @@ export const useDataPreferencesLogic = (): UseDataPreferencesLogicReturn => {
     }
   }, [user?.id]);
 
+  // Normalizar valores para comparación (evitar falsos positivos por null vs undefined vs "")
+  const normalizeValue = (val: string | null | undefined): string => {
+    return (val || "").trim();
+  };
+
   const dataHasChanges =
-    (firstName || "") !== (originalDataRef.current.firstName || "") ||
-    (lastName || "") !== (originalDataRef.current.lastName || "") ||
-    normalizeBirthDate(user?.birthDate) !== (originalDataRef.current.birthDate || "") ||
-    (draftGender || user?.gender || "") !== (originalDataRef.current.gender || "") ||
-    (occupation || "") !== (originalDataRef.current.occupation || "") ||
-    (education || "") !== (originalDataRef.current.education || "") ||
-    (bio || "") !== (originalDataRef.current.bio || "") ||
-    (draftLocation?.neighborhoodId || null) !== (originalDataRef.current.neighborhoodId || null);
+    normalizeValue(firstName) !== normalizeValue(originalDataRef.current.firstName) ||
+    normalizeValue(lastName) !== normalizeValue(originalDataRef.current.lastName) ||
+    normalizeBirthDate(user?.birthDate) !== normalizeValue(originalDataRef.current.birthDate) ||
+    normalizeValue(draftGender || user?.gender) !==
+      normalizeValue(originalDataRef.current.gender) ||
+    normalizeValue(occupation) !== normalizeValue(originalDataRef.current.occupation) ||
+    normalizeValue(education) !== normalizeValue(originalDataRef.current.education) ||
+    normalizeValue(bio) !== normalizeValue(originalDataRef.current.bio) ||
+    (draftLocation !== null &&
+      draftLocation.neighborhoodId !== originalDataRef.current.neighborhoodId);
 
   const setFirstName = useCallback(
     (value: string) => {

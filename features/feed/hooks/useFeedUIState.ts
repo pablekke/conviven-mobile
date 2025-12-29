@@ -4,8 +4,6 @@ import { ScrollView } from "react-native";
 
 export interface UseFeedUIStateParams {
   primaryCard: DeckCardSnapshot;
-  total: number;
-  onNoMoreProfilesChange?: (value: boolean) => void;
 }
 
 export interface UseFeedUIStateReturn {
@@ -19,11 +17,7 @@ export interface UseFeedUIStateReturn {
   setGalleryVisible: (value: boolean) => void;
 }
 
-export function useFeedUIState({
-  primaryCard,
-  total,
-  onNoMoreProfilesChange,
-}: UseFeedUIStateParams): UseFeedUIStateReturn {
+export function useFeedUIState({ primaryCard }: UseFeedUIStateParams): UseFeedUIStateReturn {
   const [locationOpen, setLocationOpen] = useState(false);
   const [activeLocationIndex, setActiveLocationIndex] = useState(0);
   const [galleryVisible, setGalleryVisible] = useState(false);
@@ -43,13 +37,6 @@ export function useFeedUIState({
     setActiveLocationIndex(0);
     setLocationOpen(false);
   }, [primaryCard.headline]);
-
-  // Update noMoreProfiles when total changes
-  useEffect(() => {
-    if (total > 0 && onNoMoreProfilesChange) {
-      onNoMoreProfilesChange(false);
-    }
-  }, [total, onNoMoreProfilesChange]);
 
   return {
     locationOpen,

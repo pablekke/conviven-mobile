@@ -61,9 +61,21 @@ export const useAboutPreferencesLogic = (
 
   const [aboutText, setAboutText] = useState("");
   const isInitializedRef = useRef(false);
+  const isBioInitializedRef = useRef(false);
 
+  // Inicializar aboutText con el valor de profileData.bio cuando esté disponible
   useEffect(() => {
-    if (aboutText !== profileData.bio) {
+    if (profileData?.bio !== undefined && !isBioInitializedRef.current) {
+      setAboutText(profileData.bio || "");
+      isBioInitializedRef.current = true;
+    }
+  }, [profileData?.bio]);
+
+  // Solo actualizar profileData.bio cuando aboutText cambie DESPUÉS de la inicialización
+  useEffect(() => {
+    if (!isBioInitializedRef.current) return; // No hacer nada hasta que esté inicializado
+    
+    if (aboutText !== (profileData.bio || "")) {
       updateProfileData("bio", aboutText);
     }
   }, [aboutText, profileData.bio, updateProfileData]);
@@ -96,7 +108,10 @@ export const useAboutPreferencesLogic = (
   useEffect(() => {
     if (fullProfile?.profile && !isInitializedRef.current) {
       const profile = fullProfile.profile;
-      if (profile.bio) setAboutText(profile.bio);
+      if (profile.bio !== undefined) {
+        setAboutText(profile.bio || "");
+        isBioInitializedRef.current = true;
+      }
       isInitializedRef.current = true;
     }
   }, [fullProfile]);

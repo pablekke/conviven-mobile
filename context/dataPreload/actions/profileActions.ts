@@ -20,7 +20,7 @@ export const loadProfileAction = async (
   setState(prev => ({ ...prev, profileLoading: true, profileError: null }));
 
   try {
-    const timeoutPromise = createTimeoutPromise("Profile timeout", 5000);
+    const timeoutPromise = createTimeoutPromise("Profile timeout", 15000);
 
     const fullProfile = (await Promise.race([
       UserProfileService.getFullUserProfile(),

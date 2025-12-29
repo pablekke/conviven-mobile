@@ -1,4 +1,5 @@
 import { View, StyleSheet, Modal } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import Spinner from "./Spinner";
 import React from "react";
 
@@ -25,6 +26,7 @@ export const LoadingModal: React.FC<LoadingModalProps> = ({
       statusBarTranslucent
       onRequestClose={() => {}}
     >
+      <StatusBar style="light" />
       <View style={styles.overlay}>
         <Spinner size={size} color={color} trackColor={trackColor} thickness={thickness} />
       </View>

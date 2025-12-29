@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { NeighborhoodChips } from "../neighborhoods/NeighborhoodChips";
 import { useTheme } from "../../../../../context/ThemeContext";
-import { NeighborhoodChips } from "../neighborhoods";
+import { Feather } from "@expo/vector-icons";
 import { memo } from "react";
 
 interface AdditionalNeighborhoodsSectionProps {

@@ -1,13 +1,19 @@
 import { useFeedProfiles, useFeedSwipeActions, useFeedUIState, useScrollToggle } from "../../hooks";
+import { View, ScrollView, useWindowDimensions, StyleSheet, StatusBar } from "react-native";
 import { ProfilePhotoGallery } from "../../../profile/components/ProfilePhotoGallery";
-import { View, ScrollView, useWindowDimensions, StyleSheet } from "react-native";
 import { GlassBackground } from "../../../../components/GlassBackground";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CardDeck, UserInfoCard, EmptyFeedCard } from "../index";
 import { BioSection } from "../userInfoCard/sections/BioSection";
 import { useProfileDeck } from "../../hooks/useProfileDeck";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { EmptyFeedCard } from "../cards/EmptyFeedCard";
 import { HeroScrollCue } from "../ui/HeroScrollCue";
+import { useTheme } from "@/context/ThemeContext";
+import { useAuth } from "@/context/AuthContext";
+import { UserInfoCard } from "../userInfoCard";
+import { CardDeck } from "../swipe/CardDeck";
+import { MatchModal } from "../MatchModal";
 import { FeedHeader } from "./FeedHeader";
 import {
   mapBackendFiltersToUi,
@@ -17,25 +23,35 @@ import {
 
 function FeedScreen() {
   const { width: screenWidth } = useWindowDimensions();
+  const { isDark } = useTheme();
+  const { user } = useAuth();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const { profiles, isLoading, noMoreProfiles: initialNoMoreProfiles } = useFeedProfiles();
-  const [noMoreProfiles, setNoMoreProfiles] = useState(initialNoMoreProfiles);
+  const { profiles, isLoading, noMoreProfiles: serverNoMoreProfiles, refresh } = useFeedProfiles();
+  const [localNoMoreProfiles, setLocalNoMoreProfiles] = useState(false);
+
+  // Total derived from profiles or hook
+  const noMoreProfiles = serverNoMoreProfiles || localNoMoreProfiles;
+  const [matchData, setMatchData] = useState<{
+    profile: any;
+  } | null>(null);
 
   const deck = useProfileDeck(profiles);
   const { primaryCard, secondaryCard, primaryBackend, advance, total } = deck;
 
   const uiState = useFeedUIState({
     primaryCard,
-    total,
-    onNoMoreProfilesChange: setNoMoreProfiles,
   });
 
   const { handleSwipeComplete } = useFeedSwipeActions({
     primaryBackend,
     onAdvance: advance,
-    onNoMoreProfiles: () => setNoMoreProfiles(true),
+    onNoMoreProfiles: () => setLocalNoMoreProfiles(true),
     onScrollToTop: uiState.scrollToTop,
+    onMatch: matchedProfile => {
+      setMatchData({ profile: matchedProfile });
+    },
   });
 
   const {
@@ -72,113 +88,139 @@ function FeedScreen() {
     [handleScrollInternal],
   );
 
-  useEffect(() => {
-    setNoMoreProfiles(initialNoMoreProfiles);
-  }, [initialNoMoreProfiles]);
+  const handleRefresh = useCallback(async () => {
+    setLocalNoMoreProfiles(false);
+    await refresh();
+  }, [refresh]);
 
-  if (noMoreProfiles || total === 0 || !deck.primaryProfile) {
-    return (
+  useFocusEffect(
+    useCallback(() => {
+      StatusBar.setBarStyle(!isDark ? "dark-content" : "light-content", true);
+      return () => {};
+    }, [isDark]),
+  );
+
+  const content =
+    noMoreProfiles || total === 0 || !deck.primaryProfile ? (
       <View className="flex-1 items-center justify-center" style={styles.screenShell}>
         <GlassBackground intensity={90} />
-        <EmptyFeedCard />
+        <EmptyFeedCard onReload={handleRefresh} isLoading={isLoading} />
+      </View>
+    ) : (
+      <View className="flex-1" style={styles.screenShell}>
+        <StatusBar barStyle={!isDark ? "dark-content" : "light-content"} />
+        <GlassBackground intensity={90} />
+
+        {deck.primaryProfile &&
+          primaryCard.galleryPhotos &&
+          primaryCard.galleryPhotos.length > 0 && (
+            <ProfilePhotoGallery
+              visible={galleryVisible}
+              photos={primaryCard.galleryPhotos}
+              initialIndex={0}
+              onClose={() => setGalleryVisible(false)}
+            />
+          )}
+
+        <ScrollView
+          ref={mainRef}
+          className="flex-1"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 8 }]}
+          bounces={false}
+          alwaysBounceVertical={false}
+          overScrollMode="never"
+          scrollEnabled={!noMoreProfiles && total > 0 && !!deck.primaryProfile}
+          style={styles.mainScroll}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+        >
+          <>
+            {deck.primaryProfile && !noMoreProfiles && total > 0 && !isLoading && (
+              <FeedHeader
+                locations={primaryCard.locationStrings ?? ["Sin ubicación"]}
+                activeLocationIndex={activeLocationIndex}
+                activeLocation={
+                  primaryCard.locationStrings?.[activeLocationIndex] ??
+                  primaryCard.locationStrings?.[0] ??
+                  ""
+                }
+                locationOpen={locationOpen}
+                onToggleLocation={() => setLocationOpen(v => !v)}
+                onSelectLocation={(_loc, index) => {
+                  setActiveLocationIndex(index);
+                }}
+              />
+            )}
+            <CardDeck
+              key={`${primaryCard.galleryPhotos?.[0] ?? ""}|${primaryCard.headline}|${primaryCard.budgetLabel}`}
+              screenWidth={screenWidth}
+              scrollRef={mainRef}
+              hideLocationChip
+              primary={{
+                photos: primaryCard.galleryPhotos,
+                locationStrings: primaryCard.locationStrings,
+                headline: primaryCard.headline,
+                budget: primaryCard.budgetLabel,
+                basicInfo: primaryCard.basicInfo,
+                onSwipeComplete: handleSwipeComplete,
+                photosCount: primaryCard.galleryPhotos?.length ?? 0,
+                onPhotosPress: () => setGalleryVisible(true),
+              }}
+              secondary={{
+                photos: secondaryCard.galleryPhotos,
+                locationStrings: secondaryCard.locationStrings,
+                headline: secondaryCard.headline,
+                budget: secondaryCard.budgetLabel,
+                basicInfo: secondaryCard.basicInfo,
+              }}
+            />
+            {showScrollCue && (
+              <View
+                className="items-center shadow-slate-200 shadow-lg rounded-2xl p-2"
+                onLayout={() => {
+                  setScrollTarget(720);
+                }}
+              >
+                {primaryBackend?.profile?.bio ? (
+                  <BioSection bio={primaryBackend.profile.bio} />
+                ) : null}
+              </View>
+            )}
+            {primaryBackend && primaryCard.galleryPhotos.length > 0 ? (
+              <UserInfoCard
+                profile={mapBackendProfileToUiProfile(primaryBackend.profile)}
+                location={mapBackendLocationToUi(primaryBackend.location)}
+                filters={mapBackendFiltersToUi(primaryBackend.filters)}
+                budgetFull={primaryCard.budgetLabel}
+              />
+            ) : null}
+          </>
+        </ScrollView>
+
+        {deck.primaryProfile && total > 0 && (
+          <View style={[styles.floatingArrow, { bottom: insets.bottom + 60 }]}>
+            <HeroScrollCue onPress={handleScrollToggle} rotated={isScrolled} />
+          </View>
+        )}
       </View>
     );
-  }
 
   return (
-    <View className="flex-1" style={styles.screenShell}>
-      <GlassBackground intensity={90} />
+    <View style={styles.container}>
+      {content}
 
-      {deck.primaryProfile && primaryCard.galleryPhotos && primaryCard.galleryPhotos.length > 0 && (
-        <ProfilePhotoGallery
-          visible={galleryVisible}
-          photos={primaryCard.galleryPhotos}
-          initialIndex={0}
-          onClose={() => setGalleryVisible(false)}
-        />
-      )}
-
-      <ScrollView
-        ref={mainRef}
-        className="flex-1"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 8 }]}
-        bounces={false}
-        alwaysBounceVertical={false}
-        overScrollMode="never"
-        scrollEnabled={!noMoreProfiles && total > 0 && !!deck.primaryProfile}
-        style={styles.mainScroll}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-      >
-        <>
-          {deck.primaryProfile && !noMoreProfiles && total > 0 && !isLoading && (
-            <FeedHeader
-              locations={primaryCard.locationStrings ?? ["Sin ubicación"]}
-              activeLocationIndex={activeLocationIndex}
-              activeLocation={
-                primaryCard.locationStrings?.[activeLocationIndex] ??
-                primaryCard.locationStrings?.[0] ??
-                ""
-              }
-              locationOpen={locationOpen}
-              onToggleLocation={() => setLocationOpen(v => !v)}
-              onSelectLocation={(_loc, index) => {
-                setActiveLocationIndex(index);
-              }}
-            />
-          )}
-          <CardDeck
-            key={`${primaryCard.galleryPhotos?.[0] ?? ""}|${primaryCard.headline}|${primaryCard.budgetLabel}`}
-            screenWidth={screenWidth}
-            scrollRef={mainRef}
-            hideLocationChip
-            primary={{
-              photos: primaryCard.galleryPhotos,
-              locationStrings: primaryCard.locationStrings,
-              headline: primaryCard.headline,
-              budget: primaryCard.budgetLabel,
-              basicInfo: primaryCard.basicInfo,
-              onSwipeComplete: handleSwipeComplete,
-              photosCount: primaryCard.galleryPhotos?.length ?? 0,
-              onPhotosPress: () => setGalleryVisible(true),
-            }}
-            secondary={{
-              photos: secondaryCard.galleryPhotos,
-              locationStrings: secondaryCard.locationStrings,
-              headline: secondaryCard.headline,
-              budget: secondaryCard.budgetLabel,
-              basicInfo: secondaryCard.basicInfo,
-            }}
-          />
-          {showScrollCue && (
-            <View
-              className="items-center shadow-slate-200 shadow-lg rounded-2xl p-2"
-              onLayout={() => {
-                setScrollTarget(720);
-              }}
-            >
-              {primaryBackend?.profile?.bio ? (
-                <BioSection bio={primaryBackend.profile.bio} />
-              ) : null}
-            </View>
-          )}
-          {primaryBackend && primaryCard.galleryPhotos.length > 0 ? (
-            <UserInfoCard
-              profile={mapBackendProfileToUiProfile(primaryBackend.profile)}
-              location={mapBackendLocationToUi(primaryBackend.location)}
-              filters={mapBackendFiltersToUi(primaryBackend.filters)}
-              budgetFull={primaryCard.budgetLabel}
-            />
-          ) : null}
-        </>
-      </ScrollView>
-
-      {deck.primaryProfile && total > 0 && (
-        <View style={[styles.floatingArrow, { bottom: insets.bottom + 60 }]}>
-          <HeroScrollCue onPress={handleScrollToggle} rotated={isScrolled} />
-        </View>
-      )}
+      <MatchModal
+        visible={!!matchData}
+        userImage={user?.photoUrl ?? null}
+        matchImage={matchData?.profile?.photoUrl ?? null}
+        matchName={matchData?.profile?.firstName ?? "Alguien"}
+        onSendMessage={() => {
+          setMatchData(null);
+          router.push("/chat");
+        }}
+        onKeepSwiping={() => setMatchData(null)}
+      />
     </View>
   );
 }
@@ -186,7 +228,11 @@ function FeedScreen() {
 export default FeedScreen;
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   screenShell: {
+    flex: 1,
     backgroundColor: "transparent",
   },
 
