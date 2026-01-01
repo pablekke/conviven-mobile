@@ -1,4 +1,6 @@
-import { apiGet, apiPost } from "../../../services/apiHelper";
+import { apiGet } from "../../../services/apiHelper";
+import { resilientRequest } from "../../../services/apiClient";
+import { HttpMethod } from "../../../core/enums/http.enums";
 import { HttpError } from "../../../services/http";
 import { SessionExpiredError } from "../../../services/auth/sessionManager";
 import { FEED_CONSTANTS } from "../constants";
@@ -96,9 +98,9 @@ class FeedService {
       const isSessionExpired =
         error instanceof SessionExpiredError ||
         (error instanceof HttpError && error.status === 401);
-      
+
       if (!isSessionExpired) {
-      console.error("Error fetching matching feed:", error);
+        console.error("Error fetching matching feed:", error);
       }
       throw error;
     }
@@ -110,8 +112,14 @@ class FeedService {
     timestamp: Date;
   }): Promise<{ success: boolean; isMatch?: boolean }> {
     try {
-      const raw = await apiPost(`/matching/${action.roomieId}/${action.type}`, {
-        timestamp: action.timestamp.toISOString(),
+      const raw = await resilientRequest<any>({
+        endpoint: `/matching/${action.roomieId}/${action.type}`,
+        method: HttpMethod.POST,
+        body: {
+          timestamp: action.timestamp.toISOString(),
+        },
+        timeout: 30000,
+        allowQueue: false,
       });
       const data = normalizeApiResponse<any>(raw);
       const isMatch =

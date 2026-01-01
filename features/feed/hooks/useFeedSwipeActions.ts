@@ -5,7 +5,7 @@ import { swipeService } from "../services";
 import { useCallback } from "react";
 
 // Flag para testing: si es true, fuerza que salga la pantalla de match al dar LIKE
-const DEBUG_FORCE_MATCH = true;
+const DEBUG_FORCE_MATCH = false;
 
 export interface UseFeedSwipeActionsParams {
   primaryBackend: MockedBackendUser | null;
@@ -44,9 +44,11 @@ export function useFeedSwipeActions({
           }
 
           swipeService
-            .createSwipe({ toUserId, action })
+            .createSwipe({
+              toUserId,
+              action,
+            })
             .then(response => {
-              // Solo disparamos si NO lo forzamos arriba y el backend confirma el match real
               if (
                 !DEBUG_FORCE_MATCH &&
                 response.isMatch &&
@@ -57,7 +59,8 @@ export function useFeedSwipeActions({
                 onMatch(primaryBackend);
               }
             })
-            .catch(() => {
+            .catch(err => {
+              console.error("❌ [SwipeHook Error]", err);
               Toast.show({
                 type: "error",
                 text1: "No se pudo enviar la acción",

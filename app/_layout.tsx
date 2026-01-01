@@ -29,7 +29,7 @@ function AuthRoot() {
 
   return (
     <>
-      <StatusBar style={isDark ? "light" : "dark"} />
+      <StatusBar style={showLoading ? "light" : isDark ? "light" : "dark"} />
       <Stack
         screenOptions={{
           headerStyle: {
@@ -101,8 +101,7 @@ export default function RootLayout() {
   useEffect(() => {
     if ((fontsLoaded || fontError) && !isSplashScreenHidden.current) {
       isSplashScreenHidden.current = true;
-      SplashScreen.hideAsync().catch(() => {
-      });
+      SplashScreen.hideAsync().catch(() => {});
     }
   }, [fontError, fontsLoaded]);
 

@@ -1,20 +1,22 @@
 import { useFeedProfiles, useFeedSwipeActions, useFeedUIState, useScrollToggle } from "../../hooks";
-import { View, ScrollView, useWindowDimensions, StyleSheet, StatusBar } from "react-native";
 import { ProfilePhotoGallery } from "../../../profile/components/ProfilePhotoGallery";
+import { View, ScrollView, useWindowDimensions, StyleSheet } from "react-native";
 import { GlassBackground } from "../../../../components/GlassBackground";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BioSection } from "../userInfoCard/sections/BioSection";
 import { useProfileDeck } from "../../hooks/useProfileDeck";
-import { useState, useCallback } from "react";
-import { useFocusEffect, useRouter } from "expo-router";
+import { useIsFocused } from "@react-navigation/native";
 import { EmptyFeedCard } from "../cards/EmptyFeedCard";
 import { HeroScrollCue } from "../ui/HeroScrollCue";
 import { useTheme } from "@/context/ThemeContext";
 import { useAuth } from "@/context/AuthContext";
 import { UserInfoCard } from "../userInfoCard";
+import { useState, useCallback } from "react";
 import { CardDeck } from "../swipe/CardDeck";
+import { StatusBar } from "expo-status-bar";
 import { MatchModal } from "../MatchModal";
 import { FeedHeader } from "./FeedHeader";
+import { useRouter } from "expo-router";
 import {
   mapBackendFiltersToUi,
   mapBackendLocationToUi,
@@ -93,12 +95,7 @@ function FeedScreen() {
     await refresh();
   }, [refresh]);
 
-  useFocusEffect(
-    useCallback(() => {
-      StatusBar.setBarStyle(!isDark ? "dark-content" : "light-content", true);
-      return () => {};
-    }, [isDark]),
-  );
+  const isFocused = useIsFocused();
 
   const content =
     noMoreProfiles || total === 0 || !deck.primaryProfile ? (
@@ -108,7 +105,7 @@ function FeedScreen() {
       </View>
     ) : (
       <View className="flex-1" style={styles.screenShell}>
-        <StatusBar barStyle={!isDark ? "dark-content" : "light-content"} />
+        {isFocused && <StatusBar style={!isDark ? "dark" : "light"} />}
         <GlassBackground intensity={90} />
 
         {deck.primaryProfile &&

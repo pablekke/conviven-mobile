@@ -136,8 +136,9 @@ export async function resilientRequest<T>(options: ResilientRequestOptions): Pro
   } = options;
 
   const breaker = circuitBreakerRegistry.getBreaker(getServiceKey(endpoint));
+  const isCriticalMatching = endpoint.includes("/matching/");
 
-  if (!breaker.canRequest()) {
+  if (!isCriticalMatching && !breaker.canRequest()) {
     const message = "Servicio temporalmente inestable. Inténtalo más tarde.";
     errorEmitter.emit({ message });
     throw new CircuitOpenError(message);

@@ -19,9 +19,9 @@ export class CircuitOpenError extends Error {
   }
 }
 
-const DEFAULT_FAILURE_THRESHOLD = 3;
+const DEFAULT_FAILURE_THRESHOLD = 5;
 const DEFAULT_SUCCESS_THRESHOLD = 1;
-const DEFAULT_TIMEOUT = 60_000;
+const DEFAULT_TIMEOUT = 5_000;
 
 export class CircuitBreaker {
   private state: CircuitState = "closed";

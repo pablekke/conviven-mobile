@@ -1,4 +1,6 @@
-import { apiGet, apiPost } from "../../../services/apiHelper";
+import { apiGet } from "../../../services/apiHelper";
+import { resilientRequest } from "../../../services/apiClient";
+import { HttpMethod } from "../../../core/enums/http.enums";
 
 type SwipeAction = "like" | "pass";
 
@@ -35,8 +37,27 @@ class SwipeService {
    * Body: { toUserId, action: "like" | "pass" }
    */
   async createSwipe(input: { toUserId: string; action: SwipeAction }): Promise<SwipeResponse> {
-    const raw = await apiPost("/swipes", input);
-    return normalizeApiResponse<SwipeResponse>(raw);
+    try {
+      const raw = await resilientRequest<any>({
+        endpoint: "/swipes",
+        method: HttpMethod.POST,
+        body: {
+          toUserId: input.toUserId,
+          action: input.action,
+        },
+        timeout: 30000,
+        allowQueue: false,
+      });
+      return normalizeApiResponse<SwipeResponse>(raw);
+    } catch (error) {
+      console.error("❌ [SwipeService] Error sending action:", {
+        toUserId: input.toUserId,
+        action: input.action,
+        message: (error as any)?.message,
+        status: (error as any)?.status,
+      });
+      throw error;
+    }
   }
 
   /**

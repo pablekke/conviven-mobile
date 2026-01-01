@@ -52,9 +52,10 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
       setMaintenanceMessage(message);
     });
 
+    // TEMPORARY: Force clear queue to remove stuck/stale requests from previous sessions
     persistentRequestQueue
-      .size()
-      .then(size => setQueueSize(size))
+      .clear()
+      .then(() => setQueueSize(0))
       .catch(() => setQueueSize(0));
 
     return () => {
