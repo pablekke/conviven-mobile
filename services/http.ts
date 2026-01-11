@@ -2,9 +2,9 @@ import { API_BASE_URL } from "@/config/env";
 
 export class HttpError extends Error {
   status: number;
-  payload: any;
+  payload: unknown;
 
-  constructor(status: number, message: string, payload: any) {
+  constructor(status: number, message: string, payload: unknown) {
     super(message);
     this.status = status;
     this.payload = payload;
@@ -51,13 +51,13 @@ export async function fetchWithTimeout(
   }
 }
 
-export async function parseResponse(response: Response): Promise<any> {
+export async function parseResponse(response: Response): Promise<unknown> {
   if (response.status === 502 || response.status === 503 || response.status === 504) {
     throw new NetworkError("El servidor no está disponible");
   }
 
   const contentType = response.headers.get("content-type");
-  let payload: any = null;
+  let payload: unknown = null;
 
   try {
     if (contentType?.includes("application/json")) {
@@ -94,10 +94,11 @@ export async function parseResponse(response: Response): Promise<any> {
     ) {
       message = "El servidor no está disponible";
     } else {
+      const payloadAsAny = payload as any;
       message =
         typeof payload === "string"
           ? payload
-          : payload?.message || payload?.error || "Error del servidor";
+          : payloadAsAny?.message || payloadAsAny?.error || "Error del servidor";
     }
 
     throw new HttpError(response.status, message, payload);

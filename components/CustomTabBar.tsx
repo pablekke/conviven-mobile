@@ -1,9 +1,8 @@
 import { BottomTabBar, BottomTabBarProps } from "@react-navigation/bottom-tabs";
-import { useSegments } from "expo-router";
-import { StyleSheet, View } from "react-native";
-import { BlurView } from "expo-blur";
-
 import { useTheme } from "../context/ThemeContext";
+import { StyleSheet, View } from "react-native";
+import { useSegments } from "expo-router";
+import { BlurView } from "expo-blur";
 
 export function CustomTabBar(props: BottomTabBarProps) {
   const segments = useSegments();
@@ -44,7 +43,6 @@ const tabBarStyles = StyleSheet.create({
     right: 0,
   },
   tabBarContent: {
-    backgroundColor: "transparent",
     zIndex: 1,
   },
   transparentBar: {
@@ -58,18 +56,6 @@ const tabBarStyles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     zIndex: 0,
-  },
-  iconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  iconDump: {
-    width: 36,
-    height: 180,
-    alignItems: "center",
-    justifyContent: "center",
+
   },
 });

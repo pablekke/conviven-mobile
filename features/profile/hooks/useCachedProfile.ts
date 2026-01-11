@@ -60,7 +60,6 @@ export const useCachedProfile = (): UseCachedProfileReturn => {
       const userWithProfile = {
         ...user,
         profile: fullProfile.profile,
-        searchPreferences: fullProfile.searchPreferences,
       };
 
       return profileMappingService.mapUserProfileToFormData(userWithProfile);

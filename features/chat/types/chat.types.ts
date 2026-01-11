@@ -1,4 +1,6 @@
-export type MessageStatus = "sent" | "delivered" | "read";
+import { User } from "../../../types/user";
+
+export type MessageStatus = "pending" | "sent" | "delivered" | "read" | "error" | (string & object);
 
 export interface UserShort {
   id: string;
@@ -48,6 +50,12 @@ export interface Message {
   liked: boolean;
 }
 
+export interface PaginatedMessagesResponse {
+  messages: Message[];
+  hasMore: boolean;
+  oldestMessageId: string | null;
+}
+
 // UI Types (kept for compatibility)
 export interface ChatPreview {
   id: string;
@@ -58,9 +66,11 @@ export interface ChatPreview {
   unread: number;
   avatar: string;
   updatedAt?: string;
+  userFullInfo?: UserShort;
+  conversationId: string;
 }
 
-export type ChatMessage = Message & { timestamp: Date }; // UI adds timestamp as Date object
+export type ChatMessage = Message & { timestamp: Date };
 
 export interface Match {
   id: string;
@@ -69,3 +79,54 @@ export interface Match {
   age?: number;
   hasConversation?: boolean;
 }
+
+export interface MatchItemResponse {
+  active: boolean;
+  user: User;
+  score: number;
+  photosCount: number;
+  profileCompletionRate: number;
+  lastActiveDays: number;
+}
+
+export interface MatchResponse {
+  count: number;
+  items: MatchItemResponse[];
+}
+
+// WebSocket Payload Types
+
+export interface SendMessagePayload {
+  recipientId: string;
+  content: string;
+}
+
+export interface IncomingMessagePayload {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  status: MessageStatus;
+  liked: boolean;
+  deliveredAt: string | null;
+  readAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WebSocketErrorDetails {
+  field: string;
+  message: string;
+}
+
+export interface WebSocketErrorPayload {
+  error: string;
+  details?: WebSocketErrorDetails[];
+}
+
+export type WebSocketConnectionStatus =
+  | "connecting"
+  | "connected"
+  | "disconnected"
+  | "reconnecting"
+  | "error";

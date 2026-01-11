@@ -1,6 +1,6 @@
-import { useCallback } from "react";
 import { useDataPreload } from "../../../context/DataPreloadContext";
 import { ChatPreview } from "../types";
+import { useCallback } from "react";
 
 export interface UseCachedChatsReturn {
   chats: ChatPreview[];
@@ -24,9 +24,12 @@ export const useCachedChats = (): UseCachedChatsReturn => {
     isDataFresh,
   } = useDataPreload();
 
-  const handleRefresh = useCallback(async () => {
-    await refreshChats();
-  }, [refreshChats]);
+  const handleRefresh = useCallback(
+    async (silent = false) => {
+      await refreshChats(silent);
+    },
+    [refreshChats],
+  );
 
   const dataIsFresh = isDataFresh("chats");
 
@@ -34,7 +37,7 @@ export const useCachedChats = (): UseCachedChatsReturn => {
     chats,
     loading,
     error,
-    refreshChats: handleRefresh,
+    refreshChats: () => handleRefresh(),
     isDataFresh: dataIsFresh,
   };
 };

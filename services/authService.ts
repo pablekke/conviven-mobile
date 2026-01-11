@@ -15,9 +15,18 @@ async function persistUser(user: User): Promise<void> {
   await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(user));
 }
 
+interface AuthResponse {
+  accessToken: string;
+  refreshToken?: string;
+  user?: any;
+  data?: {
+    user?: any;
+  };
+}
+
 export default class AuthService {
   static async login(credentials: LoginCredentials): Promise<User> {
-    const data = await resilientRequest<any>({
+    const data = await resilientRequest<AuthResponse>({
       endpoint: API.LOGIN,
       method: HttpMethod.POST,
       headers: {
@@ -68,7 +77,7 @@ export default class AuthService {
       registerPayload.role = credentials.role;
     }
 
-    const data = await resilientRequest<any>({
+    const data = await resilientRequest<AuthResponse>({
       endpoint: "/users/register",
       method: HttpMethod.POST,
       headers: {
@@ -194,7 +203,7 @@ export default class AuthService {
       useCache: false,
     });
 
-    const userPayload = data.user || data.data || data;
+    const userPayload = (data.user || data.data || data) as any;
     const user = mapUserFromApi(userPayload);
     return user;
   }

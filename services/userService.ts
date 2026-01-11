@@ -27,13 +27,13 @@ function buildQueryString(params: UserListQuery = {}): string {
   return queryString ? `?${queryString}` : "";
 }
 
-async function request(path: string, options: RequestInit = {}): Promise<any> {
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers: Record<string, string> = {
     ...(options.headers ? (options.headers as Record<string, string>) : {}),
   };
 
   const method = (options.method ?? HttpMethod.GET) as HttpMethod;
-  let body: any = options.body;
+  let body: unknown = options.body;
 
   if (typeof body === "string") {
     try {
@@ -43,7 +43,7 @@ async function request(path: string, options: RequestInit = {}): Promise<any> {
     }
   }
 
-  return resilientRequest({
+  return resilientRequest<T>({
     endpoint: path,
     method,
     headers,
@@ -53,12 +53,13 @@ async function request(path: string, options: RequestInit = {}): Promise<any> {
   });
 }
 
-function extractUserPayload(data: any): any {
+function extractUserPayload(data: unknown): any {
   if (!data || typeof data !== "object") {
     return data;
   }
 
-  return data.user || data.data?.user || data.data || data;
+  const d = data as any;
+  return d.user || d.data?.user || d.data || d;
 }
 
 const UserService = {
@@ -100,7 +101,7 @@ const UserService = {
 
   async list(params: UserListQuery = {}): Promise<PaginatedUsersResponse> {
     const queryString = buildQueryString(params);
-    const data = await request(`${API.USERS}${queryString}`);
+    const data = await request<any>(`${API.USERS}${queryString}`);
 
     const usersData = Array.isArray(data.users) ? data.users : [];
     const users = usersData.map(mapUserFromApi);

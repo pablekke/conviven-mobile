@@ -22,7 +22,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
       minute: "2-digit",
     });
   };
-
   return (
     <View style={[styles.container, isOwn ? styles.ownContainer : styles.otherContainer]}>
       <View style={[styles.bubble, isOwn ? styles.ownBubble : styles.otherBubble]}>

@@ -21,4 +21,9 @@ export const defaultState: DataPreloadState = {
   isPreloading: false,
   preloadCompleted: false,
   preloadError: null,
+
+  matches: [],
+  matchesLoading: false,
+  matchesError: null,
+  matchesLastUpdated: null,
 };

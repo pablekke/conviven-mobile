@@ -1,6 +1,7 @@
 import UserProfileService from "../../../services/userProfileService";
 import { createTimeoutPromise } from "../utils";
 import { DataPreloadState } from "../types";
+import { User } from "../../../types/user";
 import React from "react";
 
 let lastProfileCallTime = 0;
@@ -25,7 +26,7 @@ export const loadProfileAction = async (
     const fullProfile = (await Promise.race([
       UserProfileService.getFullUserProfile(),
       timeoutPromise,
-    ])) as { filters?: any };
+    ])) as User;
 
     setState(prev => ({
       ...prev,

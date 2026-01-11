@@ -1,6 +1,6 @@
-import { UserProfile, UserPreferences } from "../types/user";
 import { HttpMethod } from "@/core/enums/http.enums";
 import { resilientRequest } from "./apiClient";
+import { User } from "../types/user";
 
 function resolveMethod(method?: string | null): HttpMethod {
   if (!method) {
@@ -39,22 +39,11 @@ class UserProfileService {
     });
   }
 
-  async getFullUserProfile(): Promise<{
-    user?: any;
-    profile?: UserProfile;
-    searchPreferences?: UserPreferences;
-    filters?: any;
-  }> {
+  async getFullUserProfile(): Promise<User> {
     try {
       const data = await this.makeRequest<any>("/users/me");
-      const userData = data.user || data.data || data;
-
-      return {
-        user: userData,
-        profile: userData.profile,
-        searchPreferences: userData.preferences || userData.searchPreferences,
-        filters: userData.filters,
-      };
+      const userData = (data.user || data.data || data) as User;
+      return userData;
     } catch (error) {
       console.error("Error getting full user profile:", error);
       throw error;

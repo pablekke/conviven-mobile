@@ -5,4 +5,6 @@ export type {
   Message,
   Match,
   ChatUser,
+  MatchResponse,
+  PaginatedMessagesResponse,
 } from "./chat.types";

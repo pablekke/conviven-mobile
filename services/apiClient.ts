@@ -21,7 +21,7 @@ export interface ResilientRequestOptions {
   endpoint: string;
   method: HttpMethod;
   headers?: Record<string, string>;
-  body?: any;
+  body?: unknown;
   timeout?: number;
   useCache?: boolean;
   requestId?: string;
@@ -53,7 +53,7 @@ function getBackoffDelay(attempt: number): number {
   return base + jitter;
 }
 
-function shouldQueueRequest(body: any, allowQueue: boolean | undefined): boolean {
+function shouldQueueRequest(body: unknown, allowQueue: boolean | undefined): boolean {
   if (allowQueue === false) {
     return false;
   }
@@ -70,7 +70,7 @@ function createRequestId(): string {
 }
 
 function normalizeBody(
-  body: any,
+  body: unknown,
   headers: Record<string, string>,
 ): { body: BodyInit | undefined; headers: Record<string, string> } {
   if (body === undefined || body === null) {
@@ -244,7 +244,7 @@ export async function resilientRequest<T>(options: ResilientRequestOptions): Pro
         await setCachedValue(endpoint, payload);
       }
 
-      return payload;
+      return payload as T;
     } catch (error) {
       lastError = error;
 

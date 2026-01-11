@@ -1,18 +1,20 @@
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { BlurView } from "expo-blur";
 
 export interface ConversationHeaderProps {
   userName: string;
   userAvatar: string;
   onBackPress?: () => void;
+  topInset?: number;
 }
 
 export const ConversationHeader: React.FC<ConversationHeaderProps> = ({
   userName,
   userAvatar,
   onBackPress,
+  topInset = 0,
 }) => {
   const router = useRouter();
 
@@ -25,7 +27,7 @@ export const ConversationHeader: React.FC<ConversationHeaderProps> = ({
   };
 
   return (
-    <View style={styles.container}>
+    <BlurView intensity={80} tint="light" style={[styles.container, { paddingTop: topInset + 12 }]}>
       <TouchableOpacity onPress={handleBack} style={styles.backButton} activeOpacity={0.7}>
         <Ionicons name="chevron-back" size={28} color="#2563EB" />
       </TouchableOpacity>
@@ -49,7 +51,7 @@ export const ConversationHeader: React.FC<ConversationHeaderProps> = ({
       <TouchableOpacity style={styles.moreButton} activeOpacity={0.7}>
         <Ionicons name="ellipsis-vertical" size={24} color="#64748B" />
       </TouchableOpacity>
-    </View>
+    </BlurView>
   );
 };
 
@@ -58,10 +60,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: "#fff",
+    paddingBottom: 12,
+    backgroundColor: "transparent",
     borderBottomWidth: 1,
-    borderBottomColor: "#E2E8F0",
+    borderBottomColor: "rgba(226, 232, 240, 0.5)",
   },
   backButton: {
     marginRight: 8,

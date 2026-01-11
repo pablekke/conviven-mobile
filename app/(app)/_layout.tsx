@@ -4,6 +4,22 @@ import { StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 
+const iconStyles = StyleSheet.create({
+  iconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  iconDump: {
+    width: 36,
+    height: 180,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});
+
 export default function AppLayout() {
   const { colors } = useTheme();
 
@@ -84,18 +100,3 @@ export default function AppLayout() {
   );
 }
 
-const iconStyles = StyleSheet.create({
-  iconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  iconDump: {
-    width: 36,
-    height: 180,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});

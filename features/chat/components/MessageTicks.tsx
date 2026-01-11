@@ -1,40 +1,50 @@
 import { View, StyleSheet } from "react-native";
 import { Feather } from "@expo/vector-icons";
-
-import { useTheme } from "../../../context/ThemeContext";
 import { MessageStatus } from "../enums";
 
 export interface MessageTicksProps {
-  status: MessageStatus;
+  status: MessageStatus | string;
   size?: number;
 }
 
 export const MessageTicks: React.FC<MessageTicksProps> = ({ status, size = 14 }) => {
-  const { colors } = useTheme();
-
-  if (status === MessageStatus.SENT) {
-    return <Feather name="check" size={size} color={colors.mutedForeground} />;
+  // Caso: Pendiente
+  if (status === "pending" || status === MessageStatus.PENDING) {
+    return <Feather name="clock" size={size - 2} color="rgba(255, 255, 255, 0.7)" />;
   }
 
-  if (status === MessageStatus.DELIVERED) {
+  // Caso: Error
+  if (status === "error" || status === MessageStatus.ERROR) {
+    return <Feather name="alert-circle" size={size} color="#EF4444" />;
+  }
+
+  // Caso: Enviado (Un tick blanco)
+  if (status === "sent" || status === MessageStatus.SENT) {
+    return <Feather name="check" size={size} color="rgba(255, 255, 255, 0.8)" />;
+  }
+
+  // Caso: Entregado (Doble tick blanco)
+  if (status === "delivered" || status === MessageStatus.DELIVERED) {
     return (
       <View style={styles.doubleCheck}>
-        <Feather name="check" size={size} color={colors.mutedForeground} />
+        <Feather name="check" size={size} color="rgba(255, 255, 255, 0.8)" />
         <Feather
           name="check"
           size={size}
-          color={colors.mutedForeground}
+          color="rgba(255, 255, 255, 0.8)"
           style={styles.secondCheck}
         />
       </View>
     );
   }
 
-  if (status === MessageStatus.READ) {
+  // Caso: Leído (Doble tick NARANJA HEXADECIMAL)
+  if (status === "read" || status === MessageStatus.READ) {
+    // Usamos el color naranja directamente por si el tema falla en iOS
     return (
       <View style={styles.doubleCheck}>
-        <Feather name="check" size={size} color={colors.conviven.blue} />
-        <Feather name="check" size={size} color={colors.conviven.blue} style={styles.secondCheck} />
+        <Feather name="check" size={size} color="#F97316" />
+        <Feather name="check" size={size} color="#F97316" style={styles.secondCheck} />
       </View>
     );
   }

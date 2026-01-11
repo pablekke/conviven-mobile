@@ -1,6 +1,7 @@
 import { useFeedPrefetch } from "@/features/feed/hooks/useFeedPrefetch";
 import { loadSearchFiltersAction } from "./actions/filterActions";
 import { loadProfileAction } from "./actions/profileActions";
+import { loadMatchesAction } from "./actions/matchActions";
 import { loadChatsAction } from "./actions/chatActions";
 import { createTimeoutPromise } from "./utils";
 import { DataPreloadState } from "./types";
@@ -14,9 +15,17 @@ export const usePreloadActions = (
 ) => {
   const { prefetchFeed } = useFeedPrefetch();
   const loadChats = useCallback(
-    async (forceRefresh = false) => {
+    async (forceRefresh = false, silent = false) => {
       if (!user || !isAuthenticated) return;
-      await loadChatsAction(setState, forceRefresh);
+      await loadChatsAction(setState, forceRefresh, silent);
+    },
+    [user, isAuthenticated, setState],
+  );
+
+  const loadMatches = useCallback(
+    async (forceRefresh = false, silent = false) => {
+      if (!user || !isAuthenticated) return;
+      await loadMatchesAction(setState, forceRefresh, silent);
     },
     [user, isAuthenticated, setState],
   );
@@ -52,6 +61,7 @@ export const usePreloadActions = (
       await Promise.race([
         Promise.allSettled([
           loadChats(),
+          loadMatches(),
           loadProfile(true),
           loadSearchFilters(),
           prefetchFeed().catch(error => {
@@ -91,6 +101,7 @@ export const usePreloadActions = (
 
   return {
     loadChats,
+    loadMatches,
     loadProfile,
     loadSearchFilters,
     preloadAllData,

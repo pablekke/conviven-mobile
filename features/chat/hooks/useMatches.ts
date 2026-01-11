@@ -1,8 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
-import { Image } from "react-native";
-
-import { chatService } from "../services";
+import { useDataPreload } from "../../../context/DataPreloadContext";
 import { Match } from "../types/chat.types";
+import { useMemo } from "react";
 
 export interface UseMatchesReturn {
   matches: Match[];
@@ -12,48 +10,37 @@ export interface UseMatchesReturn {
 }
 
 export const useMatches = (): UseMatchesReturn => {
-  const [matches, setMatches] = useState<Match[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const {
+    matches,
+    chats,
+    matchesLoading: loading,
+    matchesError: error,
+    refreshMatches,
+  } = useDataPreload();
 
-  const loadMatches = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  const computedMatches = useMemo(() => {
+    if (!matches) return [];
+    const chatUserIds = new Set(chats.map(c => c.id));
 
-      const matchesData = await chatService.getMatches();
-      setMatches(matchesData);
-
-      const avatarUrls = matchesData
-        .map(match => match.avatar)
-        .filter(
-          (url): url is string => !!url && url.trim().length > 0 && !url.includes("ui-avatars.com"),
-        );
-
-      Promise.allSettled(avatarUrls.map(url => Image.prefetch(url).catch(() => {}))).catch(
-        () => {},
-      );
-    } catch (err) {
-      console.error("Error al cargar matches:", err);
-      setError(err instanceof Error ? err : new Error("Error desconocido"));
-      setMatches([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const refreshMatches = useCallback(async () => {
-    await loadMatches();
-  }, [loadMatches]);
-
-  useEffect(() => {
-    loadMatches();
-  }, [loadMatches]);
+    return [...matches]
+      .map(m => ({
+        ...m,
+        hasConversation: chatUserIds.has(m.id),
+      }))
+      .sort((a, b) => {
+        if (!a.hasConversation && b.hasConversation) return -1;
+        if (a.hasConversation && !b.hasConversation) return 1;
+        return 0;
+      });
+  }, [matches, chats]);
+  const handleRefresh = async (silent = false) => {
+    await refreshMatches(silent);
+  };
 
   return {
-    matches,
+    matches: computedMatches,
     loading,
     error,
-    refreshMatches,
+    refreshMatches: () => handleRefresh(false),
   };
 };

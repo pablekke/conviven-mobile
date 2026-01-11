@@ -15,6 +15,7 @@ import React, {
 const DataPreloadContext = createContext<DataPreloadContextType>({
   ...defaultState,
   refreshChats: async () => {},
+  refreshMatches: async () => {},
   refreshProfile: async () => {},
   refreshSearchFilters: async () => {},
   updateSearchFiltersState: () => {},
@@ -32,12 +33,8 @@ export const DataPreloadProvider: React.FC<DataPreloadProviderProps> = ({ childr
   const [state, setState] = useState<DataPreloadState>(defaultState);
   const lastPreloadedUserIdRef = useRef<string | null>(null);
 
-  const { loadChats, loadProfile, loadSearchFilters, preloadAllData } = usePreloadActions(
-    setState,
-    user,
-    isAuthenticated,
-    authLoading,
-  );
+  const { loadChats, loadMatches, loadProfile, loadSearchFilters, preloadAllData } =
+    usePreloadActions(setState, user, isAuthenticated, authLoading);
 
   const isDataFresh = useCallback(
     (dataType: "chats" | "profile" | "searchFilters", maxAge: number = CACHE_DURATION): boolean => {
@@ -52,9 +49,19 @@ export const DataPreloadProvider: React.FC<DataPreloadProviderProps> = ({ childr
     [state.chatsLastUpdated, state.profileLastUpdated, state.searchFiltersLastUpdated],
   );
 
-  const refreshChats = useCallback(async () => {
-    await loadChats(true);
-  }, [loadChats]);
+  const refreshChats = useCallback(
+    async (silent = false) => {
+      await loadChats(true, silent);
+    },
+    [loadChats],
+  );
+
+  const refreshMatches = useCallback(
+    async (silent = false) => {
+      await loadMatches(true, silent);
+    },
+    [loadMatches],
+  );
 
   const refreshProfile = useCallback(async () => {
     await loadProfile();
@@ -101,6 +108,7 @@ export const DataPreloadProvider: React.FC<DataPreloadProviderProps> = ({ childr
   const contextValue: DataPreloadContextType = {
     ...state,
     refreshChats,
+    refreshMatches,
     refreshProfile,
     refreshSearchFilters,
     updateSearchFiltersState,

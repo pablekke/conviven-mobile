@@ -4,11 +4,14 @@ import { HttpMethod } from "@/core/enums/http.enums";
 /**
  * GET - Obtener recurso
  */
-export async function apiGet<T>(endpoint: string, options?: { timeout?: number }): Promise<T> {
+export async function apiGet<T>(
+  endpoint: string,
+  options?: { timeout?: number; useCache?: boolean },
+): Promise<T> {
   return resilientRequest<T>({
     endpoint,
     method: HttpMethod.GET,
-    useCache: true,
+    useCache: options?.useCache ?? true,
     timeout: options?.timeout,
   });
 }
@@ -16,7 +19,7 @@ export async function apiGet<T>(endpoint: string, options?: { timeout?: number }
 /**
  * POST - Crear recurso
  */
-export async function apiPost<T>(endpoint: string, body?: any): Promise<T> {
+export async function apiPost<T>(endpoint: string, body?: unknown): Promise<T> {
   return resilientRequest<T>({
     endpoint,
     method: HttpMethod.POST,
@@ -28,7 +31,7 @@ export async function apiPost<T>(endpoint: string, body?: any): Promise<T> {
 /**
  * PUT - Actualizar recurso completo
  */
-export async function apiPut<T>(endpoint: string, body?: any): Promise<T> {
+export async function apiPut<T>(endpoint: string, body?: unknown): Promise<T> {
   return resilientRequest<T>({
     endpoint,
     method: HttpMethod.PUT,
@@ -40,7 +43,7 @@ export async function apiPut<T>(endpoint: string, body?: any): Promise<T> {
 /**
  * PATCH - Actualizar recurso parcial
  */
-export async function apiPatch<T>(endpoint: string, body?: any): Promise<T> {
+export async function apiPatch<T>(endpoint: string, body?: unknown): Promise<T> {
   return resilientRequest<T>({
     endpoint,
     method: HttpMethod.PATCH,
@@ -68,7 +71,7 @@ export async function apiRequest<T>(
   endpoint: string,
   method: HttpMethod,
   options: {
-    body?: any;
+    body?: unknown;
     headers?: Record<string, string>;
     timeout?: number;
   } = {},
@@ -109,21 +112,21 @@ export class BaseApiService {
   /**
    * POST - Crear recurso
    */
-  protected async post<T>(path: string = "", body?: any): Promise<T> {
+  protected async post<T>(path: string = "", body?: unknown): Promise<T> {
     return apiPost<T>(this.buildEndpoint(path), body);
   }
 
   /**
    * PUT - Actualizar recurso completo
    */
-  protected async put<T>(path: string = "", body?: any): Promise<T> {
+  protected async put<T>(path: string = "", body?: unknown): Promise<T> {
     return apiPut<T>(this.buildEndpoint(path), body);
   }
 
   /**
    * PATCH - Actualizar recurso parcial
    */
-  protected async patch<T>(path: string = "", body?: any): Promise<T> {
+  protected async patch<T>(path: string = "", body?: unknown): Promise<T> {
     return apiPatch<T>(this.buildEndpoint(path), body);
   }
 

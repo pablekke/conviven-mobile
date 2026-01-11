@@ -1,33 +1,60 @@
-import React, { useEffect, useRef } from "react";
-import { FlatList, StyleSheet, Text, View } from "react-native";
-
+import { ActivityIndicator, FlatList, Keyboard, StyleSheet, Text, View } from "react-native";
 import { MessageStatus as MessageStatusEnum } from "../enums";
-import { ChatMessage } from "../types";
+import React, { useEffect, useRef } from "react";
 import { MessageBubble } from "./MessageBubble";
+import { ChatMessage } from "../types";
+import { useAuth } from "@/context/AuthContext";
+import { useChat } from "../context/ChatContext";
 
 export interface MessagesListProps {
   messages: ChatMessage[];
-  currentUserId: string;
+  loadMore?: () => void;
+  hasMore?: boolean;
+  isLoadingMore?: boolean;
 }
 
-export const MessagesList: React.FC<MessagesListProps> = ({ messages, currentUserId }) => {
+export const MessagesList: React.FC<MessagesListProps> = ({
+  messages,
+  loadMore,
+  hasMore,
+  isLoadingMore,
+}) => {
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
-    if (messages.length > 0) {
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-    }
+    const timer = setTimeout(() => {
+      flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
+    }, 50);
+    return () => clearTimeout(timer);
   }, [messages.length]);
 
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
+      flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+    });
+
+    return () => {
+      showSubscription.remove();
+    };
+  }, []);
+
+  const { user } = useAuth();
+  const { lastUpdateTrigger } = useChat();
+
   const renderMessage = ({ item, index }: { item: ChatMessage; index: number }) => {
-    const isOwn = item.senderId === currentUserId;
+    const myAuthId = user?.id;
+    const myProfileId = user?.profile?.id;
+
+    // Identificación robusta: Es mío si coincide con mi AuthID o mi ProfileID
+    const isOwn = item.senderId === myAuthId || (!!myProfileId && item.senderId === myProfileId);
+
+    const nextMessage = index < messages.length - 1 ? messages[index + 1] : null;
+
     const showDateSeparator =
-      index === 0 || messages[index - 1].timestamp.toDateString() !== item.timestamp.toDateString();
+      !nextMessage || item.timestamp.toDateString() !== nextMessage.timestamp.toDateString();
 
     return (
-      <>
+      <View style={{ transform: [{ scaleY: 1 }] }}>
         {showDateSeparator && renderDateSeparator(item.timestamp)}
         <MessageBubble
           content={item.content}
@@ -35,7 +62,7 @@ export const MessagesList: React.FC<MessagesListProps> = ({ messages, currentUse
           isOwn={isOwn}
           status={isOwn ? (item.status as MessageStatusEnum) : undefined}
         />
-      </>
+      </View>
     );
   };
 
@@ -78,13 +105,24 @@ export const MessagesList: React.FC<MessagesListProps> = ({ messages, currentUse
     <FlatList
       ref={flatListRef}
       data={messages}
+      // Forzamos actualización visual en iOS si hay mensajes nuevos o cambios de estado
+      extraData={messages.length + (lastUpdateTrigger || 0)}
       renderItem={renderMessage}
       keyExtractor={item => item.id}
       contentContainerStyle={styles.listContent}
       showsVerticalScrollIndicator={false}
-      onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+      inverted
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="on-drag"
+      onEndReached={hasMore ? loadMore : undefined}
+      onEndReachedThreshold={0.5}
+      ListFooterComponent={
+        isLoadingMore ? (
+          <View style={styles.loadingFooter}>
+            <ActivityIndicator size="small" color="#000" />
+          </View>
+        ) : null
+      }
     />
   );
 };
@@ -92,6 +130,7 @@ export const MessagesList: React.FC<MessagesListProps> = ({ messages, currentUse
 const styles = StyleSheet.create({
   listContent: {
     paddingVertical: 16,
+    paddingBottom: 20,
   },
   emptyContainer: {
     flex: 1,
@@ -128,5 +167,9 @@ const styles = StyleSheet.create({
     fontFamily: "Inter-Medium",
     color: "#94A3B8",
     marginHorizontal: 12,
+  },
+  loadingFooter: {
+    padding: 10,
+    alignItems: "center",
   },
 });

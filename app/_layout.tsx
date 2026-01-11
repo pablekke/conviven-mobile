@@ -7,16 +7,18 @@ import CustomToast from "../components/CustomToast";
 import { useFonts } from "expo-font";
 
 import { ResilienceProvider, useResilience } from "../context/ResilienceContext";
+import { MatchesProvider } from "../features/chat/context/MatchesContext";
 import { useAuthNavigation, useLoadingScreenTransition } from "../hooks";
 import { DataPreloadProvider } from "../context/DataPreloadContext";
+import { ChatProvider } from "../features/chat/context/ChatContext";
 import { ThemeProvider, useTheme } from "../context/ThemeContext";
 import OfflineBanner from "../components/OfflineBanner";
 import { AuthProvider } from "../context/AuthContext";
 
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { Stack } from "expo-router";
 import { useEffect, useRef } from "react";
+import { Stack } from "expo-router";
 import "../global.css";
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
@@ -116,8 +118,12 @@ export default function RootLayout() {
           <ResilienceProvider>
             <AuthProvider>
               <DataPreloadProvider>
-                <ThemeDefaults />
-                <ThemedTree />
+                <ChatProvider>
+                  <MatchesProvider>
+                    <ThemeDefaults />
+                    <ThemedTree />
+                  </MatchesProvider>
+                </ChatProvider>
               </DataPreloadProvider>
             </AuthProvider>
           </ResilienceProvider>

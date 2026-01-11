@@ -1,8 +1,15 @@
-import { Ionicons } from "@expo/vector-icons";
+import {
+  Keyboard,
+  Platform,
+  StyleSheet,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from "react-native";
+import { TextInput } from "react-native-gesture-handler";
 import React, { useRef, useState } from "react";
-import { Platform, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
-
-import Spinner from "../../../components/Spinner";
+import { Ionicons } from "@expo/vector-icons";
+import { EmojiPicker } from "./EmojiPicker";
 
 export interface MessageInputProps {
   onSend: (message: string) => void;
@@ -10,93 +17,138 @@ export interface MessageInputProps {
   sending?: boolean;
 }
 
-export const MessageInput: React.FC<MessageInputProps> = ({
-  onSend,
-  disabled = false,
-  sending = false,
-}) => {
-  const [message, setMessage] = useState("");
-  const inputRef = useRef<TextInput>(null);
+export interface MessageInputHandles {
+  focus: () => void;
+}
 
-  const handleSend = () => {
-    if (message.trim() && !disabled && !sending) {
-      onSend(message.trim());
-      setMessage("");
-    }
-  };
+export const MessageInput = React.forwardRef<MessageInputHandles, MessageInputProps>(
+  ({ onSend, disabled = false, sending = false }, ref) => {
+    const [message, setMessage] = useState("");
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const inputRef = useRef<TextInput>(null);
 
-  const canSend = message.trim().length > 0 && !disabled && !sending;
+    React.useImperativeHandle(ref, () => ({
+      focus: () => {
+        inputRef.current?.focus();
+        setShowEmojiPicker(false);
+      },
+    }));
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.inputContainer}>
-        {Platform.OS === "android" && (
+    const toggleEmojiPicker = () => {
+      if (showEmojiPicker) {
+        inputRef.current?.focus();
+      } else {
+        Keyboard.dismiss();
+      }
+      setShowEmojiPicker(!showEmojiPicker);
+    };
+
+    const handleEmojiSelect = (emoji: string) => {
+      setMessage(prev => prev + emoji);
+    };
+
+    const handleSend = () => {
+      if (message.trim() && !disabled && !sending) {
+        onSend(message.trim());
+        setMessage("");
+      }
+    };
+
+    const canSend = message.trim().length > 0 && !disabled && !sending;
+
+    return (
+      <View style={styles.outerContainer}>
+        <View style={styles.container}>
+          <TouchableWithoutFeedback onPress={() => inputRef.current?.focus()}>
+            <View style={styles.inputContainer}>
+              <TouchableOpacity
+                style={styles.iconButton}
+                activeOpacity={0.7}
+                onPress={e => {
+                  e.stopPropagation();
+                  toggleEmojiPicker();
+                }}
+              >
+                <Ionicons
+                  name={showEmojiPicker ? "keypad-outline" : "happy-outline"}
+                  size={24}
+                  color={showEmojiPicker ? "#2563EB" : "#64748B"}
+                />
+              </TouchableOpacity>
+
+              <TextInput
+                ref={inputRef}
+                style={styles.input}
+                placeholder="Escribe un mensaje..."
+                placeholderTextColor="#94A3B8"
+                value={message}
+                onChangeText={setMessage}
+                onFocus={() => {
+                  setShowEmojiPicker(false);
+                }}
+                multiline
+                maxLength={1000}
+                editable={!disabled && !sending}
+                onSubmitEditing={handleSend}
+                blurOnSubmit={false}
+                returnKeyType="default"
+                textAlignVertical="center"
+                enablesReturnKeyAutomatically
+              />
+
+              <TouchableOpacity
+                style={styles.iconButton}
+                activeOpacity={0.7}
+                onPress={e => {
+                  e.stopPropagation();
+                  inputRef.current?.focus();
+                }}
+              >
+                <Ionicons name="attach-outline" size={24} color="#64748B" />
+              </TouchableOpacity>
+            </View>
+          </TouchableWithoutFeedback>
+
           <TouchableOpacity
-            style={styles.iconButton}
+            style={[styles.sendButton, canSend && styles.sendButtonActive]}
+            onPress={handleSend}
+            disabled={!canSend}
             activeOpacity={0.7}
-            onPress={() => inputRef.current?.focus()}
           >
-            <Ionicons name="happy-outline" size={24} color="#64748B" />
+            <Ionicons name="send" size={20} color="#fff" />
           </TouchableOpacity>
-        )}
-
-        <TextInput
-          ref={inputRef}
-          style={styles.input}
-          placeholder="Escribe un mensaje..."
-          placeholderTextColor="#94A3B8"
-          value={message}
-          onChangeText={setMessage}
-          multiline
-          maxLength={1000}
-          editable={!disabled && !sending}
-          onSubmitEditing={handleSend}
-          blurOnSubmit={false}
-          returnKeyType={Platform.OS === "ios" ? "default" : "none"}
-          textAlignVertical="center"
-        />
-
-        <TouchableOpacity style={styles.iconButton} activeOpacity={0.7}>
-          <Ionicons name="attach-outline" size={24} color="#64748B" />
-        </TouchableOpacity>
+        </View>
+        {showEmojiPicker && <EmojiPicker onEmojiSelect={handleEmojiSelect} />}
       </View>
-
-      <TouchableOpacity
-        style={[styles.sendButton, canSend && styles.sendButtonActive]}
-        onPress={handleSend}
-        disabled={!canSend}
-        activeOpacity={0.7}
-      >
-        {sending ? (
-          <Spinner size={20} color="#fff" trackColor="rgba(255, 255, 255, 0.3)" thickness={3} />
-        ) : (
-          <Ionicons name="send" size={20} color="#fff" />
-        )}
-      </TouchableOpacity>
-    </View>
-  );
-};
+    );
+  },
+);
 
 const styles = StyleSheet.create({
+  outerContainer: {
+    backgroundColor: "transparent",
+    zIndex: 9999,
+    elevation: 999,
+  },
   container: {
     flexDirection: "row",
     alignItems: "flex-end",
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: "#fff",
-    borderTopWidth: 1,
-    borderTopColor: "#E2E8F0",
+    backgroundColor: "transparent",
     gap: 12,
+    zIndex: 9999,
   },
   inputContainer: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F1F5F9",
+    backgroundColor: "rgba(241, 245, 249, 1)",
     borderRadius: 24,
     paddingHorizontal: 8,
     minHeight: 44,
     maxHeight: 100,
+    zIndex: 9999,
   },
   iconButton: {
     padding: 8,

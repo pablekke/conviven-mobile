@@ -205,6 +205,7 @@ function FeedScreen() {
 
   return (
     <View style={styles.container}>
+      {isFocused && <StatusBar style={!isDark ? "dark" : "light"} />}
       {content}
 
       <MatchModal

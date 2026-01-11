@@ -21,7 +21,6 @@ export const MatchesList: React.FC<MatchesListProps> = ({ matches, onMatchPress 
   if (!matches || matches.length === 0) {
     return null;
   }
-
   return (
     <View className="pb-4 pt-1" style={styles.container}>
       <ScrollView

@@ -29,7 +29,10 @@ export { MessageBubble } from "./MessageBubble";
 export type { MessageBubbleProps } from "./MessageBubble";
 
 export { MessageInput } from "./MessageInput";
-export type { MessageInputProps } from "./MessageInput";
+export type { MessageInputProps, MessageInputHandles } from "./MessageInput";
 
 export { MessagesList } from "./MessagesList";
 export type { MessagesListProps } from "./MessagesList";
+
+export { EmojiPicker } from "./EmojiPicker";
+export type { EmojiPickerProps } from "./EmojiPicker";

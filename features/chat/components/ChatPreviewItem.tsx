@@ -1,12 +1,10 @@
+import { Image, Text, TouchableOpacity, View } from "react-native";
+import { useTheme } from "../../../context/ThemeContext";
+import { MessageTicks } from "./MessageTicks";
+import { MessageStatus } from "../enums";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-
-import { Image, Text, TouchableOpacity, View } from "react-native";
-
-import { useTheme } from "../../../context/ThemeContext";
-import { MessageStatus } from "../enums";
 import { ChatPreview } from "../types";
-import { MessageTicks } from "./MessageTicks";
 
 export interface ChatPreviewItemProps {
   chat: ChatPreview;
@@ -63,7 +61,6 @@ export const ChatPreviewItem: React.FC<ChatPreviewItemProps> = ({ chat, onPress 
               : avatarUrl,
           }}
           style={{ width: "100%", height: "100%" }}
-          
           resizeMode="contain"
           onError={handleImageError}
         />
