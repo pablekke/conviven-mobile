@@ -1,4 +1,4 @@
-export type MessageStatus = "sent" | "delivered" | "read";
+export type MessageStatus = "sent" | "delivered" | "read" | "pending" | "error";
 
 export interface UserShort {
   id: string;
@@ -51,13 +51,16 @@ export interface Message {
 // UI Types (kept for compatibility)
 export interface ChatPreview {
   id: string;
+  conversationId: string;
   name: string;
   lastMessage: string;
   lastMessageStatus?: MessageStatus;
+  lastMessageSenderId?: string;
   time: string;
   unread: number;
   avatar: string;
   updatedAt?: string;
+  userFullInfo?: ChatUser;
 }
 
 export type ChatMessage = Message & { timestamp: Date }; // UI adds timestamp as Date object

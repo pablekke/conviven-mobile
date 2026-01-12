@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useRef, useState } from "react";
-import { Platform, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
+import React, { useRef, useState, useEffect } from "react";
+import { Platform, StyleSheet, TextInput, TouchableOpacity, View, Keyboard } from "react-native";
 
 import Spinner from "../../../components/Spinner";
 
@@ -16,7 +16,24 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   sending = false,
 }) => {
   const [message, setMessage] = useState("");
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const inputRef = useRef<TextInput>(null);
+
+  useEffect(() => {
+    const keyboardWillShowListener = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
+      () => setKeyboardVisible(true),
+    );
+    const keyboardWillHideListener = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
+      () => setKeyboardVisible(false),
+    );
+
+    return () => {
+      keyboardWillShowListener.remove();
+      keyboardWillHideListener.remove();
+    };
+  }, []);
 
   const handleSend = () => {
     if (message.trim() && !disabled && !sending) {
@@ -27,8 +44,13 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
   const canSend = message.trim().length > 0 && !disabled && !sending;
 
+  // Dynamic padding: If keyboard is visible, use standard padding (12).
+  // If keyboard is closed and it's iOS, use extra padding (84).
+  // Otherwise use standard padding.
+  const bottomPadding = isKeyboardVisible ? 12 : Platform.OS === "ios" ? 84 : 12;
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingBottom: bottomPadding }]}>
       <View style={styles.inputContainer}>
         {Platform.OS === "android" && (
           <TouchableOpacity

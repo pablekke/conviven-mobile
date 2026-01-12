@@ -1,20 +1,22 @@
+import { Image, Text, TouchableOpacity, View } from "react-native";
+import { useTheme } from "../../../context/ThemeContext";
+import { useAuth } from "../../../context/AuthContext";
+import { useChatPreviewItem } from "../hooks";
+import { MessageTicks } from "./MessageTicks";
+import { MessageStatus } from "../enums";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-
-import { Image, Text, TouchableOpacity, View } from "react-native";
-
-import { useTheme } from "../../../context/ThemeContext";
-import { MessageStatus } from "../enums";
 import { ChatPreview } from "../types";
-import { MessageTicks } from "./MessageTicks";
 
 export interface ChatPreviewItemProps {
   chat: ChatPreview;
   onPress?: (chatId: string) => void;
 }
 
-export const ChatPreviewItem: React.FC<ChatPreviewItemProps> = ({ chat, onPress }) => {
+export const ChatPreviewItem: React.FC<ChatPreviewItemProps> = ({ chat: initialChat, onPress }) => {
+  const chat = useChatPreviewItem(initialChat);
   const { colors } = useTheme();
+  const { user } = useAuth();
   const router = useRouter();
   const [imageError, setImageError] = useState(false);
 
@@ -42,6 +44,8 @@ export const ChatPreviewItem: React.FC<ChatPreviewItemProps> = ({ chat, onPress 
     setImageError(true);
   };
 
+  const isOwnLastMessage = chat.lastMessageSenderId === user?.id;
+
   return (
     <TouchableOpacity
       onPress={handlePress}
@@ -63,7 +67,6 @@ export const ChatPreviewItem: React.FC<ChatPreviewItemProps> = ({ chat, onPress 
               : avatarUrl,
           }}
           style={{ width: "100%", height: "100%" }}
-          
           resizeMode="contain"
           onError={handleImageError}
         />
@@ -74,7 +77,7 @@ export const ChatPreviewItem: React.FC<ChatPreviewItemProps> = ({ chat, onPress 
           <Text className="text-xs font-conviven text-muted-foreground">{chat.time}</Text>
         </View>
         <View className="flex-row items-center gap-1 mt-1">
-          {chat.lastMessageStatus && (
+          {chat.lastMessageStatus && isOwnLastMessage && (
             <MessageTicks status={chat.lastMessageStatus as unknown as MessageStatus} size={14} />
           )}
           <Text className="text-sm font-conviven text-muted-foreground flex-1" numberOfLines={1}>

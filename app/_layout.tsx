@@ -12,6 +12,7 @@ import { DataPreloadProvider } from "../context/DataPreloadContext";
 import { ThemeProvider, useTheme } from "../context/ThemeContext";
 import OfflineBanner from "../components/OfflineBanner";
 import { AuthProvider } from "../context/AuthContext";
+import { ChatProvider } from "@/features/chat/context/ChatContext";
 
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
@@ -116,8 +117,10 @@ export default function RootLayout() {
           <ResilienceProvider>
             <AuthProvider>
               <DataPreloadProvider>
-                <ThemeDefaults />
-                <ThemedTree />
+                <ChatProvider>
+                  <ThemeDefaults />
+                  <ThemedTree />
+                </ChatProvider>
               </DataPreloadProvider>
             </AuthProvider>
           </ResilienceProvider>

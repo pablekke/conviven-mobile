@@ -33,8 +33,12 @@ export async function fetchWithTimeout(
   const id = setTimeout(() => controller.abort(), timeout);
 
   try {
+    const headers = new Headers(options?.headers);
+    headers.set("ngrok-skip-browser-warning", "true");
+
     const response = await fetch(url, {
       ...options,
+      headers,
       signal: controller.signal,
     });
     clearTimeout(id);
@@ -45,7 +49,8 @@ export async function fetchWithTimeout(
       throw new NetworkError();
     }
     if (error instanceof TypeError) {
-      throw new NetworkError();
+      console.error("❌ [HTTP] Fetch Error:", error.message, "URL:", url);
+      throw new NetworkError(`Error de conexión: ${error.message}`);
     }
     throw error;
   }
@@ -67,11 +72,15 @@ export async function parseResponse(response: Response): Promise<any> {
 
       // Detectar si la respuesta es HTML (ngrok offline, error pages, etc)
       if (text.trim().startsWith("<!DOCTYPE") || text.trim().startsWith("<html")) {
-        // Es una página HTML de error, no JSON
+        // Es una página HTML de error, no JSON (probablemente Ngrok landing o error)
+        console.error("🔥 [HTTP] Respuesta HTML inesperada:", text.substring(0, 300));
+
         if (text.includes("ngrok") && text.includes("offline")) {
-          throw new NetworkError("El servidor no está disponible en este momento");
+          throw new NetworkError("El servidor no está disponible en este momento (Ngrok Offline)");
         }
-        throw new NetworkError("El servidor no está disponible");
+        throw new NetworkError(
+          "El servidor respondió con HTML. Revisa los logs para ver el mensaje.",
+        );
       }
 
       payload = text || null;

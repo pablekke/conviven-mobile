@@ -1,6 +1,7 @@
 import { DataPreloadState, DataPreloadContextType } from "./dataPreload/types";
 import { defaultState, CACHE_DURATION } from "./dataPreload/constants";
 import { usePreloadActions } from "./dataPreload/usePreloadActions";
+import { ChatPreview } from "@/features/chat/types"; 
 import { useAuth } from "./AuthContext";
 import React, {
   createContext,
@@ -18,6 +19,7 @@ const DataPreloadContext = createContext<DataPreloadContextType>({
   refreshProfile: async () => {},
   refreshSearchFilters: async () => {},
   updateSearchFiltersState: () => {},
+  updateChatsState: () => {},
   refreshAll: async () => {},
   clearCache: () => {},
   isDataFresh: () => false,
@@ -72,6 +74,14 @@ export const DataPreloadProvider: React.FC<DataPreloadProviderProps> = ({ childr
     }));
   }, []);
 
+  const updateChatsState = useCallback((updater: (prev: ChatPreview[]) => ChatPreview[]) => {
+    setState(prev => ({
+      ...prev,
+      chats: updater(prev.chats),
+      chatsLastUpdated: Date.now(),
+    }));
+  }, []);
+
   const refreshAll = useCallback(async () => {
     await preloadAllData();
   }, [preloadAllData]);
@@ -104,6 +114,7 @@ export const DataPreloadProvider: React.FC<DataPreloadProviderProps> = ({ childr
     refreshProfile,
     refreshSearchFilters,
     updateSearchFiltersState,
+    updateChatsState,
     refreshAll,
     clearCache,
     isDataFresh,

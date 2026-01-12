@@ -27,6 +27,7 @@ export interface DataPreloadContextType extends DataPreloadState {
   refreshProfile: () => Promise<void>;
   refreshSearchFilters: () => Promise<void>;
   updateSearchFiltersState: (filters: SearchFilters) => void;
+  updateChatsState: (updater: (prev: ChatPreview[]) => ChatPreview[]) => void;
   refreshAll: () => Promise<void>;
 
   clearCache: () => void;

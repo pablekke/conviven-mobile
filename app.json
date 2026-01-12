@@ -25,7 +25,10 @@
     "ios": {
       "bundleIdentifier": "com.conviven.expoconviven",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
       }
     }
   }

@@ -1,7 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
-
-import { MessageStatus } from "../enums";
 import { MessageTicks } from "./MessageTicks";
+import { MessageStatus } from "../enums";
 
 export interface MessageBubbleProps {
   content: string;
@@ -35,7 +34,15 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           </Text>
           {isOwn && status && (
             <View style={styles.ticksContainer}>
-              <MessageTicks status={status} size={16} />
+              <MessageTicks
+                status={status}
+                size={16}
+                color={
+                  status === MessageStatus.READ
+                    ? undefined // Dejar que MessageTicks use su naranja por defecto
+                    : "rgba(255, 255, 255, 0.7)" // Blanco con opacidad para el resto
+                }
+              />
             </View>
           )}
         </View>

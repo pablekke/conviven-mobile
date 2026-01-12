@@ -14,6 +14,7 @@ import {
   StyleSheet,
   TouchableWithoutFeedback,
   View,
+  Text,
 } from "react-native";
 
 export default function ConversationScreen() {
@@ -29,7 +30,11 @@ export default function ConversationScreen() {
   const { colors } = useTheme();
   const { user } = useAuth();
 
-  const { messages, loading, sending, sendMessage } = useChatConversation(userId || "");
+  const { messages, loading, sending, sendMessage, error } = useChatConversation(userId || "");
+
+  if (error) {
+    console.error("ConversationScreen Error:", error);
+  }
 
   const handleSendMessage = async (content: string) => {
     try {
@@ -75,6 +80,16 @@ export default function ConversationScreen() {
                   trackColor="rgba(37, 99, 235, 0.15)"
                   thickness={5}
                 />
+              </View>
+            ) : error ? (
+              <View style={styles.loadingContainer}>
+                <View style={{ padding: 20, alignItems: "center" }}>
+                  {/* @ts-ignore */}
+                  <Text style={{ color: "red", textAlign: "center", fontFamily: "Inter-Medium" }}>
+                    Error: {error.message || "Error al cargar chats"}
+                  </Text>
+                  <Text style={{ marginTop: 8, color: "#666" }}>Revisa tu conexión a internet</Text>
+                </View>
               </View>
             ) : (
               <MessagesList messages={messages} currentUserId={user?.id ?? ""} />
