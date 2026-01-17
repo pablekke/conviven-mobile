@@ -23,7 +23,11 @@ export interface UseChatConversationReturn {
   conversationId: string | null;
 }
 
-export const useChatConversation = (userId: string): UseChatConversationReturn => {
+export const useChatConversation = (
+  userId: string,
+  partnerName?: string,
+  partnerAvatar?: string,
+): UseChatConversationReturn => {
   const { user } = useAuth();
   const { markConversationAsRead, isConnected, setActiveChatId } = useChat();
   const { updateChatsState } = useDataPreload();
@@ -76,6 +80,8 @@ export const useChatConversation = (userId: string): UseChatConversationReturn =
     setMessages,
     pendingStatusUpdates,
     updateChatsState,
+    partnerName,
+    partnerAvatar,
   });
 
   useChatWebSocket({

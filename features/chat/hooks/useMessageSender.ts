@@ -12,6 +12,8 @@ interface UseMessageSenderProps {
   setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
   pendingStatusUpdates: MutableRefObject<Map<string, MessageStatus>>;
   updateChatsState: (updater: (prev: any[]) => any[]) => void;
+  partnerName?: string;
+  partnerAvatar?: string;
 }
 
 export const useMessageSender = ({
@@ -22,6 +24,8 @@ export const useMessageSender = ({
   setMessages,
   pendingStatusUpdates,
   updateChatsState,
+  partnerName,
+  partnerAvatar,
 }: UseMessageSenderProps) => {
   const [sending, setSending] = useState(false);
 
@@ -57,7 +61,24 @@ export const useMessageSender = ({
               c.id === userId,
           );
 
-          if (index === -1) return prev;
+          if (index === -1) {
+            if (!partnerName) return prev;
+            const newChat: any = {
+              id: userId,
+              conversationId: sentMessage.conversationId,
+              name: partnerName,
+              avatar:
+                partnerAvatar ||
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(partnerName)}&background=2563EB&color=fff&bold=true&size=128`,
+              lastMessage: sentMessage.content,
+              unread: 0,
+              time: "Ahora",
+              updatedAt: sentMessage.createdAt,
+              lastMessageStatus: sentMessage.status as any,
+              lastMessageSenderId: user.id,
+            };
+            return [newChat, ...prev];
+          }
 
           const updated = [...prev];
           updated[index] = {
@@ -111,6 +132,8 @@ export const useMessageSender = ({
       setMessages,
       pendingStatusUpdates,
       updateChatsState,
+      partnerName,
+      partnerAvatar,
     ],
   );
 

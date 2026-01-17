@@ -204,19 +204,14 @@ class ChatService {
             lastMessageSenderId: lastMessage.senderId,
             time: timeAgo,
             unread: conv.unreadCount,
-            updatedAt: conv.updatedAt,
+            updatedAt: lastMessage.createdAt,
             avatar,
             userFullInfo: otherUser,
           };
         });
 
-      // Sort: unread first, then by most recent
+      // Sort: most recent first (updatedAt)
       return realChats.sort((a, b) => {
-        // First sort by unread count (unread conversations first)
-        if (a.unread > 0 && b.unread === 0) return -1;
-        if (a.unread === 0 && b.unread > 0) return 1;
-
-        // Then sort by most recent (updatedAt)
         const dateA = new Date(a.updatedAt || 0).getTime();
         const dateB = new Date(b.updatedAt || 0).getTime();
         return dateB - dateA;
@@ -272,9 +267,9 @@ class ChatService {
         const birthDate = user.birthDate || user.profile?.birthDate;
 
         return {
-          id: id,
+          id,
           name: fullName,
-          avatar: avatar,
+          avatar,
           age: birthDate ? this.calculateAge(birthDate) : undefined,
           hasConversation: conversationUserIds.has(id),
         };

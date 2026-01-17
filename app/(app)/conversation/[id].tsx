@@ -32,7 +32,11 @@ export default function ConversationScreen() {
   const { colors } = useTheme();
   const { user } = useAuth();
 
-  const { messages, loading, sending, sendMessage, error } = useChatConversation(userId || "");
+  const { messages, loading, sending, sendMessage, error } = useChatConversation(
+    userId || "",
+    name,
+    avatar,
+  );
 
   if (error) {
     console.error("ConversationScreen Error:", error);

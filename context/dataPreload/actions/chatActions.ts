@@ -15,7 +15,11 @@ export const loadChatsAction = async (
       if (cachedChats && Array.isArray(cachedChats)) {
         setState(prev => ({
           ...prev,
-          chats: cachedChats,
+          chats: [...cachedChats].sort((a, b) => {
+            const dateA = new Date(a.updatedAt || 0).getTime();
+            const dateB = new Date(b.updatedAt || 0).getTime();
+            return dateB - dateA;
+          }),
           chatsLoading: false,
           chatsError: null,
           chatsLastUpdated: Date.now(),
@@ -26,12 +30,18 @@ export const loadChatsAction = async (
         chatService
           .getConversations()
           .then(conversations => {
+            // Aseguramos orden cronológico en el background switch
+            const sorted = [...conversations].sort((a, b) => {
+              const dateA = new Date(a.updatedAt || 0).getTime();
+              const dateB = new Date(b.updatedAt || 0).getTime();
+              return dateB - dateA;
+            });
             setState(prev => ({
               ...prev,
-              chats: conversations,
+              chats: sorted,
               chatsLastUpdated: Date.now(),
             }));
-            preloadChatAvatars(conversations).catch(() => {});
+            preloadChatAvatars(sorted).catch(() => {});
           })
           .catch(error => {
             console.error("Error refreshing chats in background:", error);
@@ -48,9 +58,15 @@ export const loadChatsAction = async (
       timeoutPromise,
     ])) as ChatPreview[];
 
+    const sorted = [...conversations].sort((a, b) => {
+      const dateA = new Date(a.updatedAt || 0).getTime();
+      const dateB = new Date(b.updatedAt || 0).getTime();
+      return dateB - dateA;
+    });
+
     setState(prev => ({
       ...prev,
-      chats: conversations,
+      chats: sorted,
       chatsLoading: false,
       chatsError: null,
       chatsLastUpdated: Date.now(),

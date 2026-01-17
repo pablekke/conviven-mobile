@@ -1,7 +1,7 @@
 import { DataPreloadState, DataPreloadContextType } from "./dataPreload/types";
 import { defaultState, CACHE_DURATION } from "./dataPreload/constants";
 import { usePreloadActions } from "./dataPreload/usePreloadActions";
-import { ChatPreview } from "@/features/chat/types"; 
+import { ChatPreview } from "@/features/chat/types";
 import { useAuth } from "./AuthContext";
 import React, {
   createContext,
@@ -75,11 +75,19 @@ export const DataPreloadProvider: React.FC<DataPreloadProviderProps> = ({ childr
   }, []);
 
   const updateChatsState = useCallback((updater: (prev: ChatPreview[]) => ChatPreview[]) => {
-    setState(prev => ({
-      ...prev,
-      chats: updater(prev.chats),
-      chatsLastUpdated: Date.now(),
-    }));
+    setState(prev => {
+      const updated = updater(prev.chats);
+      const sorted = [...updated].sort((a, b) => {
+        const dateA = new Date(a.updatedAt || 0).getTime();
+        const dateB = new Date(b.updatedAt || 0).getTime();
+        return dateB - dateA;
+      });
+      return {
+        ...prev,
+        chats: sorted,
+        chatsLastUpdated: Date.now(),
+      };
+    });
   }, []);
 
   const refreshAll = useCallback(async () => {
