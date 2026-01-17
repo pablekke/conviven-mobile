@@ -134,6 +134,7 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
         placeholder="Escribí tu nombre"
         error={errors.firstName}
         autoCapitalize="words"
+        maxLength={12}
       />
 
       <FormField

@@ -85,7 +85,7 @@ export const useLocation = (): UseLocationReturn => {
   }, []);
 
   useEffect(() => {
-    loadDepartments();
+    loadDepartments().catch(() => {});
   }, [loadDepartments]);
 
   return {

@@ -97,5 +97,6 @@ export const useFiltersScreen = () => {
     handleNeighborhoodConfirm,
     ...neighborhoodsData,
     getSelectedLabel: modals.getSelectedLabel,
+    searchFiltersData: editFiltersLogic.searchFiltersData,
   };
 };

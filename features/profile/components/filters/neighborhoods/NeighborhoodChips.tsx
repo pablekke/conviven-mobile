@@ -30,7 +30,7 @@ export const NeighborhoodChips: React.FC<NeighborhoodChipsProps> = ({
     onNeighborhoodsChange(newIds);
   };
 
-  if (loading && neighborhoodIds.length > 0) {
+  if ((loading || neighborhoods.length === 0) && neighborhoodIds.length > 0) {
     return <SkeletonChips count={neighborhoodIds.length} />;
   }
 

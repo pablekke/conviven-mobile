@@ -1,17 +1,24 @@
-import React, { useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-
-import { Match } from "../types/chat.types";
+import { useMatchCardLayout } from "../hooks/useMatchCardLayout";
 import { PulseIndicator } from "./PulseIndicator";
+import { Match } from "../types/chat.types";
+import React, { useState } from "react";
 
 export interface MatchCardProps {
   match: Match;
   avatarUrl: string;
   cardWidth: number;
+  hasLongNames: boolean;
   onPress: () => void;
 }
 
-export const MatchCard: React.FC<MatchCardProps> = ({ match, avatarUrl, cardWidth, onPress }) => {
+export const MatchCard: React.FC<MatchCardProps> = ({
+  match,
+  avatarUrl,
+  cardWidth,
+  hasLongNames,
+  onPress,
+}) => {
   const [imageError, setImageError] = useState(false);
 
   const handleImageError = () => {
@@ -20,11 +27,16 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, avatarUrl, cardWidt
 
   const fallbackAvatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(match.name)}&background=2563EB&color=fff&bold=true&size=128`;
 
+  const firstName = match.name.split(" ")[0];
+  const { dynamicWidth, showAgeBelow } = useMatchCardLayout(firstName, cardWidth);
+
+  const cardHeight = hasLongNames ? 120 : 110;
+
   return (
     <TouchableOpacity
       onPress={onPress}
-      className="items-center justify-center rounded-3xl mr-3"
-      style={[styles.matchCard, { width: cardWidth }]}
+      className="items-center justify-start rounded-3xl mr-3 pt-3"
+      style={[styles.matchCard, { width: dynamicWidth, height: cardHeight }]}
       activeOpacity={0.8}
     >
       {!match.hasConversation && <PulseIndicator />}
@@ -36,12 +48,23 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, avatarUrl, cardWidt
           onError={handleImageError}
         />
       </View>
-      <View className="flex-row items-baseline mt-2">
-        <Text className="text-base font-conviven-bold text-white" numberOfLines={1}>
-          {match.name.split(" ")[0]}
-        </Text>
-        {match.age && <Text className="text-sm font-conviven text-white/90 ml-1">{match.age}</Text>}
-      </View>
+      {showAgeBelow ? (
+        <View className="items-center mt-1">
+          <Text className="text-base font-conviven-bold text-white" numberOfLines={1}>
+            {firstName}
+          </Text>
+          {match.age && <Text className="text-sm font-conviven text-white/90">{match.age}</Text>}
+        </View>
+      ) : (
+        <View className="flex-row items-baseline mt-2">
+          <Text className="text-base font-conviven-bold text-white" numberOfLines={1}>
+            {firstName}
+          </Text>
+          {match.age && (
+            <Text className="text-sm font-conviven text-white/90 ml-1">{match.age}</Text>
+          )}
+        </View>
+      )}
     </TouchableOpacity>
   );
 };

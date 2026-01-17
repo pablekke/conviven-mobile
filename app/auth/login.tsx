@@ -14,7 +14,11 @@ export default function LoginScreen() {
   const { submit, isLoading, handleFieldFocus } = useLogin();
 
   const handleLogin = async (credentials: LoginCredentials) => {
-    await submit(credentials);
+    try {
+      await submit(credentials);
+    } catch (error) {
+      console.error("[LoginScreen] Error inesperado:", error);
+    }
   };
 
   return (

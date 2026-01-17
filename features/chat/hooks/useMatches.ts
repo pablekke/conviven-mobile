@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { Image } from "react-native";
-
-import { chatService } from "../services";
+import { useChat } from "../context/ChatContext";
 import { Match } from "../types/chat.types";
+import { chatService } from "../services";
+import { Image } from "react-native";
 
 export interface UseMatchesReturn {
   matches: Match[];
@@ -12,6 +12,7 @@ export interface UseMatchesReturn {
 }
 
 export const useMatches = (): UseMatchesReturn => {
+  const { lastMatchNotification } = useChat();
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -47,8 +48,14 @@ export const useMatches = (): UseMatchesReturn => {
   }, [loadMatches]);
 
   useEffect(() => {
-    loadMatches();
+    loadMatches().catch(() => {});
   }, [loadMatches]);
+
+  useEffect(() => {
+    if (lastMatchNotification) {
+      loadMatches().catch(() => {});
+    }
+  }, [lastMatchNotification, loadMatches]);
 
   return {
     matches,

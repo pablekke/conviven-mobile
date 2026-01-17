@@ -57,7 +57,7 @@ export const ChatPreviewItem: React.FC<ChatPreviewItemProps> = ({ chat: initialC
       }}
     >
       <View
-        className="w-14 h-14 rounded-full overflow-hidden"
+        className="w-14 h-14 rounded-full overflow-hidden items-center justify-center"
         style={{ backgroundColor: colors.muted }}
       >
         <Image

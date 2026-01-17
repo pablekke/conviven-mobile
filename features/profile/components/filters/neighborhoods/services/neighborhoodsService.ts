@@ -252,4 +252,26 @@ export const neighborhoodsService = {
     pendingAdjacentRequests.set(cacheKey, request);
     return request;
   },
+
+  /**
+   * Obtiene todos los barrios adyacentes para una lista de barrios (bulk)
+   */
+  async getAdjacentsForMultiple(ids: string[]): Promise<Neighborhood[]> {
+    if (!ids || ids.length === 0) return [];
+
+    // Filtramos IDs únicos para no repetir peticiones
+    const uniqueIds = Array.from(new Set(ids.filter(id => !!id)));
+
+    // Obtenemos promesas para todos
+    const results = await Promise.all(uniqueIds.map(id => this.getAdjacentNeighborhoods(id)));
+
+    // Aplanamos y deduplicamos resultados
+    const flat = results.flat();
+    const uniqueMap = new Map<string, Neighborhood>();
+    flat.forEach(n => {
+      if (n.id) uniqueMap.set(n.id, n);
+    });
+
+    return Array.from(uniqueMap.values());
+  },
 };

@@ -1,5 +1,5 @@
 import { QUESTION_TITLES, QUESTION_OPTIONS } from "../../../../features/profile/constants";
-import { useFiltersScreen, useEditFiltersLogic } from "../../../../features/profile/hooks";
+import { useFiltersScreen } from "../../../../features/profile/hooks";
 import { Animated, StyleSheet, View, Dimensions } from "react-native";
 import TabTransition from "../../../../components/TabTransition";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -51,9 +51,8 @@ export default function FiltersScreen() {
     handleNeighborhoodConfirm,
     preferredLocations,
     mainPreferredNeighborhoodId,
+    searchFiltersData,
   } = useFiltersScreen();
-
-  const { searchFiltersData } = useEditFiltersLogic();
 
   return (
     <TabTransition>

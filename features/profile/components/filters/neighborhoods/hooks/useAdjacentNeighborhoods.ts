@@ -1,63 +1,66 @@
-import { useState, useRef } from "react";
-import { neighborhoodsService } from "../services";
+import { useNeighborhoodAdjacency } from "./useNeighborhoodAdjacency";
+import { useRef } from "react";
 
 interface UseAdjacentNeighborhoodsProps {
   mainPreferredNeighborhoodId: string;
   preferredLocations: string[];
-  onNeighborhoodsUpdate: (newNeighborhoods: string[]) => void;
+  onBatchUpdate: (newNeighborhoods: string[], newToggleValue: boolean) => void;
   onToggleChange: (value: boolean) => void;
 }
 
+/**
+ * Hook que orquesta el toggle de barrios adyacentes usando el manager específico.
+ */
 export const useAdjacentNeighborhoods = ({
   mainPreferredNeighborhoodId,
   preferredLocations,
-  onNeighborhoodsUpdate,
+  onBatchUpdate,
   onToggleChange,
 }: UseAdjacentNeighborhoodsProps) => {
-  const [loadingAdjacents, setLoadingAdjacents] = useState(false);
+  const { loading, expandWithAdjacents, contractByRemovingAdjacents } = useNeighborhoodAdjacency();
   const preferredRef = useRef(preferredLocations);
   preferredRef.current = preferredLocations;
 
   const handleToggleChange = async (newValue: boolean) => {
+    // 1. Cambio visual optimista
     onToggleChange(newValue);
 
-    if (!mainPreferredNeighborhoodId) {
-      return;
-    }
+    const currentPreferred = preferredRef.current;
 
-    setLoadingAdjacents(true);
     try {
-      const adjacents = await neighborhoodsService.getAdjacentNeighborhoods(
-        mainPreferredNeighborhoodId,
-      );
-      const adjacentIds = new Set(adjacents.map(n => n.id));
-      const currentPreferred = preferredRef.current;
-
       if (newValue) {
-        const currentIds = new Set(currentPreferred);
-        const newIds = adjacents.map(n => n.id).filter(id => !currentIds.has(id));
+        // AGREGAR: Expandir basado en todos los barrios base (Main + Adicionales)
+        const expandedList = await expandWithAdjacents(
+          mainPreferredNeighborhoodId,
+          currentPreferred,
+        );
 
-        if (newIds.length > 0) {
-          onNeighborhoodsUpdate([...currentPreferred, ...newIds]);
+        if (expandedList.length !== currentPreferred.length) {
+          onBatchUpdate(expandedList, newValue);
+        } else {
+          onToggleChange(newValue);
         }
       } else {
-        const filteredNeighborhoods = currentPreferred.filter(id => !adjacentIds.has(id));
+        // REMOVER: Quitar cualquier barrio que sea adyacente
+        const contractedList = await contractByRemovingAdjacents(
+          mainPreferredNeighborhoodId,
+          currentPreferred,
+        );
 
-        if (filteredNeighborhoods.length !== currentPreferred.length) {
-          onNeighborhoodsUpdate(filteredNeighborhoods);
+        if (contractedList.length !== currentPreferred.length) {
+          onBatchUpdate(contractedList, newValue);
+        } else {
+          onToggleChange(newValue);
         }
       }
     } catch (error) {
-      console.error("Error handling adjacent neighborhoods:", error);
-      // Revertir el estado si hay error
-      onToggleChange(!newValue);
-    } finally {
-      setLoadingAdjacents(false);
+      console.error("[useAdjacentNeighborhoods] Toggle handler error:", error);
+      if (newValue) onToggleChange(false);
     }
   };
 
   return {
-    loadingAdjacents,
+    loadingAdjacents: loading,
     handleToggleChange,
   };
 };

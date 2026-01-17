@@ -35,7 +35,7 @@ export const ConversationHeader: React.FC<ConversationHeaderProps> = ({
           <Image
             source={{ uri: userAvatar }}
             style={styles.avatar}
-            resizeMode="cover"
+            resizeMode="center"
             defaultSource={require("../../../assets/logo.png")}
           />
         </View>
@@ -59,9 +59,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E2E8F0",
+    backgroundColor: "transparent",
   },
   backButton: {
     marginRight: 8,
@@ -77,9 +75,9 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     backgroundColor: "#E2E8F0",
   },
   textInfo: {

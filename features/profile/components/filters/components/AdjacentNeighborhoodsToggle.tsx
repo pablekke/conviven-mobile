@@ -1,6 +1,6 @@
 import { View, Text, Switch, StyleSheet, TouchableOpacity } from "react-native";
 import { useTheme } from "../../../../../context/ThemeContext";
-import { memo } from "react";
+import { memo, useState, useEffect } from "react";
 
 interface AdjacentNeighborhoodsToggleProps {
   value: boolean;
@@ -11,11 +11,17 @@ interface AdjacentNeighborhoodsToggleProps {
 export const AdjacentNeighborhoodsToggle = memo(
   ({ value, onValueChange, disabled = false }: AdjacentNeighborhoodsToggleProps) => {
     const { colors } = useTheme();
+    const [internalValue, setInternalValue] = useState(value);
 
-    const handleToggle = () => {
-      if (!disabled) {
-        onValueChange(!value);
-      }
+    useEffect(() => {
+      setInternalValue(value);
+    }, [value]);
+
+    const handlePress = () => {
+      if (disabled) return;
+      const newValue = !internalValue;
+      setInternalValue(newValue);
+      onValueChange(newValue);
     };
 
     return (
@@ -30,9 +36,9 @@ export const AdjacentNeighborhoodsToggle = memo(
       >
         <TouchableOpacity
           style={styles.content}
-          onPress={handleToggle}
-          disabled={disabled}
           activeOpacity={0.7}
+          disabled={disabled}
+          onPress={handlePress}
         >
           <View style={styles.textContainer}>
             <Text style={[styles.label, { color: colors.foreground }]}>
@@ -43,13 +49,13 @@ export const AdjacentNeighborhoodsToggle = memo(
             </Text>
           </View>
           <Switch
-            value={value}
-            onValueChange={onValueChange}
+            value={internalValue}
+            onValueChange={handlePress}
             trackColor={{
               false: colors.muted,
               true: colors.primary + "80",
             }}
-            thumbColor={value ? colors.primary : colors.mutedForeground}
+            thumbColor={internalValue ? colors.primary : colors.mutedForeground}
             disabled={disabled}
           />
         </TouchableOpacity>

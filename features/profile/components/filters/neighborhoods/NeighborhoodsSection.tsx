@@ -10,7 +10,7 @@ import React from "react";
 interface NeighborhoodsSectionProps {
   openSelectionModal: (key: string) => void;
   formData: SearchFiltersFormData;
-  updateFormData: (field: keyof SearchFiltersFormData, value: any) => void;
+  updateFormData: (fieldOrObject: any, value?: any) => void;
 }
 
 export const NeighborhoodsSection: React.FC<NeighborhoodsSectionProps> = ({

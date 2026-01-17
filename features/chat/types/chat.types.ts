@@ -1,23 +1,82 @@
-export type MessageStatus = "sent" | "delivered" | "read" | "pending" | "error";
+import { MessageStatus } from "../enums";
 
-export interface UserShort {
+export { MessageStatus };
+
+export enum UserRole {
+  USER = "USER",
+  ADMIN = "ADMIN",
+  SUPER_ADMIN = "SUPER_ADMIN",
+}
+
+export enum UserStatus {
+  ACTIVE = "ACTIVE",
+  INACTIVE = "INACTIVE",
+  BANNED = "BANNED",
+}
+
+export enum Gender {
+  MALE = "MALE",
+  FEMALE = "FEMALE",
+  OTHER = "OTHER",
+}
+
+export interface LocationInfo {
+  neighborhood: {
+    id: string;
+    name: string;
+  };
+  city: {
+    id: string;
+    name: string;
+  };
+  department: {
+    id: string;
+    name: string;
+  };
+}
+
+export interface ProfileAttributes {
+  about?: string;
+  occupation?: string;
+  interests?: string[];
+  [key: string]: unknown;
+}
+
+export interface SearchPreferencesAttributes {
+  ageMin?: number;
+  ageMax?: number;
+  maxDistance?: number;
+  [key: string]: unknown;
+}
+
+export interface SearchFiltersAttributes {
+  gender?: Gender[];
+  hasPhoto?: boolean;
+  [key: string]: unknown;
+}
+
+export interface ConversationUser {
   id: string;
+  email: string;
+  historicalEmail: string | null;
   firstName: string;
   lastName: string;
-  photoUrl?: string | null;
+  birthDate: Date;
+  gender: string;
+  desirabilityRating: number;
+  role: string;
+  status: string;
+  location: LocationInfo | null;
+  profile: ProfileAttributes | null;
+  preferences: SearchPreferencesAttributes | null;
+  filters: SearchFiltersAttributes | null;
+  photoUrl: string | null;
+  secondaryPhotoUrls: string[];
+  lastLoginAt: Date | null;
+  discardedAt: Date | null;
 }
 
-export interface ChatUser {
-  id: string;
-  firstName?: string | null;
-  lastName?: string | null;
-  photoUrl?: string | null;
-  secondaryPhotoUrls?: string[] | null;
-  birthDate?: string | null;
-  gender?: string | null;
-}
-
-export interface LastMessage {
+export interface ConversationLastMessage {
   id: string;
   content: string;
   senderId: string;
@@ -25,11 +84,10 @@ export interface LastMessage {
   createdAt: string;
 }
 
-export interface Conversation {
+export interface ConversationResponse {
   id: string;
-  otherUser: UserShort;
-  otherUserFull?: ChatUser;
-  lastMessage?: LastMessage;
+  otherUser: ConversationUser;
+  lastMessage: ConversationLastMessage;
   unreadCount: number;
   createdAt: string;
   updatedAt: string;
@@ -48,7 +106,8 @@ export interface Message {
   liked: boolean;
 }
 
-// UI Types (kept for compatibility)
+export type ChatMessage = Message & { timestamp: Date };
+
 export interface ChatPreview {
   id: string;
   conversationId: string;
@@ -60,10 +119,8 @@ export interface ChatPreview {
   unread: number;
   avatar: string;
   updatedAt?: string;
-  userFullInfo?: ChatUser;
+  userFullInfo?: ConversationUser;
 }
-
-export type ChatMessage = Message & { timestamp: Date }; // UI adds timestamp as Date object
 
 export interface Match {
   id: string;
@@ -71,4 +128,12 @@ export interface Match {
   avatar: string;
   age?: number;
   hasConversation?: boolean;
+}
+
+export interface MatchNotification {
+  type: "NEW_MATCH";
+  matchId: string;
+  userId: string;
+  matchedUserId: string;
+  timestamp: Date;
 }

@@ -40,8 +40,7 @@ export function useLogin() {
                 lineHeight: 18,
               },
             });
-            // Lanzar el error para que los tests puedan verificar el código de estado
-            throw err;
+            return { success: false, error: message };
           }
           // Error 401: credenciales inválidas (contraseña incorrecta o email no existe)
           if (err.status === 401) {
@@ -58,8 +57,7 @@ export function useLogin() {
                 lineHeight: 18,
               },
             });
-            // Lanzar el error para que los tests puedan verificar el código de estado
-            throw err;
+            return { success: false, error: message };
           }
           // Otros errores HTTP (500, 503, etc.)
           if (err.status >= 500) {

@@ -12,6 +12,7 @@ export interface FormFieldProps {
   autoCapitalize?: "none" | "sentences" | "words" | "characters";
   multiline?: boolean;
   numberOfLines?: number;
+  maxLength?: number;
 }
 
 export default function FormField({
@@ -25,6 +26,7 @@ export default function FormField({
   autoCapitalize = "sentences",
   multiline = false,
   numberOfLines = 1,
+  maxLength,
 }: FormFieldProps) {
   const { colors } = useTheme();
 
@@ -51,6 +53,7 @@ export default function FormField({
         autoCapitalize={autoCapitalize}
         multiline={multiline}
         numberOfLines={numberOfLines}
+        maxLength={maxLength}
         style={inputStyle}
       />
       {error && <Text className={errorClass}>{error}</Text>}

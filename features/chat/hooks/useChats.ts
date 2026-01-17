@@ -58,12 +58,12 @@ export const useChats = (): UseChatsReturn => {
       if (index === -1) index = prev.findIndex(c => c.id === lastMessage.senderId);
 
       if (lastMessage.senderId === user.id) {
-        refreshChats();
+        refreshChats().catch(() => {});
         return prev;
       }
 
       if (index === -1) {
-        refreshChats();
+        refreshChats().catch(() => {});
         return prev;
       }
 

@@ -1,9 +1,8 @@
-import React from "react";
-import { ScrollView, StyleSheet, useWindowDimensions, View } from "react-native";
-
+import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { PulseIndicator } from "./PulseIndicator";
 import { Match } from "../types/chat.types";
 import { MatchCard } from "./MatchCard";
-import { PulseIndicator } from "./PulseIndicator";
+import React from "react";
 
 export type { Match };
 
@@ -19,8 +18,16 @@ export const MatchesList: React.FC<MatchesListProps> = ({ matches, onMatchPress 
   const cardWidth = (width - 48) / 3.6;
 
   if (!matches || matches.length === 0) {
-    return null;
+    return (
+      <View className="pb-4 pt-4 px-6">
+        <Text className="text-white/80 font-conviven text-center">No tienes matches aún</Text>
+      </View>
+    );
   }
+  const hasLongNames = matches.some(match => {
+    const firstName = match.name.split(" ")[0];
+    return firstName.length >= 10;
+  });
 
   return (
     <View className="pb-4 pt-1" style={styles.container}>
@@ -43,6 +50,7 @@ export const MatchesList: React.FC<MatchesListProps> = ({ matches, onMatchPress 
               match={match}
               avatarUrl={avatarUrl}
               cardWidth={cardWidth}
+              hasLongNames={hasLongNames}
               onPress={() => onMatchPress?.(match.id)}
             />
           );

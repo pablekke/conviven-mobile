@@ -1,8 +1,5 @@
-import { ChatMessage, ChatPreview, Match, ChatUser } from "../types";
-import { MessageStatus } from "../enums";
+import { ChatMessage, ChatPreview, Match, ConversationResponse, MessageStatus } from "../types";
 import { apiGet, apiPost, apiPatch } from "../../../services/apiHelper";
-import AuthService from "../../../services/authService";
-import UserService from "../../../services/userService";
 
 interface SendMessageResponse {
   id: string;
@@ -32,26 +29,6 @@ interface MatchResponse {
   userAId: string;
   userBId: string;
   active: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface ConversationResponse {
-  id: string;
-  otherUser: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    photoUrl?: string;
-  };
-  lastMessage: {
-    id: string;
-    content: string;
-    senderId: string;
-    status: MessageStatus;
-    createdAt: string;
-  };
-  unreadCount: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -185,7 +162,7 @@ class ChatService {
         : (data.conversations ?? []);
 
       const realChats = conversations
-        .filter(conv => conv.lastMessage) // Only include conversations with messages
+        .filter(conv => conv.lastMessage)
         .map(conv => {
           const { otherUser, lastMessage } = conv;
           const now = new Date();
@@ -213,17 +190,6 @@ class ChatService {
               ? userPhotoUrl
               : `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=2563EB&color=fff&bold=true&size=128`;
 
-          // Construimos un objeto ChatUser parcial con la info que tenemos
-          const userFullInfo: ChatUser = {
-            id: otherUser.id,
-            firstName: otherUser.firstName,
-            lastName: otherUser.lastName,
-            photoUrl: otherUser.photoUrl,
-            secondaryPhotoUrls: undefined,
-            birthDate: null,
-            gender: null,
-          };
-
           const safeContent =
             typeof lastMessage.content === "string"
               ? lastMessage.content
@@ -240,7 +206,7 @@ class ChatService {
             unread: conv.unreadCount,
             updatedAt: conv.updatedAt,
             avatar,
-            userFullInfo,
+            userFullInfo: otherUser,
           };
         });
 
@@ -269,69 +235,52 @@ class ChatService {
    */
   async getMatches(): Promise<Match[]> {
     try {
-      // Obtener matches desde la API
-      const response = await apiGet<MatchResponse[] | { matches: MatchResponse[] }>("/matches");
-      const matchesData = Array.isArray(response) ? response : (response.matches ?? []);
+      const response = await apiGet<any>("/matches");
+
+      let matchesData: MatchResponse[] = [];
+      if (Array.isArray(response)) {
+        matchesData = response;
+      } else if (response.matches && Array.isArray(response.matches)) {
+        matchesData = response.matches;
+      } else if (response.data && Array.isArray(response.data)) {
+        matchesData = response.data;
+      } else if (response.items && Array.isArray(response.items)) {
+        matchesData = response.items;
+      }
 
       // Obtener el ID del usuario actual
-      const currentUser = await AuthService.getCurrentUser();
-      if (!currentUser) {
-        return [];
-      }
-
-      // Filtrar solo matches activos y obtener el ID del otro usuario
-      const otherUserIds = matchesData
-        .filter(match => match.active)
-        .map(match => {
-          // Determinar cuál es el otro usuario (no el actual)
-          return match.userAId === currentUser.id ? match.userBId : match.userAId;
-        });
-
-      if (otherUserIds.length === 0) {
-        return [];
-      }
-
-      // Obtener información de los usuarios
-      const usersInfo = await Promise.all(
-        otherUserIds.map(async userId => {
-          try {
-            const user = await UserService.getById(userId);
-            const fullName = `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Usuario";
-            return {
-              id: user.id,
-              name: fullName,
-              avatar:
-                user.photoUrl && user.photoUrl.trim().length > 0
-                  ? user.photoUrl
-                  : `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName || user.id)}&background=2563EB&color=fff&bold=true&size=128`,
-              age: user.birthDate ? this.calculateAge(user.birthDate) : undefined,
-            };
-          } catch (error) {
-            console.warn(`Error al obtener información del usuario ${userId}:`, error);
-            return {
-              id: userId,
-              name: "Usuario",
-              avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userId)}&background=2563EB&color=fff&bold=true&size=128`,
-              age: undefined,
-            };
-          }
-        }),
-      );
-
-      // Obtener IDs de usuarios que ya tienen conversación
+      // Obtener conversaciones para saber si ya hablamos (para el punto amarillo)
       const conversations = await this.getConversations();
       const conversationUserIds = new Set(conversations.map(conv => conv.id));
 
-      // Mapear a Match con información de conversación
-      const matches: Match[] = usersInfo.map(userInfo => ({
-        id: userInfo.id,
-        name: userInfo.name,
-        avatar: userInfo.avatar,
-        age: userInfo.age,
-        hasConversation: conversationUserIds.has(userInfo.id),
-      }));
+      // Mapear respuesta del endpoint /matching directamente a objetos Match
+      // La estructura es { items: [ { user: { id, firstName, photoUrl... }, score... } ] }
+      const matches: Match[] = matchesData.map((item: any) => {
+        // Soporte tanto para item.user (nuevo endpoint /matching) como match directo
+        const user = item.user || item;
 
-      // Ordenar: primero los que NO tienen conversación (indicador amarillo), luego los que sí tienen
+        // Extracción segura de datos
+        const id = user.id || "unknown";
+        const firstName = user.firstName || "Usuario";
+        // const lastName = user.lastName || "";
+        const fullName = firstName; // En matches card solo mostramos primer nombre usualmente
+
+        const avatar = user.photoUrl
+          ? user.photoUrl
+          : `https://ui-avatars.com/api/?name=${encodeURIComponent(firstName)}&background=2563EB&color=fff&bold=true&size=128`;
+
+        const birthDate = user.birthDate || user.profile?.birthDate;
+
+        return {
+          id: id,
+          name: fullName,
+          avatar: avatar,
+          age: birthDate ? this.calculateAge(birthDate) : undefined,
+          hasConversation: conversationUserIds.has(id),
+        };
+      });
+
+      // Ordenar: primero los que NO tienen conversación (nuevos matches), luego los que ya tienen chat
       return matches.sort((a, b) => {
         if (!a.hasConversation && b.hasConversation) return -1;
         if (a.hasConversation && !b.hasConversation) return 1;

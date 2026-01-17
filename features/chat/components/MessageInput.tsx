@@ -105,9 +105,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: "#fff",
-    borderTopWidth: 1,
-    borderTopColor: "#E2E8F0",
+    backgroundColor: "rgba(255, 255, 255, 0.4)",
     gap: 12,
   },
   inputContainer: {

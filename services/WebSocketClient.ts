@@ -56,8 +56,6 @@ export class WebSocketClient {
       finalUrl += `&userId=${this.userId}`;
     }
 
-    console.log("🔌 [WS] Intentando conectar a:", finalUrl);
-
     try {
       // @ts-ignore: React Native allows headers in options
       this.ws = new WebSocket(finalUrl, null, {
@@ -65,7 +63,6 @@ export class WebSocketClient {
       });
 
       this.ws.onopen = () => {
-        console.log("✅ [WS] ABIERTO! Conexión exitosa a:", finalUrl);
         if (this.reconnectInterval) {
           clearInterval(this.reconnectInterval);
           this.reconnectInterval = null;
@@ -84,12 +81,6 @@ export class WebSocketClient {
         }
       };
 
-      this.ws.onclose = e => {
-        console.log(`🔒 [WS] CERRADO Code: ${e.code}, Reason: ${e.reason}`);
-        this.ws = null;
-        this.handleReconnection();
-      };
-
       this.ws.onerror = e => {
         const error = e as unknown as { message?: string };
         console.error("❌ [WS] ERROR SOCKET:", error.message || "Unknown error");
@@ -105,7 +96,6 @@ export class WebSocketClient {
 
     if (!this.reconnectInterval) {
       this.reconnectInterval = setInterval(() => {
-        console.log("🔄 [WS] Reintentando conexión...");
         this.initSocket();
       }, 3000); // Intento cada 3 segundos
     }
@@ -116,11 +106,9 @@ export class WebSocketClient {
     this.isAppActive = nextAppState === "active";
 
     if (this.isAppActive && wasBackground) {
-      console.log("📱 [App] Volviendo a primer plano -> Reconectando...");
       this.initSocket();
       if (this.onReconnectCallback) this.onReconnectCallback();
     } else if (!this.isAppActive) {
-      console.log("💤 [App] Pasando a segundo plano -> Pausando socket");
       this.ws?.close();
       this.ws = null;
     }

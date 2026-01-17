@@ -19,7 +19,7 @@ export interface UseNeighborhoodsSectionReturn {
 
 interface UseNeighborhoodsSectionProps {
   formData: SearchFiltersFormData;
-  updateFormData: (field: keyof SearchFiltersFormData, value: any) => void;
+  updateFormData: (fieldOrObject: any, value?: any) => void;
 }
 
 /**
@@ -32,7 +32,6 @@ export const useNeighborhoodsSection = ({
 }: UseNeighborhoodsSectionProps): UseNeighborhoodsSectionReturn => {
   const { searchFilters } = useDataPreload();
 
-  // Obtener datos del cache en el formato esperado por los componentes
   const cachedFilters = useMemo(() => {
     if (!searchFilters) return null;
     return {
@@ -41,32 +40,30 @@ export const useNeighborhoodsSection = ({
     };
   }, [searchFilters]);
 
-  // Obtener IDs desde formData (que viene del cache/parent)
   const mainPreferredNeighborhoodId = formData.mainPreferredNeighborhoodId || "";
   const preferredLocations = formData.preferredLocations || [];
   const includeAdjacentNeighborhoods = formData.includeAdjacentNeighborhoods || false;
 
-  // Hook para manejar barrios adyacentes (solo se ejecuta cuando el usuario cambia el switch)
   const { loadingAdjacents, handleToggleChange } = useAdjacentNeighborhoods({
     mainPreferredNeighborhoodId,
     preferredLocations,
-    onNeighborhoodsUpdate: newNeighborhoods => {
-      updateFormData("preferredLocations", newNeighborhoods);
+    onBatchUpdate: (newNeighborhoods, newToggleValue) => {
+      updateFormData({
+        preferredLocations: newNeighborhoods,
+        includeAdjacentNeighborhoods: newToggleValue,
+      });
     },
     onToggleChange: value => {
       updateFormData("includeAdjacentNeighborhoods", value);
     },
   });
 
-  // Verificar si es Montevideo
   const isMontevideo = useIsMontevideoNeighborhood({
     neighborhoodId: mainPreferredNeighborhoodId || null,
     cachedFilters,
   });
 
-  // Funciones para actualizar el draft
   const updateMainNeighborhood = (neighborhoodId: string) => {
-    // Cuando cambia el barrio principal, resetear adyacentes y limpiar barrios adicionales
     updateFormData("mainPreferredNeighborhoodId", neighborhoodId);
     updateFormData("includeAdjacentNeighborhoods", false);
     updateFormData("preferredLocations", []);
