@@ -19,6 +19,9 @@ interface ResilienceContextValue {
   maintenanceMessage?: string;
   statusPageUrl?: string;
   queueSize: number;
+  isStartupError: boolean;
+  isLoadingStartup: boolean;
+  retryStartup: () => Promise<void>;
   refreshRemoteConfig: () => Promise<void>;
   flushQueue: () => Promise<void>;
 }
@@ -33,6 +36,20 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
   const [maintenance, setMaintenance] = useState(false);
   const [maintenanceMessage, setMaintenanceMessage] = useState<string | undefined>(undefined);
   const [statusPageUrl, setStatusPageUrl] = useState<string | undefined>(undefined);
+  const [isStartupError, setIsStartupError] = useState(false);
+  const [isLoadingStartup, setIsLoadingStartup] = useState(true);
+
+  const retryStartup = async () => {
+    setIsLoadingStartup(true);
+    setIsStartupError(false);
+    const isConnected = await networkMonitor.checkConnection();
+
+    if (!isConnected) {
+      setIsStartupError(true);
+    }
+
+    setIsLoadingStartup(false);
+  };
 
   useEffect(() => {
     const unsubscribeOffline = offlineEmitter.subscribe(({ active }) => {
@@ -57,6 +74,9 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
       .clear()
       .then(() => setQueueSize(0))
       .catch(() => setQueueSize(0));
+
+    // Initial startup check
+    retryStartup();
 
     return () => {
       unsubscribeOffline();
@@ -164,6 +184,9 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
       maintenanceMessage,
       statusPageUrl,
       queueSize,
+      isStartupError,
+      isLoadingStartup,
+      retryStartup,
       refreshRemoteConfig: async () => {
         const config = await loadRemoteConfig();
         applyRemoteConfig(config);
@@ -172,7 +195,16 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
         await flushQueuedRequests();
       },
     }),
-    [offline, lastErrorMessage, maintenance, maintenanceMessage, statusPageUrl, queueSize],
+    [
+      offline,
+      lastErrorMessage,
+      maintenance,
+      maintenanceMessage,
+      statusPageUrl,
+      queueSize,
+      isStartupError,
+      isLoadingStartup,
+    ],
   );
 
   return <ResilienceContext.Provider value={value}>{children}</ResilienceContext.Provider>;

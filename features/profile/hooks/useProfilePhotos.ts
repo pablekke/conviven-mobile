@@ -1,6 +1,7 @@
 import ProfilePhotoService from "../../../services/profilePhotoService";
 import { prefetchProfilePhotos } from "../utils/prefetchProfilePhotos";
 import { getCachedValue } from "../../../services/resilience/cache";
+import * as ImageManipulator from "expo-image-manipulator";
 import { ProfilePhoto } from "../../../types/profilePhoto";
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../../../context/AuthContext";
@@ -21,6 +22,7 @@ export interface UseProfilePhotosReturn {
   loadPhotos: () => Promise<void>;
   uploadPrimaryPhoto: () => Promise<void>;
   uploadAdditionalPhoto: () => Promise<void>;
+  editPhoto: (photoId: string, isPrimary: boolean) => Promise<void>;
   setAsPrimary: (photoId: string) => Promise<void>;
   deletePhoto: (photoId: string) => Promise<void>;
   refreshPhotos: (showIndicator?: boolean) => Promise<ProfilePhoto[]>;
@@ -51,21 +53,6 @@ export const useProfilePhotos = (): UseProfilePhotosReturn => {
             console.debug("[useProfilePhotos] Error precargando imágenes del cache:", error);
           });
 
-          ProfilePhotoService.getAll()
-            .then(fetchedPhotos => {
-              if (Array.isArray(fetchedPhotos)) {
-                setPhotos(fetchedPhotos);
-                prefetchProfilePhotos(fetchedPhotos).catch(error => {
-                  console.debug(
-                    "[useProfilePhotos] Error precargando imágenes actualizadas:",
-                    error,
-                  );
-                });
-              }
-            })
-            .catch(error => {
-              console.error("Error refreshing photos in background:", error);
-            });
           return;
         }
       }
@@ -355,6 +342,73 @@ export const useProfilePhotos = (): UseProfilePhotosReturn => {
     [photos, refreshPhotos],
   );
 
+  const editPhoto = useCallback(
+    async (photoId: string, isPrimary: boolean) => {
+      try {
+        const photoToEdit = photos.find(p => p.id === photoId);
+        if (!photoToEdit) {
+          Toast.show({
+            type: "error",
+            text1: "No se encontró la foto.",
+          });
+          return;
+        }
+
+        const result = await ImageManipulator.manipulateAsync(photoToEdit.url, [], {
+          compress: 0.8,
+          format: ImageManipulator.SaveFormat.JPEG,
+        });
+
+        if (!result.uri) {
+          return;
+        }
+
+        setUploadingPhotoType(isPrimary ? "primary" : `additional-${photoId}`);
+
+        await ProfilePhotoService.delete(photoId);
+
+        const fileName = `photo-${Date.now()}.jpg`;
+
+        if (isPrimary) {
+          const uploadedPhoto = await ProfilePhotoService.uploadPrimary({
+            uri: result.uri,
+            name: fileName,
+            type: "image/jpeg",
+          });
+
+          await refreshPhotos(false);
+
+          if (user && uploadedPhoto?.url) {
+            await updateUser({ photoUrl: uploadedPhoto.url });
+            await refreshUser();
+          }
+        } else {
+          await ProfilePhotoService.uploadAdditional({
+            uri: result.uri,
+            name: fileName,
+            type: "image/jpeg",
+          });
+
+          await refreshPhotos(false);
+        }
+
+        Toast.show({
+          type: "success",
+          text1: "La foto se actualizó correctamente.",
+        });
+      } catch (error: any) {
+        console.error("Error editing photo:", error);
+        Toast.show({
+          type: "error",
+          text1: error?.message || "No se pudo actualizar la foto. Intenta nuevamente.",
+        });
+      } finally {
+        setUploadingPhotoType(null);
+      }
+    },
+    [photos, refreshPhotos, user, updateUser, refreshUser],
+  );
+
   useEffect(() => {
     if (!initialized) {
       loadPhotos(false);
@@ -373,6 +427,7 @@ export const useProfilePhotos = (): UseProfilePhotosReturn => {
     loadPhotos,
     uploadPrimaryPhoto,
     uploadAdditionalPhoto,
+    editPhoto,
     setAsPrimary,
     deletePhoto,
     refreshPhotos,

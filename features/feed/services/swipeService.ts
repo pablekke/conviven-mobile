@@ -46,7 +46,7 @@ class SwipeService {
           action: input.action,
         },
         timeout: 30000,
-        allowQueue: false,
+        allowQueue: true,
       });
       return normalizeApiResponse<SwipeResponse>(raw);
     } catch (error) {

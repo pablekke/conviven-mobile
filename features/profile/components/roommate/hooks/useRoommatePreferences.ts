@@ -1,5 +1,5 @@
-import { getCachedValue, setCachedValue } from "../../../../../services/resilience/cache";
 import { useDataPreload } from "../../../../../context/DataPreloadContext";
+import { getCachedValue } from "../../../../../services/resilience/cache";
 import { useCachedProfile } from "../../../hooks/useCachedProfile";
 import { roommatePreferencesAdapter } from "../../../adapters";
 import { useAuth } from "../../../../../context/AuthContext";
@@ -21,6 +21,7 @@ export interface UseRoommatePreferencesReturn {
   reinitializeFormData: () => Promise<void>;
   saveFormData: () => Promise<void>;
   hasChanges: boolean;
+  getChanges: () => Partial<CreateRoommatePreferencesRequest>;
 }
 
 export const useRoommatePreferences = (): UseRoommatePreferencesReturn => {
@@ -149,17 +150,46 @@ export const useRoommatePreferences = (): UseRoommatePreferencesReturn => {
     setHasChanges(false);
   }, [initialData]);
 
+  const getChanges = useCallback((): Partial<CreateRoommatePreferencesRequest> => {
+    const changes: Partial<CreateRoommatePreferencesRequest> = {};
+    let hasDiff = false;
+
+    (Object.keys(formData) as (keyof RoommatePreferencesFormData)[]).forEach(key => {
+      if (JSON.stringify(formData[key]) !== JSON.stringify(initialData[key])) {
+        changes[key] = formData[key] as any;
+        hasDiff = true;
+      }
+    });
+
+    return hasDiff ? changes : {};
+  }, [formData, initialData]);
+
   const saveFormData = useCallback(async () => {
     if (!user) {
       throw new Error("Usuario no autenticado");
     }
 
+    const changes = getChanges();
+    if (Object.keys(changes).length === 0) {
+      return;
+    }
+
     setSaving(true);
     try {
-      const dataToSave: CreateRoommatePreferencesRequest =
-        roommatePreferencesAdapter.mapFormDataToApi(formData);
+      const fullApiData = roommatePreferencesAdapter.mapFormDataToApi(formData);
+      const initialApiData = roommatePreferencesAdapter.mapFormDataToApi(initialData);
 
-      const updatedData = await searchPreferencesService.upsertSearchPreferences(dataToSave);
+      const apiChanges: any = {};
+      Object.keys(fullApiData).forEach(k => {
+        const key = k as keyof CreateRoommatePreferencesRequest;
+        if (JSON.stringify(fullApiData[key]) !== JSON.stringify(initialApiData[key])) {
+          apiChanges[key] = fullApiData[key];
+        }
+      });
+
+      if (Object.keys(apiChanges).length === 0) return;
+
+      const updatedData = await searchPreferencesService.upsertSearchPreferences(apiChanges);
 
       const mappedData = mapCachedToApiData(updatedData);
       if (mappedData) {
@@ -167,22 +197,6 @@ export const useRoommatePreferences = (): UseRoommatePreferencesReturn => {
         const mergedData: RoommatePreferencesFormData = {
           ...formData,
           ...formattedData,
-          tidinessMin: formattedData.tidinessMin || formData.tidinessMin,
-          schedulePref: formattedData.schedulePref || formData.schedulePref,
-          guestsMax: formattedData.guestsMax || formData.guestsMax,
-          musicMax: formattedData.musicMax || formData.musicMax,
-          languagesPref:
-            formattedData.languagesPref && formattedData.languagesPref.length > 0
-              ? formattedData.languagesPref
-              : formData.languagesPref,
-          interestsPref:
-            formattedData.interestsPref && formattedData.interestsPref.length > 0
-              ? formattedData.interestsPref
-              : formData.interestsPref,
-          zodiacPref:
-            formattedData.zodiacPref && formattedData.zodiacPref.length > 0
-              ? formattedData.zodiacPref
-              : formData.zodiacPref,
         };
         setInitialData(mergedData);
         setFormData(mergedData);
@@ -195,7 +209,7 @@ export const useRoommatePreferences = (): UseRoommatePreferencesReturn => {
     } finally {
       setSaving(false);
     }
-  }, [user, formData, mapCachedToApiData, refreshProfile]);
+  }, [user, formData, initialData, getChanges, mapCachedToApiData, refreshProfile]);
 
   return {
     formData,
@@ -206,5 +220,6 @@ export const useRoommatePreferences = (): UseRoommatePreferencesReturn => {
     reinitializeFormData,
     saveFormData,
     hasChanges,
+    getChanges,
   };
 };

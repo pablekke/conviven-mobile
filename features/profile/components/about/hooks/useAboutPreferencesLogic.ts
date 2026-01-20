@@ -20,6 +20,7 @@ export interface UseAboutPreferencesLogicReturn {
   mapAboutPrefsToSelectedAnswers: () => Record<string, string>;
   resetAboutPrefsInSelectedAnswers: () => Record<string, string>;
   initializeSelectedAnswers: () => void;
+  getChanges: () => Partial<UserProfileData>;
 }
 
 // Configuración centralizada de mapeo
@@ -57,6 +58,7 @@ export const useAboutPreferencesLogic = (
     saveProfileData,
     resetToUserData,
     hasChanges: aboutHasChanges,
+    getChanges,
   } = useUserProfileData();
 
   const [aboutText, setAboutText] = useState("");
@@ -74,7 +76,7 @@ export const useAboutPreferencesLogic = (
   // Solo actualizar profileData.bio cuando aboutText cambie DESPUÉS de la inicialización
   useEffect(() => {
     if (!isBioInitializedRef.current) return; // No hacer nada hasta que esté inicializado
-    
+
     if (aboutText !== (profileData.bio || "")) {
       updateProfileData("bio", aboutText);
     }
@@ -169,5 +171,6 @@ export const useAboutPreferencesLogic = (
     mapAboutPrefsToSelectedAnswers,
     resetAboutPrefsInSelectedAnswers,
     initializeSelectedAnswers,
+    getChanges,
   };
 };

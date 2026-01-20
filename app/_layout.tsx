@@ -1,5 +1,6 @@
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import ConnectionErrorState from "../components/ConnectionErrorState";
 import MaintenanceScreen from "../components/MaintenanceScreen";
 import { View, Text as RNText, StyleSheet } from "react-native";
 import LoadingScreen from "../components/LoadingScreen";
@@ -9,15 +10,16 @@ import { useFonts } from "expo-font";
 import { ResilienceProvider, useResilience } from "../context/ResilienceContext";
 import { useAuthNavigation, useLoadingScreenTransition } from "../hooks";
 import { DataPreloadProvider } from "../context/DataPreloadContext";
+import { ReactQueryProvider } from "../context/QueryClientProvider";
+import { ChatProvider } from "@/features/chat/context/ChatContext";
 import { ThemeProvider, useTheme } from "../context/ThemeContext";
 import OfflineBanner from "../components/OfflineBanner";
 import { AuthProvider } from "../context/AuthContext";
-import { ChatProvider } from "@/features/chat/context/ChatContext";
 
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { Stack } from "expo-router";
 import { useEffect, useRef } from "react";
+import { Stack } from "expo-router";
 import "../global.css";
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
@@ -115,14 +117,16 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <ThemeProvider>
           <ResilienceProvider>
-            <AuthProvider>
-              <DataPreloadProvider>
-                <ChatProvider>
-                  <ThemeDefaults />
-                  <ThemedTree />
-                </ChatProvider>
-              </DataPreloadProvider>
-            </AuthProvider>
+            <ReactQueryProvider>
+              <AuthProvider>
+                <DataPreloadProvider>
+                  <ChatProvider>
+                    <ThemeDefaults />
+                    <ThemedTree />
+                  </ChatProvider>
+                </DataPreloadProvider>
+              </AuthProvider>
+            </ReactQueryProvider>
           </ResilienceProvider>
         </ThemeProvider>
       </SafeAreaProvider>
@@ -146,7 +150,22 @@ function ThemedTree() {
 }
 
 function ResilienceWrapper() {
-  const { maintenance } = useResilience();
+  const { maintenance, isLoadingStartup, isStartupError, retryStartup } = useResilience();
+
+  if (isLoadingStartup) {
+    return <LoadingScreen />
+  }
+
+  if (isStartupError) {
+    return (
+      <View style={styles.fullScreen}>
+        <ConnectionErrorState
+          onRetry={retryStartup}
+          message="No pudimos conectar con el servidor. Por favor, revisá tu conexión e intentá nuevamente."
+        />
+      </View>
+    );
+  }
 
   return (
     <>

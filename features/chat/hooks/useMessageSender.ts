@@ -54,7 +54,7 @@ export const useMessageSender = ({
         setSending(true);
         setMessages(prev => [optimisticMessage, ...prev]);
 
-        const sentMessage = await chatService.sendMessage(userId, content.trim());
+        const sentMessage = await chatService.sendMessage(userId, content.trim(), user.id);
 
         updateChatsState(prev => {
           const index = prev.findIndex(

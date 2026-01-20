@@ -76,6 +76,7 @@ export interface UseRoommatePreferencesLogicReturn {
   saveRoommatePrefs: () => Promise<void>;
   resetRoommatePrefs: () => void;
   reinitializeRoommatePrefs: () => Promise<void>;
+  getChanges: () => any;
 
   // Funciones para mapear a selectedAnswers
   mapRoommatePrefsToSelectedAnswers: () => Record<string, string>;
@@ -98,6 +99,7 @@ export const useRoommatePreferencesLogic = (
     reinitializeFormData: reinitializeRoommatePrefs,
     saveFormData: saveRoommatePrefs,
     hasChanges: roommatePrefsHasChanges,
+    getChanges,
   } = useRoommatePreferences();
 
   // Mapear roommate preferences a selectedAnswers cuando cambian los datos
@@ -229,7 +231,6 @@ export const useRoommatePreferencesLogic = (
       } else if (["tidinessMin", "schedulePref", "guestsMax", "musicMax"].includes(question)) {
         updateRoommatePrefs(question as any, value);
       } else if (question === "languagesPref") {
-
         const current = roommatePrefsData?.languagesPref || [];
         const normalizedCurrent = current.map(lang => normalizeLanguage(lang));
         const normalizedValue = normalizeLanguage(value);
@@ -268,6 +269,7 @@ export const useRoommatePreferencesLogic = (
     roommatePrefsHasChanges,
     roommatePrefsSaving,
     roommatePrefsLoading,
+    getChanges,
     updateRoommatePreference,
     saveRoommatePrefs,
     resetRoommatePrefs,

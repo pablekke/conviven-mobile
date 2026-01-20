@@ -12,8 +12,10 @@ export default function OfflineBanner() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.conviven.orange }]}> 
-      <Text style={[styles.text, { color: colors.primaryForeground }]}>Modo limitado: sin conexión</Text>
+    <View style={[styles.container, { backgroundColor: colors.conviven.orange }]}>
+      <Text style={[styles.text, { color: colors.primaryForeground }]}>
+        Sin conexión con el servidor
+      </Text>
     </View>
   );
 }

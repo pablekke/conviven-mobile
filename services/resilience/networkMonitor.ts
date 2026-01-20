@@ -1,9 +1,8 @@
 import { AppState, AppStateStatus } from "react-native";
-
-import { API_BASE_URL } from "@/config/env";
+import { API_ROOT } from "@/config/env";
 
 const CHECK_INTERVAL = 15000;
-const PING_TIMEOUT = 4000;
+const PING_TIMEOUT = 8000;
 
 export type NetworkStatusListener = (isOnline: boolean) => void;
 
@@ -65,6 +64,17 @@ class NetworkMonitor {
     }
   }
 
+  public async checkConnection(): Promise<boolean> {
+    return this.ping();
+  }
+
+  public triggerOffline(): void {
+    if (this.currentState) {
+      this.currentState = false;
+      this.emit();
+    }
+  }
+
   private emit(): void {
     for (const listener of this.listeners) {
       listener(this.currentState);
@@ -72,7 +82,11 @@ class NetworkMonitor {
   }
 
   private async ping(): Promise<boolean> {
-    if (typeof navigator !== "undefined" && typeof navigator.onLine === "boolean" && !navigator.onLine) {
+    if (
+      typeof navigator !== "undefined" &&
+      typeof navigator.onLine === "boolean" &&
+      !navigator.onLine
+    ) {
       return false;
     }
 
@@ -80,12 +94,19 @@ class NetworkMonitor {
     const timeoutId = setTimeout(() => controller.abort(), PING_TIMEOUT);
 
     try {
-      await fetch(API_BASE_URL, {
-        method: "HEAD",
+      const response = await fetch(`${API_ROOT}/health`, {
+        method: "GET",
         signal: controller.signal,
+        headers: {
+          Accept: "application/json",
+        },
       });
       clearTimeout(timeoutId);
-      return true;
+
+      if (!response.ok) return false;
+
+      const data = await response.json();
+      return data.status === "OK";
     } catch (error) {
       clearTimeout(timeoutId);
       return false;

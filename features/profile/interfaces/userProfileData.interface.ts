@@ -41,4 +41,5 @@ export interface UseUserProfileDataReturn {
   updateProfileData: (field: keyof UserProfileData, value: string | string[]) => void;
   saveProfileData: () => Promise<void>;
   resetToUserData: () => void;
+  getChanges: () => Partial<UserProfileData>;
 }

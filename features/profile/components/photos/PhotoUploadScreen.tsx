@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl } 
 import { PRIMARY_PHOTO_SIZE, ADDITIONAL_PHOTO_SIZE } from "./constants";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Animated, { useAnimatedRef } from "react-native-reanimated";
+import React, { useState, useRef, useCallback } from "react";
 import { useTheme } from "../../../../context/ThemeContext";
 import { AddMorePhotosButton } from "./AddMorePhotosButton";
 import { PrimaryPhotoSection } from "./PrimaryPhotoSection";
@@ -10,9 +11,9 @@ import Spinner from "../../../../components/Spinner";
 import Button from "../../../../components/Button";
 import { DraggablePhoto } from "./DraggablePhoto";
 import { useProfilePhotos } from "../../hooks";
+import { useFocusEffect } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { PhotoHeader } from "./PhotoHeader";
-import React, { useState } from "react";
 
 interface PhotoUploadScreenProps {
   onBack: () => void;
@@ -29,6 +30,7 @@ export const PhotoUploadScreen: React.FC<PhotoUploadScreenProps> = ({ onBack }) 
     deletingPhotoId,
     uploadPrimaryPhoto,
     uploadAdditionalPhoto,
+    editPhoto,
     setAsPrimary,
     deletePhoto,
     refreshPhotos,
@@ -40,16 +42,22 @@ export const PhotoUploadScreen: React.FC<PhotoUploadScreenProps> = ({ onBack }) 
   const [isSettingPrimary, setIsSettingPrimary] = useState(false);
   const [hoveredPhotoIndex, setHoveredPhotoIndex] = useState<number | null>(null);
 
-  // Use Animated ref for the drop zone
+  const scrollViewRef = useRef<ScrollView>(null);
+
   const primarySlotRef = useAnimatedRef<Animated.View>();
 
-  // Explicitly create 4 refs for additional photos (max limit)
   const photoRef0 = useAnimatedRef<Animated.View>();
   const photoRef1 = useAnimatedRef<Animated.View>();
   const photoRef2 = useAnimatedRef<Animated.View>();
   const photoRef3 = useAnimatedRef<Animated.View>();
 
   const photoRefsArray = [photoRef0, photoRef1, photoRef2, photoRef3];
+
+  useFocusEffect(
+    useCallback(() => {
+      scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+    }, []),
+  );
 
   const handleDragStart = (id: string) => {
     setDraggedPhotoId(id);
@@ -124,6 +132,7 @@ export const PhotoUploadScreen: React.FC<PhotoUploadScreenProps> = ({ onBack }) 
           photo={primaryPhoto}
           dropZoneRef={primarySlotRef}
           isDraggingOverPrimary={isDraggingOverPrimary}
+          onEdit={() => editPhoto(primaryPhoto.id, true)}
           onDelete={deletePhoto}
           deletingPhotoId={deletingPhotoId}
         />
@@ -203,6 +212,7 @@ export const PhotoUploadScreen: React.FC<PhotoUploadScreenProps> = ({ onBack }) 
 
       <GestureHandlerRootView style={styles.gestureRoot}>
         <ScrollView
+          ref={scrollViewRef}
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           refreshControl={
@@ -267,6 +277,7 @@ export const PhotoUploadScreen: React.FC<PhotoUploadScreenProps> = ({ onBack }) 
                           onDrop={handleDrop}
                           onHoverChange={setIsDraggingOverPrimary}
                           onPhotoHoverChange={handlePhotoHoverChange}
+                          onEdit={() => editPhoto(photo.id, false)}
                           isDeleting={deletingPhotoId === photo.id}
                           onDelete={deletePhoto}
                           isAnotherDragged={draggedPhotoId !== null && draggedPhotoId !== photo.id}

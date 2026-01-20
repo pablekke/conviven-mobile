@@ -57,56 +57,60 @@ export async function fetchWithTimeout(
 }
 
 export async function parseResponse(response: Response): Promise<any> {
-  if (response.status === 502 || response.status === 503 || response.status === 504) {
-    throw new NetworkError("El servidor no está disponible");
-  }
-
   const contentType = response.headers.get("content-type");
   let payload: any = null;
 
   try {
     if (contentType?.includes("application/json")) {
-      payload = await response.json();
+      try {
+        const text = await response.text();
+        if (text) {
+          payload = JSON.parse(text);
+        }
+      } catch (jsonError) {
+        console.warn("⚠️ [HTTP] JSON Syntax Error:", jsonError);
+        if (response.status >= 500) {
+          throw new HttpError(response.status, "Error del servidor (Respuesta inválida)", null);
+        }
+        throw new NetworkError("Respuesta del servidor inválida");
+      }
     } else {
       const text = await response.text();
 
       // Detectar si la respuesta es HTML (ngrok offline, error pages, etc)
-      if (text.trim().startsWith("<!DOCTYPE") || text.trim().startsWith("<html")) {
+      if (
+        text.trim().toLowerCase().startsWith("<!doctype") ||
+        text.trim().toLowerCase().startsWith("<html")
+      ) {
         // Es una página HTML de error, no JSON (probablemente Ngrok landing o error)
         console.error("🔥 [HTTP] Respuesta HTML inesperada:", text.substring(0, 300));
+
+        if (response.status === 502 || response.status === 503 || response.status === 504) {
+          throw new HttpError(response.status, "El servidor no está disponible", null);
+        }
 
         if (text.includes("ngrok") && text.includes("offline")) {
           throw new NetworkError("El servidor no está disponible en este momento (Ngrok Offline)");
         }
-        throw new NetworkError(
-          "El servidor respondió con HTML. Revisa los logs para ver el mensaje.",
-        );
+        throw new NetworkError("El servidor respondió con contenido inválido.");
       }
 
       payload = text || null;
     }
   } catch (error) {
-    // Si ya es un NetworkError, re-lanzarlo
-    if (error instanceof NetworkError) {
+    if (error instanceof NetworkError || error instanceof HttpError) {
       throw error;
     }
-    throw new NetworkError("Error de conexión");
+    throw new NetworkError("No se pudo leer la respuesta del servidor");
   }
 
   if (!response.ok) {
-    // Si el payload es HTML, no mostrarlo al usuario
-    let message: string;
+    let message: string = "Error del servidor";
 
-    if (
-      typeof payload === "string" &&
-      (payload.includes("<!DOCTYPE") || payload.includes("<html"))
-    ) {
-      message = "El servidor no está disponible";
-    } else {
-      message =
-        typeof payload === "string"
-          ? payload
-          : payload?.message || payload?.error || "Error del servidor";
+    if (payload && typeof payload === "object") {
+      message = payload.message || payload.error || "Error del servidor";
+    } else if (typeof payload === "string") {
+      message = payload;
     }
 
     throw new HttpError(response.status, message, payload);

@@ -20,6 +20,7 @@ interface DraggablePhotoProps {
   onDrop: (id: string, targetIndex: number | null) => void;
   onHoverChange: (isOver: boolean) => void;
   onPhotoHoverChange?: (photoId: string | null) => void;
+  onEdit?: () => void;
   isDeleting: boolean;
   onDelete: (id: string) => void;
   isAnotherDragged: boolean;
@@ -39,6 +40,7 @@ export const DraggablePhoto: React.FC<DraggablePhotoProps> = ({
   onDrop,
   onHoverChange,
   onPhotoHoverChange,
+  onEdit,
   isDeleting,
   onDelete,
   isAnotherDragged,
@@ -49,7 +51,6 @@ export const DraggablePhoto: React.FC<DraggablePhotoProps> = ({
 }) => {
   const { colors } = useTheme();
 
-  // No mostrar overlay si yo soy la foto que se está arrastrando
   const isSelfDragged = draggedPhotoId === photo.id;
 
   const { panGesture, animatedStyle } = useDraggablePhoto({
@@ -75,7 +76,18 @@ export const DraggablePhoto: React.FC<DraggablePhotoProps> = ({
             isDraggedOver && [styles.draggedOverBorder, { borderColor: colors.primary }],
           ]}
         >
-          <Image source={{ uri: photo.url }} style={styles.additionalPhoto} resizeMode="contain" />
+          <TouchableOpacity
+            onPress={onEdit}
+            activeOpacity={0.9}
+            disabled={!onEdit || isDisabled}
+            style={styles.photoImageTouchable}
+          >
+            <Image
+              source={{ uri: photo.url }}
+              style={styles.additionalPhoto}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
 
           {isDraggedOver && !isSelfDragged && (
             <View style={styles.photoOverlayDark}>
@@ -133,6 +145,10 @@ const styles = StyleSheet.create({
   additionalPhoto: {
     width: ADDITIONAL_PHOTO_SIZE,
     height: ADDITIONAL_PHOTO_SIZE,
+  },
+  photoImageTouchable: {
+    width: "100%",
+    height: "100%",
   },
   photoOverlay: {
     position: "absolute",

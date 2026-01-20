@@ -121,14 +121,32 @@ class ChatService {
    * @returns El mensaje enviado
    * @throws Error si el contenido no cumple con la longitud requerida (1-1000 caracteres)
    */
-  async sendMessage(userId: string, content: string): Promise<ChatMessage> {
+  async sendMessage(userId: string, content: string, senderId?: string): Promise<ChatMessage> {
     if (!content || content.length < 1 || content.length > 1000) {
       throw new Error("El contenido debe tener entre 1 y 1000 caracteres");
     }
 
-    const msg = await apiPost<SendMessageResponse>(`/messages/${userId}`, {
+    // apiPost returns undefined if the request is queued (offline mode)
+    const msg = await apiPost<SendMessageResponse | undefined>(`/messages/${userId}`, {
       content,
     });
+
+    if (!msg) {
+      // Offline/Queued case
+      return {
+        id: `queued-${Date.now()}`,
+        conversationId: "", // Unknown until synced
+        senderId: senderId || "unknown",
+        content,
+        status: MessageStatus.PENDING,
+        deliveredAt: null,
+        readAt: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        timestamp: new Date(),
+        liked: false,
+      };
+    }
 
     return {
       id: msg.id,

@@ -1,17 +1,18 @@
-import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
-import { Feather } from "@expo/vector-icons";
 import Animated, { AnimatedRef } from "react-native-reanimated";
+import { ProfilePhoto } from "../../../../types/profilePhoto";
 import { useTheme } from "../../../../context/ThemeContext";
 import Spinner from "../../../../components/Spinner";
-import { ProfilePhoto } from "../../../../types/profilePhoto";
 import { PRIMARY_PHOTO_SIZE } from "./constants";
+import { Feather } from "@expo/vector-icons";
+import React from "react";
 
 interface PrimaryPhotoDisplayProps {
   photo: ProfilePhoto;
   dropZoneRef: AnimatedRef<any>;
   isDraggingOverPrimary: boolean;
   onDelete: (id: string) => void;
+  onEdit?: () => void;
   deletingPhotoId: string | null;
 }
 
@@ -20,6 +21,7 @@ export const PrimaryPhotoDisplay: React.FC<PrimaryPhotoDisplayProps> = ({
   dropZoneRef,
   isDraggingOverPrimary,
   onDelete,
+  onEdit,
   deletingPhotoId,
 }) => {
   const { colors } = useTheme();
@@ -34,11 +36,18 @@ export const PrimaryPhotoDisplay: React.FC<PrimaryPhotoDisplayProps> = ({
           isDraggingOverPrimary && [styles.draggingBorder, { borderColor: colors.primary }],
         ]}
       >
-        <Image
-          source={{ uri: photo.url }}
-          style={[styles.primaryPhoto, isDraggingOverPrimary && { opacity: 0.5 }]}
-          resizeMode="cover"
-        />
+        <TouchableOpacity
+          onPress={onEdit}
+          activeOpacity={0.9}
+          disabled={!onEdit || isDraggingOverPrimary}
+          style={styles.photoTouchable}
+        >
+          <Image
+            source={{ uri: photo.url }}
+            style={[styles.primaryPhoto, isDraggingOverPrimary && styles.draggingPhoto]}
+            resizeMode="cover"
+          />
+        </TouchableOpacity>
       </Animated.View>
       <View style={[styles.primaryBadge, { backgroundColor: colors.primary }]}>
         <Feather name="star" size={14} color={colors.primaryForeground} />
@@ -94,6 +103,13 @@ const styles = StyleSheet.create({
   primaryPhoto: {
     width: "100%",
     height: "100%",
+  },
+  photoTouchable: {
+    width: "100%",
+    height: "100%",
+  },
+  draggingPhoto: {
+    opacity: 0.5,
   },
   primaryBadge: {
     position: "absolute",

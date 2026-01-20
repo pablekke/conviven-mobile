@@ -100,6 +100,10 @@ export const useEditProfileScreen = () => {
       if (!hasChanges) {
         reinitializeState();
       }
+
+      return () => {
+        setActiveTab("about");
+      };
     }, [reinitializeState, profileHasChanges, searchPrefsHasChanges]),
   );
 

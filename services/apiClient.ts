@@ -1,19 +1,25 @@
-import Toast from "react-native-toast-message";
-
-import { trackRequestTelemetry } from "./telemetryService";
+import { HttpError, NetworkError, buildUrl, fetchWithTimeout, parseResponse } from "./http";
 import { CircuitOpenError, circuitBreakerRegistry } from "./resilience/circuitBreaker";
+import { authSession, SessionExpiredError } from "./auth/sessionManager";
+import { HttpMethod, NonGetHttpMethod } from "@/core/enums/http.enums";
 import { getCachedValue, setCachedValue } from "./resilience/cache";
 import { persistentRequestQueue } from "./resilience/requestQueue";
 import { errorEmitter, offlineEmitter } from "./resilience/state";
-import { HttpError, NetworkError, buildUrl, fetchWithTimeout, parseResponse } from "./http";
-import { HttpMethod, NonGetHttpMethod } from "@/core/enums/http.enums";
-import { authSession, SessionExpiredError } from "./auth/sessionManager";
+import { networkMonitor } from "./resilience/networkMonitor";
+import { trackRequestTelemetry } from "./telemetryService";
+import Toast from "react-native-toast-message";
 
 const REQUEST_TIMEOUT = 8000;
 const MAX_RETRIES = 2;
 const OFFLINE_MESSAGE = "Modo limitado: sin conexión";
 
 const offlineState = { active: false };
+
+const inFlightRequests = new Map<string, Promise<unknown>>();
+
+function getRequestKey(endpoint: string, method: HttpMethod): string {
+  return `${method}:${endpoint}`;
+}
 
 type RequestOrigin = "direct" | "queue";
 
@@ -123,6 +129,29 @@ function shouldAttachAuth(endpoint: string): boolean {
 }
 
 export async function resilientRequest<T>(options: ResilientRequestOptions): Promise<T> {
+  const { endpoint, method } = options;
+  const requestKey = getRequestKey(endpoint, method);
+
+  if (method === "GET") {
+    const existingRequest = inFlightRequests.get(requestKey);
+    if (existingRequest) {
+      return existingRequest as Promise<T>;
+    }
+  }
+
+  const requestPromise = executeRequest<T>(options);
+
+  if (method === "GET") {
+    inFlightRequests.set(requestKey, requestPromise);
+    requestPromise.finally(() => {
+      inFlightRequests.delete(requestKey);
+    });
+  }
+
+  return requestPromise;
+}
+
+async function executeRequest<T>(options: ResilientRequestOptions): Promise<T> {
   const {
     endpoint,
     method,
@@ -251,6 +280,17 @@ export async function resilientRequest<T>(options: ResilientRequestOptions): Pro
       if (error instanceof SessionExpiredError) {
         await authSession.handleSessionExpired();
         throw new HttpError(401, "Sesión vencida, iniciá sesión de nuevo.", null);
+      }
+
+      // Global Interceptor: Trigger offline mode immediately on network failures
+      if (error instanceof NetworkError) {
+        networkMonitor.triggerOffline();
+      }
+
+      if (error instanceof HttpError) {
+        if (error.status === 502 || error.status === 503) {
+          networkMonitor.triggerOffline();
+        }
       }
 
       const telemetryStatus = error instanceof NetworkError ? "timeout" : "error";

@@ -1,6 +1,6 @@
 import { UserProfileData, UseUserProfileDataReturn } from "../interfaces";
-import { setCachedValue } from "../../../services/resilience/cache";
 import { useDataPreload } from "../../../context/DataPreloadContext";
+import { setCachedValue } from "../../../services/resilience/cache";
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import { userProfileUpdateService } from "../services";
@@ -26,7 +26,7 @@ const DEFAULT_PROFILE_DATA: UserProfileData = {
 
 export const useUserProfileData = (): UseUserProfileDataReturn => {
   const { user, updateUser } = useAuth() as any;
-  const { profileData: cachedProfileData, fullProfile, loading: cacheLoading } = useCachedProfile();
+  const { profileData: cachedProfileData, loading: cacheLoading } = useCachedProfile();
   const { refreshProfile: refreshDataPreloadProfile } = useDataPreload();
   const [profileData, setProfileData] = useState<UserProfileData>(
     cachedProfileData || DEFAULT_PROFILE_DATA,
@@ -59,18 +59,7 @@ export const useUserProfileData = (): UseUserProfileDataReturn => {
     (field: keyof UserProfileData, value: string | string[]) => {
       setProfileData(prev => {
         const newData = { ...prev, [field]: value };
-
-        // Debugging change detection
-        // console.log(`Updating ${field} to`, value);
-        // console.log("Old value:", originalData[field]);
-
-        // Simple JSON comparison might fail if key order differs, but usually consistent for shallow copies
-        // Better: compare specific field change against originalData?
-        // But we need to know if *any* field is different from originalData.
-
         const changed = JSON.stringify(newData) !== JSON.stringify(originalData);
-        // console.log("Has changes?", changed);
-
         setHasChanges(changed);
 
         if (changed) {
@@ -83,26 +72,36 @@ export const useUserProfileData = (): UseUserProfileDataReturn => {
     [originalData],
   );
 
+  const getChanges = useCallback((): Partial<UserProfileData> => {
+    const changes: Partial<UserProfileData> = {};
+    let hasDiff = false;
+
+    (Object.keys(profileData) as typeof profileData).forEach(key => {
+      if (JSON.stringify(profileData[key]) !== JSON.stringify(originalData[key])) {
+        changes[key] = profileData[key] as any;
+        hasDiff = true;
+      }
+    });
+
+    return hasDiff ? changes : {};
+  }, [profileData, originalData]);
+
   const saveProfileData = useCallback(async () => {
     if (!user) {
       throw new Error("Usuario no autenticado");
     }
 
+    const changes = getChanges();
+    if (Object.keys(changes).length === 0) {
+      return;
+    }
+
     setSaving(true);
     try {
-      const completeProfileData = {
-        ...profileData,
-        ...(fullProfile?.profile && {
-          musicUsage: fullProfile.profile.musicUsage,
-          quietHoursStart: fullProfile.profile.quietHoursStart,
-          quietHoursEnd: fullProfile.profile.quietHoursEnd,
-        }),
-      };
-
-      const updatedUser = await userProfileUpdateService.updateUserProfile(completeProfileData);
+      const updatedUser = await userProfileUpdateService.updateUserProfile(changes);
 
       updateUser(updatedUser);
-      setOriginalData(profileData);
+      setOriginalData(prev => ({ ...prev, ...changes }));
       setHasChanges(false);
       await refreshDataPreloadProfile();
     } catch (error) {
@@ -111,7 +110,7 @@ export const useUserProfileData = (): UseUserProfileDataReturn => {
     } finally {
       setSaving(false);
     }
-  }, [user, profileData, originalData, fullProfile, updateUser, refreshDataPreloadProfile]);
+  }, [user, getChanges, updateUser, refreshDataPreloadProfile]);
 
   const resetToUserData = useCallback(() => {
     setProfileData(originalData);
@@ -126,5 +125,6 @@ export const useUserProfileData = (): UseUserProfileDataReturn => {
     updateProfileData,
     saveProfileData,
     resetToUserData,
+    getChanges,
   };
 };
