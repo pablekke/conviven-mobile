@@ -14,8 +14,11 @@ interface ChatContextProps {
   lastMatchNotification: MatchNotification | null;
   isConnected: boolean;
   activeChatId: string | null;
+
   setActiveChatId: (id: string | null) => void;
   markConversationAsRead: (conversationId: string) => void;
+  matchesRefreshTrigger: number;
+  triggerMatchesRefresh: () => void;
 }
 
 const ChatContext = createContext<ChatContextProps>({
@@ -25,7 +28,10 @@ const ChatContext = createContext<ChatContextProps>({
   isConnected: false,
   activeChatId: null,
   setActiveChatId: () => {},
+
   markConversationAsRead: () => {},
+  matchesRefreshTrigger: 0,
+  triggerMatchesRefresh: () => {},
 });
 
 export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
@@ -38,6 +44,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   );
   const [isConnected, setIsConnected] = useState(false);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
+  const [matchesRefreshTrigger, setMatchesRefreshTrigger] = useState(0);
   const activeChatIdRef = useRef<string | null>(null);
   const router = useRouter();
 
@@ -56,22 +63,21 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       const unsubscribe = wsClient.subscribe(data => {
         const inputType = data.type;
 
-        // MANEJO DE NUEVO MATCH
         if (inputType === "NEW_MATCH") {
           const matchNotification = data as MatchNotification;
           setLastMatchNotification(matchNotification);
 
-          // Mostrar notificación visual
           Toast.show({
             type: "success",
             text1: "¡Es un Match! 🎉",
             text2: "Has conectado con alguien nuevo",
             visibilityTime: 4000,
             onPress: () => {
-              // Navegar al listado de chats/matches
               router.push("/chat");
             },
           });
+
+          triggerMatchesRefresh();
           return;
         }
 
@@ -197,6 +203,10 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     [updateChatsState],
   );
 
+  const triggerMatchesRefresh = useCallback(() => {
+    setMatchesRefreshTrigger(prev => prev + 1);
+  }, []);
+
   return (
     <ChatContext.Provider
       value={{
@@ -206,7 +216,10 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         isConnected,
         activeChatId,
         setActiveChatId,
+
         markConversationAsRead,
+        matchesRefreshTrigger,
+        triggerMatchesRefresh,
       }}
     >
       {children}

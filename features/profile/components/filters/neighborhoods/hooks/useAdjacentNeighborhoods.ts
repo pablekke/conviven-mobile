@@ -22,14 +22,12 @@ export const useAdjacentNeighborhoods = ({
   preferredRef.current = preferredLocations;
 
   const handleToggleChange = async (newValue: boolean) => {
-    // 1. Cambio visual optimista
     onToggleChange(newValue);
 
     const currentPreferred = preferredRef.current;
 
     try {
       if (newValue) {
-        // AGREGAR: Expandir basado en todos los barrios base (Main + Adicionales)
         const expandedList = await expandWithAdjacents(
           mainPreferredNeighborhoodId,
           currentPreferred,
@@ -41,7 +39,6 @@ export const useAdjacentNeighborhoods = ({
           onToggleChange(newValue);
         }
       } else {
-        // REMOVER: Quitar cualquier barrio que sea adyacente
         const contractedList = await contractByRemovingAdjacents(
           mainPreferredNeighborhoodId,
           currentPreferred,

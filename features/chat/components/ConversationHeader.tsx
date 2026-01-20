@@ -7,12 +7,14 @@ export interface ConversationHeaderProps {
   userName: string;
   userAvatar: string;
   onBackPress?: () => void;
+  onProfilePress?: () => void;
 }
 
 export const ConversationHeader: React.FC<ConversationHeaderProps> = ({
   userName,
   userAvatar,
   onBackPress,
+  onProfilePress,
 }) => {
   const router = useRouter();
 
@@ -30,7 +32,12 @@ export const ConversationHeader: React.FC<ConversationHeaderProps> = ({
         <Ionicons name="chevron-back" size={28} color="#2563EB" />
       </TouchableOpacity>
 
-      <View style={styles.userInfo}>
+      <TouchableOpacity
+        style={styles.userInfo}
+        activeOpacity={0.7}
+        hitSlop={{ top: 15, bottom: 15, left: 30, right: 30 }}
+        onPress={() => onProfilePress?.()}
+      >
         <View style={styles.avatarContainer}>
           <Image
             source={{ uri: userAvatar }}
@@ -44,7 +51,7 @@ export const ConversationHeader: React.FC<ConversationHeaderProps> = ({
             {userName}
           </Text>
         </View>
-      </View>
+      </TouchableOpacity>
 
       <TouchableOpacity style={styles.moreButton} activeOpacity={0.7}>
         <Ionicons name="ellipsis-vertical" size={24} color="#64748B" />
@@ -60,15 +67,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: "transparent",
+    zIndex: 100,
   },
   backButton: {
-    marginRight: 8,
-    padding: 4,
+    marginRight: 16,
+    paddingVertical: 4,
+    paddingRight: 20,
+    paddingLeft: 8,
+    zIndex: 110,
   },
   userInfo: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
+    zIndex: 110,
+    paddingVertical: 5,
   },
   avatarContainer: {
     position: "relative",
@@ -91,5 +104,6 @@ const styles = StyleSheet.create({
   moreButton: {
     padding: 4,
     marginLeft: 8,
+    zIndex: 110,
   },
 });

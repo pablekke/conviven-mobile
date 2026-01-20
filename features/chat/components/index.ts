@@ -33,3 +33,5 @@ export type { MessageInputProps } from "./MessageInput";
 
 export { MessagesList } from "./MessagesList";
 export type { MessagesListProps } from "./MessagesList";
+
+export { PartnerProfileOverlay } from "./PartnerProfileOverlay";

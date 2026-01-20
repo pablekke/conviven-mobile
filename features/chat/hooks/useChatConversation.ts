@@ -29,7 +29,7 @@ export const useChatConversation = (
   partnerAvatar?: string,
 ): UseChatConversationReturn => {
   const { user } = useAuth();
-  const { markConversationAsRead, isConnected, setActiveChatId } = useChat();
+  const { markConversationAsRead, isConnected, setActiveChatId, triggerMatchesRefresh } = useChat();
   const { updateChatsState } = useDataPreload();
   const appState = useRef(AppState.currentState);
   const isFocused = useIsFocused();
@@ -82,6 +82,7 @@ export const useChatConversation = (
     updateChatsState,
     partnerName,
     partnerAvatar,
+    triggerMatchesRefresh,
   });
 
   useChatWebSocket({

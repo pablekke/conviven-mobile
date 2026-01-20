@@ -1,5 +1,9 @@
-/* eslint-disable react-native/no-inline-styles */
-import { ConversationHeader, MessageInput, MessagesList } from "@/features/chat/components";
+import {
+  ConversationHeader,
+  MessageInput,
+  MessagesList,
+  PartnerProfileOverlay,
+} from "@/features/chat/components";
 import { useLocalSearchParams, useFocusEffect } from "expo-router";
 import { GlassBackground } from "@/components/GlassBackground";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -7,7 +11,7 @@ import { useChatConversation } from "@/features/chat/hooks";
 import { useTheme } from "@/context/ThemeContext";
 import { useAuth } from "@/context/AuthContext";
 import Spinner from "@/components/Spinner";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import {
   Keyboard,
   KeyboardAvoidingView,
@@ -38,6 +42,8 @@ export default function ConversationScreen() {
     avatar,
   );
 
+  const [isProfileVisible, setIsProfileVisible] = useState(false);
+
   if (error) {
     console.error("ConversationScreen Error:", error);
   }
@@ -67,7 +73,11 @@ export default function ConversationScreen() {
     <SafeAreaView style={styles.container} edges={["top"]}>
       <GlassBackground intensity={90} />
       <StatusBar barStyle="dark-content" />
-      <ConversationHeader userName={displayName} userAvatar={displayAvatar} />
+      <ConversationHeader
+        userName={displayName}
+        userAvatar={displayAvatar}
+        onProfilePress={() => setIsProfileVisible(true)}
+      />
 
       <KeyboardAvoidingView
         style={styles.keyboardView}
@@ -103,6 +113,12 @@ export default function ConversationScreen() {
 
         <MessageInput key={userId} onSend={handleSendMessage} sending={sending} />
       </KeyboardAvoidingView>
+
+      <PartnerProfileOverlay
+        isVisible={isProfileVisible}
+        onClose={() => setIsProfileVisible(false)}
+        userId={userId || ""}
+      />
     </SafeAreaView>
   );
 }

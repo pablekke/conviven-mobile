@@ -1,10 +1,10 @@
 import type { MockedBackendUser } from "../mocks/incomingProfile";
+import { useChat } from "../../chat/context/ChatContext";
 import Toast from "react-native-toast-message";
 import { FEED_USE_MOCK } from "@/config/env";
 import { swipeService } from "../services";
 import { useCallback } from "react";
 
-// Flag para testing: si es true, fuerza que salga la pantalla de match al dar LIKE
 const DEBUG_FORCE_MATCH = false;
 
 export interface UseFeedSwipeActionsParams {
@@ -26,6 +26,8 @@ export function useFeedSwipeActions({
   onScrollToTop,
   onMatch,
 }: UseFeedSwipeActionsParams): UseFeedSwipeActionsReturn {
+  const { triggerMatchesRefresh } = useChat();
+
   const handleSwipeComplete = useCallback(
     (direction: "like" | "dislike") => {
       if (!FEED_USE_MOCK) {
@@ -49,14 +51,12 @@ export function useFeedSwipeActions({
               action,
             })
             .then(response => {
-              if (
-                !DEBUG_FORCE_MATCH &&
-                response.isMatch &&
-                action === "like" &&
-                onMatch &&
-                primaryBackend
-              ) {
-                onMatch(primaryBackend);
+              if (response && response.isMatch) {
+                triggerMatchesRefresh();
+
+                if (!DEBUG_FORCE_MATCH && action === "like" && onMatch && primaryBackend) {
+                  onMatch(primaryBackend);
+                }
               }
             })
             .catch(err => {
@@ -79,12 +79,14 @@ export function useFeedSwipeActions({
       }
 
       onScrollToTop();
+      triggerMatchesRefresh();
+
       const advanced = onAdvance(direction);
       if (!advanced) {
         onNoMoreProfiles();
       }
     },
-    [primaryBackend, onAdvance, onNoMoreProfiles, onScrollToTop, onMatch],
+    [primaryBackend, onAdvance, onNoMoreProfiles, onScrollToTop, onMatch, triggerMatchesRefresh],
   );
 
   return {

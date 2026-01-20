@@ -96,6 +96,19 @@ class ProfilePhotoService {
       allowQueue: true,
     });
   }
+
+  /**
+   * Reordenar fotos
+   * PUT /api/profile-photos/reorder
+   */
+  async reorderPhotos(photos: { photoId: string; order: number }[]): Promise<void> {
+    return resilientRequest<void>({
+      endpoint: "/profile-photos/reorder",
+      method: HttpMethod.PUT,
+      body: { photos },
+      allowQueue: false,
+    });
+  }
 }
 
 export default new ProfilePhotoService();

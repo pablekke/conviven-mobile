@@ -229,8 +229,7 @@ export const useRoommatePreferencesLogic = (
       } else if (["tidinessMin", "schedulePref", "guestsMax", "musicMax"].includes(question)) {
         updateRoommatePrefs(question as any, value);
       } else if (question === "languagesPref") {
-        // Toggle: agregar si no está, remover si está
-        // Normalizar valores actuales para comparar correctamente
+
         const current = roommatePrefsData?.languagesPref || [];
         const normalizedCurrent = current.map(lang => normalizeLanguage(lang));
         const normalizedValue = normalizeLanguage(value);
@@ -239,8 +238,6 @@ export const useRoommatePreferencesLogic = (
           : [...current, normalizedValue];
         updateRoommatePrefs("languagesPref", newArray);
       } else if (question === "interestsPref") {
-        // Toggle: agregar si no está, remover si está
-        // Normalizar valores actuales para comparar correctamente
         const current = roommatePrefsData?.interestsPref || [];
         const normalizedCurrent = current.map(interest => normalizeInterest(interest));
         const normalizedValue = normalizeInterest(value);
@@ -249,9 +246,7 @@ export const useRoommatePreferencesLogic = (
           : [...current, normalizedValue];
         updateRoommatePrefs("interestsPref", newArray);
       } else if (question === "zodiacPref") {
-        // Toggle: agregar si no está, remover si está
         const current = roommatePrefsData?.zodiacPref || [];
-        // Normalizar zodiac signs
         const normalizeZodiac = (z: string): string => {
           const upper = z.toUpperCase();
           if (Object.values(ZodiacSign).includes(upper as ZodiacSign)) return upper;

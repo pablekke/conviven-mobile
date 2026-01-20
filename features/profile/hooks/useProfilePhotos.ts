@@ -23,7 +23,8 @@ export interface UseProfilePhotosReturn {
   uploadAdditionalPhoto: () => Promise<void>;
   setAsPrimary: (photoId: string) => Promise<void>;
   deletePhoto: (photoId: string) => Promise<void>;
-  refreshPhotos: () => Promise<void>;
+  refreshPhotos: (showIndicator?: boolean) => Promise<ProfilePhoto[]>;
+  reorderPhotos: (reorderedPhotos: ProfilePhoto[]) => Promise<void>;
 }
 
 export const useProfilePhotos = (): UseProfilePhotosReturn => {
@@ -94,9 +95,9 @@ export const useProfilePhotos = (): UseProfilePhotosReturn => {
     }
   }, []);
 
-  const refreshPhotos = useCallback(async () => {
+  const refreshPhotos = useCallback(async (showIndicator: boolean = true) => {
     try {
-      setRefreshing(true);
+      if (showIndicator) setRefreshing(true);
       const fetchedPhotos = await ProfilePhotoService.getAll();
       const photosArray = Array.isArray(fetchedPhotos) ? fetchedPhotos : [];
       setPhotos(photosArray);
@@ -106,8 +107,10 @@ export const useProfilePhotos = (): UseProfilePhotosReturn => {
           console.debug("[useProfilePhotos] Error precargando imágenes al refrescar:", error);
         });
       }
+      return photosArray;
     } catch (error) {
       console.error("Error refreshing photos:", error);
+      return [];
     } finally {
       setRefreshing(false);
     }
@@ -141,16 +144,24 @@ export const useProfilePhotos = (): UseProfilePhotosReturn => {
         return;
       }
 
-      const asset = result.assets[0];
+      const asset = result.assets[0] as any;
+      if (asset.fileSize && asset.fileSize > 5 * 1024 * 1024) {
+        Toast.show({
+          type: "error",
+          text1: "La imagen es demasiado pesada (máx 5MB).",
+        });
+        return;
+      }
+
       setUploadingPhotoType("primary");
 
       const uploadedPhoto = await ProfilePhotoService.uploadPrimary({
         uri: asset.uri,
-        name: asset.fileName,
-        type: asset.mimeType,
+        name: asset.fileName || "primary_photo.jpg",
+        type: asset.mimeType || "image/jpeg",
       });
 
-      await refreshPhotos();
+      await refreshPhotos(false);
 
       // Actualizar el avatar del usuario en el contexto
       if (user && uploadedPhoto?.url) {
@@ -208,7 +219,7 @@ export const useProfilePhotos = (): UseProfilePhotosReturn => {
         type: asset.mimeType,
       });
 
-      await refreshPhotos();
+      await refreshPhotos(false);
       Toast.show({
         type: "success",
         text1: "La foto se agregó correctamente.",
@@ -228,8 +239,7 @@ export const useProfilePhotos = (): UseProfilePhotosReturn => {
     async (photoId: string) => {
       try {
         await ProfilePhotoService.setPrimary(photoId);
-        const updatedPhotos = await ProfilePhotoService.getAll();
-        await refreshPhotos();
+        const updatedPhotos = await refreshPhotos(false);
 
         const newPrimaryPhoto = updatedPhotos.find(p => p.id === photoId);
         if (user && newPrimaryPhoto?.url) {
@@ -285,9 +295,9 @@ export const useProfilePhotos = (): UseProfilePhotosReturn => {
                       await refreshUser();
                     }
                   }
-                  await refreshPhotos();
+                  await refreshPhotos(false);
                 } else {
-                  await refreshPhotos();
+                  await refreshPhotos(false);
                 }
 
                 Toast.show({
@@ -314,6 +324,37 @@ export const useProfilePhotos = (): UseProfilePhotosReturn => {
     [photos, refreshPhotos, user, updateUser, refreshUser],
   );
 
+  const reorderPhotos = useCallback(
+    async (reorderedPhotos: ProfilePhoto[]) => {
+      const previousPhotos = [...photos];
+
+      try {
+        // Optimistic update
+        setPhotos(reorderedPhotos);
+
+        // Send to backend
+        const photosToReorder = reorderedPhotos.map((photo, index) => ({
+          photoId: photo.id,
+          order: index,
+        }));
+
+        await ProfilePhotoService.reorderPhotos(photosToReorder);
+
+        // Refresh to ensure consistency
+        await refreshPhotos(false);
+      } catch (error: any) {
+        console.error("Error reordering photos:", error);
+        // Rollback on error
+        setPhotos(previousPhotos);
+        Toast.show({
+          type: "error",
+          text1: error?.message || "No se pudo reordenar las fotos. Intenta nuevamente.",
+        });
+      }
+    },
+    [photos, refreshPhotos],
+  );
+
   useEffect(() => {
     if (!initialized) {
       loadPhotos(false);
@@ -335,5 +376,6 @@ export const useProfilePhotos = (): UseProfilePhotosReturn => {
     setAsPrimary,
     deletePhoto,
     refreshPhotos,
+    reorderPhotos,
   };
 };

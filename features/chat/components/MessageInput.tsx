@@ -1,8 +1,6 @@
-import { Ionicons } from "@expo/vector-icons";
-import React, { useRef, useState, useEffect } from "react";
 import { Platform, StyleSheet, TextInput, TouchableOpacity, View, Keyboard } from "react-native";
-
-import Spinner from "../../../components/Spinner";
+import React, { useRef, useState, useEffect } from "react";
+import { Ionicons } from "@expo/vector-icons";
 
 export interface MessageInputProps {
   onSend: (message: string) => void;
@@ -44,9 +42,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
   const canSend = message.trim().length > 0 && !disabled && !sending;
 
-  // Dynamic padding: If keyboard is visible, use standard padding (12).
-  // If keyboard is closed and it's iOS, use extra padding (84).
-  // Otherwise use standard padding.
   const bottomPadding = isKeyboardVisible ? 12 : Platform.OS === "ios" ? 84 : 12;
 
   return (
@@ -89,11 +84,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         disabled={!canSend}
         activeOpacity={0.7}
       >
-        {sending ? (
-          <Spinner size={20} color="#fff" trackColor="rgba(255, 255, 255, 0.3)" thickness={3} />
-        ) : (
-          <Ionicons name="send" size={20} color="#fff" />
-        )}
+        <Ionicons name="send" size={20} color="#fff" />
       </TouchableOpacity>
     </View>
   );

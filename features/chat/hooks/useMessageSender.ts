@@ -14,6 +14,7 @@ interface UseMessageSenderProps {
   updateChatsState: (updater: (prev: any[]) => any[]) => void;
   partnerName?: string;
   partnerAvatar?: string;
+  triggerMatchesRefresh?: () => void;
 }
 
 export const useMessageSender = ({
@@ -26,6 +27,7 @@ export const useMessageSender = ({
   updateChatsState,
   partnerName,
   partnerAvatar,
+  triggerMatchesRefresh,
 }: UseMessageSenderProps) => {
   const [sending, setSending] = useState(false);
 
@@ -63,6 +65,11 @@ export const useMessageSender = ({
 
           if (index === -1) {
             if (!partnerName) return prev;
+            if (triggerMatchesRefresh) {
+              setTimeout(() => {
+                triggerMatchesRefresh();
+              }, 0);
+            }
             const newChat: any = {
               id: userId,
               conversationId: sentMessage.conversationId,
@@ -134,6 +141,7 @@ export const useMessageSender = ({
       updateChatsState,
       partnerName,
       partnerAvatar,
+      triggerMatchesRefresh,
     ],
   );
 

@@ -32,14 +32,24 @@ export const PhotoUploadScreen: React.FC<PhotoUploadScreenProps> = ({ onBack }) 
     setAsPrimary,
     deletePhoto,
     refreshPhotos,
+    reorderPhotos,
   } = useProfilePhotos();
 
   const [draggedPhotoId, setDraggedPhotoId] = useState<string | null>(null);
   const [isDraggingOverPrimary, setIsDraggingOverPrimary] = useState(false);
   const [isSettingPrimary, setIsSettingPrimary] = useState(false);
+  const [hoveredPhotoIndex, setHoveredPhotoIndex] = useState<number | null>(null);
 
   // Use Animated ref for the drop zone
   const primarySlotRef = useAnimatedRef<Animated.View>();
+
+  // Explicitly create 4 refs for additional photos (max limit)
+  const photoRef0 = useAnimatedRef<Animated.View>();
+  const photoRef1 = useAnimatedRef<Animated.View>();
+  const photoRef2 = useAnimatedRef<Animated.View>();
+  const photoRef3 = useAnimatedRef<Animated.View>();
+
+  const photoRefsArray = [photoRef0, photoRef1, photoRef2, photoRef3];
 
   const handleDragStart = (id: string) => {
     setDraggedPhotoId(id);
@@ -48,16 +58,54 @@ export const PhotoUploadScreen: React.FC<PhotoUploadScreenProps> = ({ onBack }) 
   const handleDragEnd = () => {
     setDraggedPhotoId(null);
     setIsDraggingOverPrimary(false);
+    setHoveredPhotoIndex(null);
   };
 
-  const handleDrop = async (photoId: string) => {
-    setIsSettingPrimary(true);
-    try {
-      await setAsPrimary(photoId);
-    } finally {
-      setIsSettingPrimary(false);
+  const handlePhotoHoverChange = (photoId: string | null) => {
+    if (photoId === null) {
+      setHoveredPhotoIndex(null);
+    } else {
+      // Extract index from photoId (format: "photo-{index}")
+      const index = parseInt(photoId.split("-")[1], 10);
+      setHoveredPhotoIndex(index);
+    }
+  };
+
+  const handleDrop = async (photoId: string, targetIndex: number | null) => {
+    // If hovering over another photo, reorder
+    if (targetIndex !== null) {
+      const draggedIndex = additionalPhotos.findIndex(p => p.id === photoId);
+      if (draggedIndex !== -1 && draggedIndex !== targetIndex) {
+        // Create a new array with reordered photos
+        const newAdditionalPhotos = [...additionalPhotos];
+        const [draggedPhoto] = newAdditionalPhotos.splice(draggedIndex, 1);
+        newAdditionalPhotos.splice(targetIndex, 0, draggedPhoto);
+
+        // Combine with primary photo to create the full reordered array
+        const reorderedPhotos = primaryPhoto
+          ? [primaryPhoto, ...newAdditionalPhotos]
+          : newAdditionalPhotos;
+
+        await reorderPhotos(reorderedPhotos);
+      }
+      setHoveredPhotoIndex(null);
       setDraggedPhotoId(null);
-      setIsDraggingOverPrimary(false);
+      return;
+    }
+
+    // Otherwise, check if we are over primary via internal check or current state
+    if (isDraggingOverPrimary) {
+      setIsSettingPrimary(true);
+      try {
+        await setAsPrimary(photoId);
+      } finally {
+        setIsSettingPrimary(false);
+        setDraggedPhotoId(null);
+        setIsDraggingOverPrimary(false);
+      }
+    } else {
+      // If not over anything, just reset
+      setDraggedPhotoId(null);
     }
   };
 
@@ -183,7 +231,8 @@ export const PhotoUploadScreen: React.FC<PhotoUploadScreenProps> = ({ onBack }) 
               )}
             </View>
             <Text style={[styles.sectionDescription, { color: colors.mutedForeground }]}>
-              Agrega hasta 4 fotos adicionales para que los demás te conozcan mejor
+              Arrastra las fotos para ordenarlas o suelta la foto principal en esta sección para
+              cambiarla
             </Text>
 
             {loading ? (
@@ -192,20 +241,44 @@ export const PhotoUploadScreen: React.FC<PhotoUploadScreenProps> = ({ onBack }) 
               </View>
             ) : (
               <View style={styles.additionalPhotosGrid}>
-                {additionalPhotos.map(photo => (
-                  <DraggablePhoto
-                    key={photo.id}
-                    photo={photo}
-                    dropZoneRef={primarySlotRef}
-                    onDragStart={handleDragStart}
-                    onDragEnd={handleDragEnd}
-                    onDrop={handleDrop}
-                    onHoverChange={setIsDraggingOverPrimary}
-                    isDeleting={deletingPhotoId === photo.id}
-                    onDelete={deletePhoto}
-                    isAnotherDragged={draggedPhotoId !== null && draggedPhotoId !== photo.id}
-                  />
-                ))}
+                {additionalPhotos.map((photo, index) => {
+                  return (
+                    <View
+                      key={photo.id}
+                      style={[
+                        styles.photoContainer,
+                        draggedPhotoId === photo.id && styles.activePhotoZIndex,
+                      ]}
+                    >
+                      <Animated.View
+                        ref={photoRefsArray[index]}
+                        style={[
+                          styles.additionalPhotoSlot,
+                          draggedPhotoId === photo.id && styles.draggedSlotElevation,
+                        ]}
+                      >
+                        <DraggablePhoto
+                          photo={photo}
+                          photoIndex={index}
+                          dropZoneRef={primarySlotRef}
+                          photoDropZoneRefs={photoRefsArray.slice(0, additionalPhotos.length)}
+                          onDragStart={handleDragStart}
+                          onDragEnd={handleDragEnd}
+                          onDrop={handleDrop}
+                          onHoverChange={setIsDraggingOverPrimary}
+                          onPhotoHoverChange={handlePhotoHoverChange}
+                          isDeleting={deletingPhotoId === photo.id}
+                          onDelete={deletePhoto}
+                          isAnotherDragged={draggedPhotoId !== null && draggedPhotoId !== photo.id}
+                          isDraggedOver={hoveredPhotoIndex === index}
+                          position={index + 2}
+                          draggedPhotoId={draggedPhotoId}
+                        />
+                      </Animated.View>
+                    </View>
+                  );
+                })}
+
                 {additionalPhotos.length < 4 &&
                   Array.from({ length: 4 - additionalPhotos.length }).map((_, index) =>
                     renderEmptyAdditionalSlot(additionalPhotos.length + index),
@@ -293,7 +366,7 @@ const styles = StyleSheet.create({
   sectionDescription: {
     fontSize: 14,
     fontFamily: "Inter-Regular",
-    marginBottom: 16,
+    marginBottom: 8,
   },
   primaryPhotoSection: {
     alignItems: "center",
@@ -374,5 +447,21 @@ const styles = StyleSheet.create({
   gestureRoot: {
     flex: 1,
     backgroundColor: "transparent",
+  },
+  additionalPhotoSlot: {
+    width: ADDITIONAL_PHOTO_SIZE,
+    height: ADDITIONAL_PHOTO_SIZE,
+    borderRadius: 12,
+    overflow: "visible",
+  },
+  photoContainer: {
+    zIndex: 1,
+  },
+  activePhotoZIndex: {
+    zIndex: 9999,
+  },
+  draggedSlotElevation: {
+    zIndex: 9999,
+    elevation: 10,
   },
 });

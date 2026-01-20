@@ -122,12 +122,44 @@ export const useChatWebSocket = ({
 
             // Case B: Mensaje individual
             const targetId = inputId;
-            return prev.map(msg => {
-              if (msg.id === targetId) {
-                return { ...msg, status: netStatus! };
+            const targetIndex = prev.findIndex(m => m.id === targetId);
+
+            if (targetIndex === -1) return prev;
+
+            const newMessages = [...prev];
+            const currentMsg = newMessages[targetIndex];
+
+            // Actualizamos el mensaje objetivo
+            newMessages[targetIndex] = {
+              ...currentMsg,
+              status: netStatus!,
+              deliveredAt:
+                netStatus === MessageStatus.DELIVERED
+                  ? data.deliveredAt || new Date().toISOString()
+                  : currentMsg.deliveredAt,
+              readAt:
+                netStatus === MessageStatus.READ
+                  ? data.readAt || new Date().toISOString()
+                  : currentMsg.readAt,
+            };
+
+            // Cascada para READ: Si este mensaje se leyó, los anteriores (más viejos) también
+            if (netStatus === MessageStatus.READ) {
+              for (let i = targetIndex + 1; i < newMessages.length; i++) {
+                const olderMsg = newMessages[i];
+                const isMyMsg = olderMsg.senderId === currentMsg.senderId;
+
+                if (isMyMsg && olderMsg.status !== MessageStatus.READ) {
+                  newMessages[i] = {
+                    ...olderMsg,
+                    status: MessageStatus.READ,
+                    readAt: newMessages[targetIndex].readAt,
+                  };
+                }
               }
-              return msg;
-            });
+            }
+
+            return newMessages;
           });
 
           // Si no encontramos el mensaje (ej: sigue siendo optimistic con tempId), guardamos el update

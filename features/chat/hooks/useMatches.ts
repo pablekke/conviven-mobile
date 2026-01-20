@@ -12,14 +12,14 @@ export interface UseMatchesReturn {
 }
 
 export const useMatches = (): UseMatchesReturn => {
-  const { lastMatchNotification } = useChat();
+  const { lastMatchNotification, matchesRefreshTrigger } = useChat();
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const loadMatches = useCallback(async () => {
+  const loadMatches = useCallback(async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       setError(null);
 
       const matchesData = await chatService.getMatches();
@@ -39,7 +39,7 @@ export const useMatches = (): UseMatchesReturn => {
       setError(err instanceof Error ? err : new Error("Error desconocido"));
       setMatches([]);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
@@ -52,10 +52,10 @@ export const useMatches = (): UseMatchesReturn => {
   }, [loadMatches]);
 
   useEffect(() => {
-    if (lastMatchNotification) {
-      loadMatches().catch(() => {});
+    if (lastMatchNotification || matchesRefreshTrigger > 0) {
+      loadMatches(true).catch(() => {});
     }
-  }, [lastMatchNotification, loadMatches]);
+  }, [lastMatchNotification, matchesRefreshTrigger, loadMatches]);
 
   return {
     matches,

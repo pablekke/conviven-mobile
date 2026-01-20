@@ -4,6 +4,7 @@ export interface ProfilePhoto {
   url: string;
   publicId: string;
   isPrimary: boolean;
+  order: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -14,6 +15,7 @@ export interface UploadPhotoResponse {
   url: string;
   publicId: string;
   isPrimary: boolean;
+  order: number;
   createdAt: string;
   updatedAt: string;
 }

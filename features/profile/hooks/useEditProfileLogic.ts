@@ -138,7 +138,6 @@ export const useEditProfileLogic = () => {
       const aboutMapped = resetAboutPrefsInSelectedAnswers();
       Object.assign(mapped, aboutMapped);
 
-      // Agregar roommate preferences mapeadas
       const roommateMapped = resetRoommatePrefsInSelectedAnswers();
       Object.assign(mapped, roommateMapped);
 
