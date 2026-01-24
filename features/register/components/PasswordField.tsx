@@ -1,7 +1,10 @@
-import React, { useState } from "react";
+/* eslint-disable react-native/no-inline-styles */
 import { Text, TextInput, View, TouchableOpacity } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import PasswordMatchIndicator from "./PasswordMatchIndicator";
+import PasswordRequirements from "./PasswordRequirements";
 import { useTheme } from "../../../context/ThemeContext";
+import { Ionicons } from "@expo/vector-icons";
+import { useState, useRef } from "react";
 
 export interface PasswordFieldProps {
   label: string;
@@ -11,6 +14,7 @@ export interface PasswordFieldProps {
   error?: string;
   confirmPassword?: string;
   isConfirmField?: boolean;
+  onFocus?: (inputRef: TextInput | null) => void;
 }
 
 export default function PasswordField({
@@ -21,9 +25,11 @@ export default function PasswordField({
   error,
   confirmPassword,
   isConfirmField = false,
+  onFocus,
 }: PasswordFieldProps) {
   const { colors } = useTheme();
   const [showPassword, setShowPassword] = useState(false);
+  const inputRef = useRef<TextInput>(null);
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -63,6 +69,7 @@ export default function PasswordField({
       <Text className={labelClass}>{label}</Text>
       <View className="relative">
         <TextInput
+          ref={inputRef}
           className={inputClass}
           value={value}
           onChangeText={onChangeText}
@@ -75,6 +82,7 @@ export default function PasswordField({
           textContentType="oneTimeCode"
           keyboardType="default"
           style={inputStyle}
+          onFocus={() => onFocus?.(inputRef.current)}
         />
 
         {/* Ícono de ojo para mostrar/ocultar contraseña */}
@@ -124,22 +132,13 @@ export default function PasswordField({
 
       {error && <Text className={errorClass}>{error}</Text>}
 
-      {/* Mensaje de validación para confirmar contraseña */}
-      {isConfirmField &&
-        value &&
-        confirmPassword &&
-        value.length > 0 &&
-        confirmPassword.length > 0 && (
-          <Text
-            className={`mt-1 text-xs font-conviven ${
-              matchStatus?.isValid ? "text-green-600" : "text-destructive"
-            }`}
-          >
-            {matchStatus?.isValid
-              ? "✓ Las contraseñas coinciden"
-              : "✗ Las contraseñas no coinciden"}
-          </Text>
-        )}
+      {/* Indicador de coincidencia para confirmar contraseña */}
+      {isConfirmField && confirmPassword && (
+        <PasswordMatchIndicator password={confirmPassword} confirmPassword={value} />
+      )}
+
+      {/* Requisitos de contraseña (solo para campo principal) */}
+      {!isConfirmField && value.length > 0 && <PasswordRequirements password={value} />}
     </View>
   );
 }

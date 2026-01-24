@@ -54,6 +54,12 @@ export const useRegister = (): UseRegisterReturn => {
       newErrors.password = `La contraseña debe tener al menos ${REGISTER_CONSTANTS.MIN_PASSWORD_LENGTH} caracteres`;
     } else if (formData.password.length > REGISTER_CONSTANTS.MAX_PASSWORD_LENGTH) {
       newErrors.password = `La contraseña no puede tener más de ${REGISTER_CONSTANTS.MAX_PASSWORD_LENGTH} caracteres`;
+    } else if (!/[A-Z]/.test(formData.password)) {
+      newErrors.password = "La contraseña debe contener al menos una mayúscula";
+    } else if (!/[a-z]/.test(formData.password)) {
+      newErrors.password = "La contraseña debe contener al menos una minúscula";
+    } else if (!/[0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(formData.password)) {
+      newErrors.password = "La contraseña debe contener al menos un número o símbolo";
     }
 
     // Validar confirmación de contraseña

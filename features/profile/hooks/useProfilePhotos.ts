@@ -71,12 +71,6 @@ export const useProfilePhotos = (): UseProfilePhotosReturn => {
       console.error("Error loading photos:", error);
       setPhotos([]);
       setInitialized(true);
-      if (error?.status !== 404) {
-        Toast.show({
-          type: "error",
-          text1: "No se pudieron cargar las fotos. Intenta nuevamente.",
-        });
-      }
     } finally {
       setLoading(false);
     }

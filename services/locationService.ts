@@ -1,7 +1,8 @@
-import { resilientRequest } from "./apiClient";
 import { City, Department, Neighborhood } from "@/types/user";
-import { API } from "@/constants";
 import { HttpMethod } from "@/core/enums/http.enums";
+import Toast from "react-native-toast-message";
+import { resilientRequest } from "./apiClient";
+import { API } from "@/constants";
 
 function resolveMethod(method?: string | null): HttpMethod {
   if (!method) {
@@ -131,6 +132,29 @@ const LocationService = {
       return neighborhoodsArray.map(mapNeighborhood);
     } catch (error) {
       console.error("Error loading adjacent neighborhoods:", error);
+      return [];
+    }
+  },
+
+  async searchNeighborhoods(query: string): Promise<Neighborhood[]> {
+    try {
+      const url = `${API.NEIGHBORHOODS}?query=${encodeURIComponent(query)}`;
+      const data = await request(url);
+      const neighborhoodsArray = Array.isArray(data) ? data : (data?.data ?? []);
+      return neighborhoodsArray.map(mapNeighborhood);
+    } catch (error) {
+      console.error("Error al buscar barrios:", error);
+
+      const isSessionError =
+        error instanceof Error && error.message.toLowerCase().includes("sesión vencida");
+
+      if (!isSessionError) {
+        Toast.show({
+          type: "error",
+          text1: "Error en la búsqueda",
+          text2: error instanceof Error ? error.message : "No se pudieron obtener resultados",
+        });
+      }
       return [];
     }
   },

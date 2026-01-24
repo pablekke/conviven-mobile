@@ -59,6 +59,9 @@ export interface Neighborhood {
   id: string;
   name: string;
   cityId: string;
+  cityName?: string;
+  departmentId?: string;
+  departmentName?: string;
 }
 
 export interface LocationLoading {

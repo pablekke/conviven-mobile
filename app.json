@@ -31,6 +31,10 @@
           "NSAllowsArbitraryLoads": true
         }
       }
+    },
+    "android": {
+      "package": "com.conviven.expoconviven",
+      "softwareKeyboardLayoutMode": "pan"
     }
   }
 }

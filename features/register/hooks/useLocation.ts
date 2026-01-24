@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
-import LocationService from "../../../services/locationService";
 import { Department, City, Neighborhood, LocationLoading } from "../types";
+import LocationService from "../../../services/locationService";
+import { useCallback, useEffect, useState } from "react";
 
 export interface UseLocationReturn {
   departments: Department[];
@@ -9,6 +9,7 @@ export interface UseLocationReturn {
   loading: LocationLoading;
   loadCities: (departmentId: string) => Promise<void>;
   loadNeighborhoods: (cityId: string) => Promise<void>;
+  searchNeighborhoods: (query: string) => Promise<void>;
   clearCities: () => void;
   clearNeighborhoods: () => void;
 }
@@ -75,6 +76,24 @@ export const useLocation = (): UseLocationReturn => {
     }
   }, []);
 
+  const searchNeighborhoods = useCallback(async (query: string) => {
+    if (!query || query.length < 3) {
+      setNeighborhoods([]);
+      return;
+    }
+
+    setLoading(prev => ({ ...prev, neighborhoods: true }));
+    try {
+      const data = await LocationService.searchNeighborhoods(query);
+      setNeighborhoods(data);
+    } catch (error) {
+      console.error("Error searching neighborhoods:", error);
+      setNeighborhoods([]);
+    } finally {
+      setLoading(prev => ({ ...prev, neighborhoods: false }));
+    }
+  }, []);
+
   const clearCities = useCallback(() => {
     setCities([]);
     setNeighborhoods([]);
@@ -95,6 +114,7 @@ export const useLocation = (): UseLocationReturn => {
     loading,
     loadCities,
     loadNeighborhoods,
+    searchNeighborhoods,
     clearCities,
     clearNeighborhoods,
   };

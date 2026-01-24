@@ -1,5 +1,6 @@
 import { ChatMessage, ChatPreview, Match, ConversationResponse, MessageStatus } from "../types";
 import { apiGet, apiPost, apiPatch } from "../../../services/apiHelper";
+import Toast from "react-native-toast-message";
 
 interface SendMessageResponse {
   id: string;
@@ -236,6 +237,18 @@ class ChatService {
       });
     } catch (error) {
       console.warn("No se pudieron cargar las conversaciones:", error);
+
+      // Si es un error de sesión, no mostramos toast acá porque ya lo maneja el AuthContext/SessionManager
+      const isSessionError =
+        error instanceof Error && error.message.toLowerCase().includes("sesión vencida");
+
+      if (!isSessionError) {
+        Toast.show({
+          type: "error",
+          text1: "Error al cargar conversaciones",
+          text2: error instanceof Error ? error.message : "Error de conexión",
+        });
+      }
       return [];
     }
   }
@@ -301,6 +314,17 @@ class ChatService {
       });
     } catch (error) {
       console.error("Error al obtener matches:", error);
+
+      const isSessionError =
+        error instanceof Error && error.message.toLowerCase().includes("sesión vencida");
+
+      if (!isSessionError) {
+        Toast.show({
+          type: "error",
+          text1: "Error al obtener matches",
+          text2: error instanceof Error ? error.message : "Ocurrió un error inesperado",
+        });
+      }
       return [];
     }
   }

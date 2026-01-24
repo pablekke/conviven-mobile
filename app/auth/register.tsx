@@ -1,11 +1,13 @@
 import { RegisterForm, RegisterHeaderSection } from "../../features/register/components";
+import { useKeyboardScroll } from "../../features/register/hooks";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { RegisterCredentials } from "../../types/user";
 import { useAuth } from "../../context/AuthContext";
 import { StatusBar } from "expo-status-bar";
 import { useState, useRef } from "react";
 import { router } from "expo-router";
-import { KeyboardAvoidingView,
+import {
+  KeyboardAvoidingView,
   TouchableOpacity,
   StyleSheet,
   Platform,
@@ -19,13 +21,14 @@ export default function RegisterScreen() {
   const [error, setError] = useState<string | null>(null);
   const { register, isLoading } = useAuth();
   const scrollY = useRef(new Animated.Value(0)).current;
+  const { scrollViewRef, handleInputFocus } = useKeyboardScroll();
 
   const handleRegister = async (credentials: RegisterCredentials) => {
     try {
       setError(null);
       await register(credentials);
-      Alert.alert("Éxito", "¡Cuenta creada exitosamente!", [
-        { text: "Ir al inicio de sesión", onPress: () => router.replace("/auth/login") },
+      Alert.alert("Éxito", "¡Cuenta creada exitosamente! Ahora completá tu perfil.", [
+        { text: "Continuar", onPress: () => router.replace("/auth/complete-profile") },
       ]);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Error al registrarse";
@@ -49,9 +52,11 @@ export default function RegisterScreen() {
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
         <KeyboardAvoidingView
           style={styles.keyboardView}
-          behavior={Platform.select({ ios: "padding", android: "height" })}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
         >
           <Animated.ScrollView
+            ref={scrollViewRef as any}
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
@@ -67,7 +72,11 @@ export default function RegisterScreen() {
               ) : null}
 
               {/* Form */}
-              <RegisterForm onSubmit={handleRegister} isLoading={isLoading} />
+              <RegisterForm
+                onSubmit={handleRegister}
+                isLoading={isLoading}
+                onInputFocus={handleInputFocus}
+              />
 
               {/* Divider sutil */}
               <View style={styles.dividerContainer}>
@@ -110,7 +119,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: 90,
-    paddingBottom: 20,
+    paddingBottom: 40,
   },
   contentContainer: {
     backgroundColor: "#F8F9FA",

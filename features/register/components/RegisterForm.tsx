@@ -1,20 +1,19 @@
-import React, { useState, useEffect } from "react";
-import { View, Text } from "react-native";
-
-import { Gender } from "../../../types/user";
-import { RegisterCredentials } from "../types";
-import { useRegister, useLocation } from "../hooks";
-import { TEXTS } from "../../../constants";
+import FormNeighborhoodSearch from "./FormNeighborhoodSearch";
 import { SelectOption } from "../../../components/Select";
-import FormField from "./FormField";
-import PasswordField from "./PasswordField";
-import FormSelect from "./FormSelect";
+import { RegisterCredentials } from "../types";
 import FormDatePicker from "./FormDatePicker";
+import { Gender } from "../../../types/user";
+import PasswordField from "./PasswordField";
+import { useRegisterForm } from "../hooks";
 import SubmitButton from "./SubmitButton";
+import FormSelect from "./FormSelect";
+import { View, TextInput } from "react-native";
+import FormField from "./FormField";
 
 interface RegisterFormProps {
   onSubmit: (credentials: RegisterCredentials) => Promise<void>;
   isLoading?: boolean;
+  onInputFocus?: (inputRef: TextInput | null, extraOffset?: number) => void;
 }
 
 const GENDER_OPTIONS: SelectOption[] = [
@@ -24,132 +23,36 @@ const GENDER_OPTIONS: SelectOption[] = [
   { label: "Prefiero no decir", value: Gender.UNSPECIFIED },
 ];
 
-export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFormProps) {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [birthDate, setBirthDate] = useState("");
-  const [gender, setGender] = useState("");
-  const [departmentId, setDepartmentId] = useState("");
-  const [cityId, setCityId] = useState("");
-  const [neighborhoodId, setNeighborhoodId] = useState("");
-
-  const { validateForm, errors, clearErrors } = useRegister();
-  const {
-    departments,
-    cities,
-    neighborhoods,
-    loading,
-    loadCities,
-    loadNeighborhoods,
-    clearCities,
-    clearNeighborhoods,
-  } = useLocation();
-
-  // Autoselección si hay una única ciudad
-  useEffect(() => {
-    if (cities.length === 1 && !cityId) {
-      const singleCity = cities[0];
-      setCityId(singleCity.id);
-      clearErrors();
-      loadNeighborhoods(singleCity.id);
-    }
-  }, [cities, cityId, clearErrors, loadNeighborhoods]);
-
-  // Autoselección si hay un único barrio
-  useEffect(() => {
-    if (neighborhoods.length === 1 && !neighborhoodId) {
-      setNeighborhoodId(neighborhoods[0].id);
-      clearErrors();
-    }
-  }, [neighborhoods, neighborhoodId, clearErrors]);
-
-  const handleSubmit = async () => {
-    // Copia “limpia” de lo ingresado
-    const cleaned = {
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      email: email.trim().toLowerCase(),
-      password,
-      confirmPassword,
-      birthDate,
-      gender,
-      departmentId,
-      cityId,
-      neighborhoodId,
-    };
-
-    if (validateForm(cleaned)) {
-      await onSubmit({
-        email: cleaned.email,
-        password: cleaned.password,
-        firstName: cleaned.firstName,
-        lastName: cleaned.lastName,
-        birthDate: cleaned.birthDate,
-        gender: cleaned.gender as Gender,
-        departmentId: cleaned.departmentId,
-        cityId: cleaned.cityId,
-        neighborhoodId: cleaned.neighborhoodId,
-      });
-    }
-  };
-
-  const handleDepartmentChange = async (value: string) => {
-    setDepartmentId(value);
-    clearErrors();
-    setCityId("");
-    setNeighborhoodId("");
-    clearCities();
-
-    if (!value) return;
-    await loadCities(value);
-  };
-
-  const handleCityChange = async (value: string) => {
-    setCityId(value);
-    clearErrors();
-    setNeighborhoodId("");
-    clearNeighborhoods();
-
-    if (!value) return;
-    await loadNeighborhoods(value);
-  };
-
-  const handleNeighborhoodChange = (value: string) => {
-    setNeighborhoodId(value);
-    clearErrors();
-  };
+export default function RegisterForm({ onSubmit, onInputFocus }: RegisterFormProps) {
+  const { state, actions, errors, loading } = useRegisterForm({ onSubmit });
 
   return (
-    <View className="w-full p-5rounded-2xl">
-      {/* Sección: Datos personales */}
-      <Text className="text-foreground font-conviven-semibold mb-3">Datos personales</Text>
-
+    <View className="w-full rounded-2xl">
       <FormField
         label="Nombre"
-        value={firstName}
-        onChangeText={setFirstName}
+        value={state.firstName}
+        onChangeText={actions.setFirstName}
         placeholder="Escribí tu nombre"
         error={errors.firstName}
         autoCapitalize="words"
         maxLength={12}
+        onFocus={onInputFocus}
       />
 
       <FormField
         label="Apellido"
-        value={lastName}
-        onChangeText={setLastName}
+        value={state.lastName}
+        onChangeText={actions.setLastName}
         placeholder="Escribí tu apellido"
         error={errors.lastName}
         autoCapitalize="words"
+        onFocus={onInputFocus}
       />
 
       <FormDatePicker
         label="Fecha de nacimiento"
-        value={birthDate}
-        onValueChange={setBirthDate}
+        value={state.birthDate}
+        onValueChange={actions.setBirthDate}
         placeholder="Seleccioná tu fecha de nacimiento"
         error={!!errors.birthDate}
         errorMessage={errors.birthDate}
@@ -164,99 +67,52 @@ export default function RegisterForm({ onSubmit, isLoading = false }: RegisterFo
       <FormSelect
         label="Género"
         options={GENDER_OPTIONS}
-        selectedValue={gender}
-        onValueChange={setGender}
+        selectedValue={state.gender}
+        onValueChange={actions.setGender}
         placeholder="Seleccioná tu género"
         error={!!errors.gender}
         errorMessage={errors.gender}
       />
 
-      {/* Sección: Seguridad */}
-      <Text className="text-foreground font-conviven-semibold mt-4 mb-3">Seguridad</Text>
+      <FormNeighborhoodSearch
+        label="Barrio"
+        onSelect={actions.handleNeighborhoodSelect}
+        error={errors.neighborhood}
+        selectedNeighborhoodName={state.neighborhoodName}
+      />
 
       <FormField
         label="Correo electrónico"
-        value={email}
-        onChangeText={setEmail}
-        placeholder="tu@email.com"
+        value={state.email}
+        onChangeText={actions.setEmail}
+        placeholder="diego.forlan@email.com"
         error={errors.email}
         keyboardType="email-address"
         autoCapitalize="none"
+        onFocus={onInputFocus}
       />
 
       <PasswordField
         label="Contraseña"
-        value={password}
-        onChangeText={setPassword}
+        value={state.password}
+        onChangeText={actions.setPassword}
         placeholder="Mínimo 8 caracteres"
         error={errors.password}
+        onFocus={inputRef => onInputFocus?.(inputRef, 130)}
       />
 
       <PasswordField
         label="Confirmar contraseña"
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
+        value={state.confirmPassword}
+        onChangeText={actions.setConfirmPassword}
         placeholder="Repetí tu contraseña"
         error={errors.confirmPassword}
-        confirmPassword={password}
+        confirmPassword={state.password}
         isConfirmField
+        onFocus={onInputFocus}
       />
 
-      {/* Sección: Ubicación */}
-      <Text className="text-foreground font-conviven-semibold mt-4 mb-3">Ubicación</Text>
-
-      <FormSelect
-        label="Departamento"
-        options={[
-          { label: TEXTS.SELECT_DEPARTMENT, value: "" },
-          ...departments.map(department => ({
-            label: department.name,
-            value: department.id,
-          })),
-        ]}
-        selectedValue={departmentId}
-        onValueChange={handleDepartmentChange}
-        placeholder={TEXTS.SELECT_DEPARTMENT}
-        disabled={loading.departments}
-        error={!!errors.departmentId}
-        helperText={loading.departments ? TEXTS.LOADING_DEPARTMENTS : undefined}
-      />
-
-      <FormSelect
-        label="Ciudad"
-        options={[
-          { label: departmentId ? TEXTS.SELECT_CITY : TEXTS.FIRST_SELECT_DEPT, value: "" },
-          ...cities.map(city => ({
-            label: city.name,
-            value: city.id,
-          })),
-        ]}
-        selectedValue={cityId}
-        onValueChange={handleCityChange}
-        placeholder={departmentId ? TEXTS.SELECT_CITY : TEXTS.FIRST_SELECT_DEPT}
-        disabled={!departmentId || loading.cities}
-        error={!!errors.cityId}
-        helperText={loading.cities ? TEXTS.LOADING_CITIES : undefined}
-      />
-
-      <FormSelect
-        label="Barrio"
-        options={[
-          { label: cityId ? TEXTS.SELECT_NEIGHBORHOOD : TEXTS.FIRST_SELECT_CITY, value: "" },
-          ...neighborhoods.map(neighborhood => ({
-            label: neighborhood.name,
-            value: neighborhood.id,
-          })),
-        ]}
-        selectedValue={neighborhoodId}
-        onValueChange={handleNeighborhoodChange}
-        placeholder={cityId ? TEXTS.SELECT_NEIGHBORHOOD : TEXTS.FIRST_SELECT_CITY}
-        disabled={!cityId || loading.neighborhoods}
-        error={!!errors.neighborhoodId}
-        helperText={loading.neighborhoods ? TEXTS.LOADING_NEIGHBORHOODS : undefined}
-      />
-
-      <SubmitButton label="Registrarse" onPress={handleSubmit} isLoading={isLoading} />
+      <SubmitButton label="Registrarse" onPress={actions.handleSubmit} isLoading={loading.form} />
     </View>
   );
 }
