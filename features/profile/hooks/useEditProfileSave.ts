@@ -1,3 +1,4 @@
+import { useAuth } from "../../../context/AuthContext";
 import Toast from "react-native-toast-message";
 import { useCallback, useState } from "react";
 import { useRouter } from "expo-router";
@@ -34,6 +35,7 @@ export const useEditProfileSave = ({
   isSaving,
 }: UseEditProfileSaveProps) => {
   const router = useRouter();
+  const { refreshUser } = useAuth();
   const [unsavedChangesModalVisible, setUnsavedChangesModalVisible] = useState(false);
 
   const buildSavePromises = useCallback((): Promise<void>[] => {
@@ -80,6 +82,8 @@ export const useEditProfileSave = ({
           position: "bottom",
           visibilityTime: 3000,
         });
+
+        await refreshUser();
 
         if (exit) {
           setUnsavedChangesModalVisible(false);

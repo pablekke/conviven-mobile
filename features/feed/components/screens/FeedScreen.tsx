@@ -1,11 +1,10 @@
 import { useFeedProfiles, useFeedSwipeActions, useFeedUIState, useScrollToggle } from "../../hooks";
 import { ProfilePhotoGallery } from "../../../profile/components/ProfilePhotoGallery";
-import { View, ScrollView, useWindowDimensions, StyleSheet } from "react-native";
 import { GlassBackground } from "../../../../components/GlassBackground";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BioSection } from "../userInfoCard/sections/BioSection";
 import { useProfileDeck } from "../../hooks/useProfileDeck";
-import { useIsFocused } from "@react-navigation/native";
+import { useFocusEffect } from "@react-navigation/native";
 import { EmptyFeedCard } from "../cards/EmptyFeedCard";
 import { HeroScrollCue } from "../ui/HeroScrollCue";
 import { useTheme } from "@/context/ThemeContext";
@@ -13,7 +12,6 @@ import { useAuth } from "@/context/AuthContext";
 import { UserInfoCard } from "../userInfoCard";
 import { useState, useCallback } from "react";
 import { CardDeck } from "../swipe/CardDeck";
-import { StatusBar } from "expo-status-bar";
 import { MatchModal } from "../MatchModal";
 import { FeedHeader } from "./FeedHeader";
 import { useRouter } from "expo-router";
@@ -22,6 +20,13 @@ import {
   mapBackendLocationToUi,
   mapBackendProfileToUiProfile,
 } from "../../mocks/incomingProfile";
+import {
+  View,
+  ScrollView,
+  useWindowDimensions,
+  StyleSheet,
+  StatusBar as RNStatusBar,
+} from "react-native";
 
 function FeedScreen() {
   const { width: screenWidth } = useWindowDimensions();
@@ -95,7 +100,12 @@ function FeedScreen() {
     await refresh();
   }, [refresh]);
 
-  const isFocused = useIsFocused();
+  useFocusEffect(
+    useCallback(() => {
+      RNStatusBar.setBarStyle(isDark ? "light-content" : "dark-content", true);
+      return () => {};
+    }, [isDark]),
+  );
 
   const content =
     noMoreProfiles || total === 0 || !deck.primaryProfile ? (
@@ -105,7 +115,6 @@ function FeedScreen() {
       </View>
     ) : (
       <View className="flex-1" style={styles.screenShell}>
-        {isFocused && <StatusBar style={!isDark ? "dark" : "light"} />}
         <GlassBackground intensity={90} />
 
         {deck.primaryProfile &&

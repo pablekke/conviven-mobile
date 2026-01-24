@@ -11,7 +11,18 @@ export const useProfileScreen = () => {
 
   const userAge = useMemo(() => {
     if (!user?.birthDate) return 26;
-    return new Date().getFullYear() - new Date(user.birthDate).getFullYear();
+
+    const today = new Date();
+    const birthDate = new Date(user.birthDate);
+
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+
+    return age;
   }, [user?.birthDate]);
 
   const progressPercentage = useMemo(() => {

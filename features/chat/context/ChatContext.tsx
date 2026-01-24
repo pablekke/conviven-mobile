@@ -1,12 +1,15 @@
-import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
-import { useDataPreload } from "@/context/DataPreloadContext";
-import { WebSocketClient } from "@/services/WebSocketClient";
+import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from "react";
 import { ChatMessage, MatchNotification } from "../types";
 import { useAuth } from "@/context/AuthContext";
-import Toast from "react-native-toast-message";
-import { useRouter } from "expo-router";
-import { API_BASE_URL_WS } from "@/config/env";
-import { MessageStatus } from "../enums";
+import {
+  useNewConversationHandler,
+  useMarkConversationAsRead,
+  useMatchesRefresh,
+  useMatchNotifications,
+  useMessageStatusUpdates,
+  useIncomingMessages,
+  useChatWebSocketConnection,
+} from "../hooks";
 
 interface ChatContextProps {
   lastMessage: ChatMessage | null;
@@ -36,176 +39,74 @@ const ChatContext = createContext<ChatContextProps>({
 
 export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
-  const { updateChatsState } = useDataPreload();
+  const { handleNewConversation } = useNewConversationHandler();
+
   const [lastMessage, setLastMessage] = useState<ChatMessage | null>(null);
   const [lastStatusUpdate, setLastStatusUpdate] = useState<any | null>(null);
   const [lastMatchNotification, setLastMatchNotification] = useState<MatchNotification | null>(
     null,
   );
-  const [isConnected, setIsConnected] = useState(false);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
-  const [matchesRefreshTrigger, setMatchesRefreshTrigger] = useState(0);
   const activeChatIdRef = useRef<string | null>(null);
-  const router = useRouter();
 
   useEffect(() => {
     activeChatIdRef.current = activeChatId;
   }, [activeChatId]);
 
-  useEffect(() => {
-    if (user?.id) {
-      const wsClient = WebSocketClient.getInstance();
+  const { matchesRefreshTrigger, triggerMatchesRefresh } = useMatchesRefresh();
 
-      const wsUrl = API_BASE_URL_WS;
-      wsClient.connect(wsUrl, user.id);
-      setIsConnected(true);
+  const { markConversationAsRead } = useMarkConversationAsRead(setLastStatusUpdate);
 
-      const unsubscribe = wsClient.subscribe(data => {
-        const inputType = data.type;
+  const { handleMatchNotification } = useMatchNotifications({
+    setLastMatchNotification,
+    triggerMatchesRefresh,
+  });
 
-        if (inputType === "NEW_MATCH") {
-          const matchNotification = data as MatchNotification;
-          setLastMatchNotification(matchNotification);
+  const { handleStatusUpdate } = useMessageStatusUpdates({
+    setLastStatusUpdate,
+  });
 
-          Toast.show({
-            type: "success",
-            text1: "¡Es un Match! 🎉",
-            text2: "Has conectado con alguien nuevo",
-            visibilityTime: 4000,
-            onPress: () => {
-              router.push("/chat");
-            },
-          });
+  const { handleIncomingMessage } = useIncomingMessages({
+    setLastMessage,
+    handleNewConversation,
+    activeChatIdRef,
+    userId: user?.id || "",
+  });
 
-          triggerMatchesRefresh();
-          return;
-        }
+  const handleWebSocketMessage = useCallback(
+    (data: any) => {
+      const inputType = data.type;
 
-        const inputId = data.id || data.messageId || data.message_id || data._id;
-        const inputConversationId = data.conversationId || data.conversation_id;
-        const inputSenderId = data.senderId || data.sender_id;
-        const inputContent = data.content;
-        const inputStatus = data.status;
+      if (inputType === "NEW_MATCH") {
+        handleMatchNotification(data as MatchNotification);
+        return;
+      }
 
-        const isStatusUpdate =
-          inputType === "MESSAGE_STATUS_UPDATE" ||
-          inputId === "ALL" ||
-          (inputId && inputStatus && !inputContent);
+      const inputId = data.id || data.messageId || data.message_id || data._id;
+      const inputContent = data.content;
+      const inputStatus = data.status;
 
-        if (isStatusUpdate) {
-          const updateData = {
-            messageId: inputId,
-            conversationId: inputConversationId,
-            status: inputStatus,
-            deliveredAt: data.deliveredAt || data.delivered_at || null,
-            readAt: data.readAt || data.read_at || null,
-            local: data.local || false,
-          };
-          if (updateData.messageId && updateData.status) {
-            setLastStatusUpdate(updateData);
+      const isStatusUpdate =
+        inputType === "MESSAGE_STATUS_UPDATE" ||
+        inputId === "ALL" ||
+        (inputId && inputStatus && !inputContent);
 
-            updateChatsState(prev =>
-              prev.map(c => {
-                if (c.conversationId === updateData.conversationId || c.id === inputSenderId) {
-                  return {
-                    ...c,
-                    unread: updateData.status === "read" ? 0 : c.unread,
-                    lastMessageStatus: updateData.status as MessageStatus,
-                  };
-                }
-                return c;
-              }),
-            );
-          }
-        }
+      if (isStatusUpdate) {
+        handleStatusUpdate(data);
+        return;
+      }
 
-        if (inputId && inputContent && inputSenderId && !isStatusUpdate) {
-          let msgContent = inputContent;
-          if (typeof msgContent === "object") {
-            if (msgContent.content && typeof msgContent.content === "string") {
-              msgContent = msgContent.content;
-            } else {
-              msgContent = JSON.stringify(msgContent);
-            }
-          }
-
-          const normalizedMsg: ChatMessage = {
-            id: inputId,
-            conversationId: inputConversationId,
-            senderId: inputSenderId,
-            content: typeof msgContent === "string" ? msgContent : JSON.stringify(msgContent),
-            createdAt: data.createdAt || data.created_at || new Date().toISOString(),
-            status: inputStatus || "sent",
-            deliveredAt: data.deliveredAt || data.delivered_at || null,
-            readAt: data.readAt || data.read_at || null,
-            updatedAt: data.updatedAt || data.updated_at || new Date().toISOString(),
-            liked: !!data.liked,
-            timestamp: new Date(),
-          };
-
-          setLastMessage(normalizedMsg);
-
-          updateChatsState(prev => {
-            const index = prev.findIndex(
-              c =>
-                (normalizedMsg.conversationId &&
-                  c.conversationId === normalizedMsg.conversationId) ||
-                c.id === normalizedMsg.senderId,
-            );
-
-            if (index === -1) return prev;
-
-            const updated = [...prev];
-            const chat = updated[index];
-
-            const isTargetActive =
-              activeChatIdRef.current === chat.conversationId ||
-              activeChatIdRef.current === chat.id;
-
-            updated[index] = {
-              ...chat,
-              lastMessage: normalizedMsg.content,
-              unread: normalizedMsg.senderId !== user.id && !isTargetActive ? chat.unread + 1 : 0,
-              updatedAt: normalizedMsg.createdAt,
-              lastMessageStatus: normalizedMsg.status as any,
-              lastMessageSenderId: normalizedMsg.senderId,
-            };
-
-            return updated.sort(
-              (a, b) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime(),
-            );
-          });
-        }
-      });
-
-      return () => {
-        unsubscribe();
-      };
-    }
-  }, [user, updateChatsState]);
-
-  const markConversationAsRead = useCallback(
-    (conversationId: string) => {
-      const updateData = {
-        messageId: "ALL",
-        conversationId,
-        status: "read",
-        local: true,
-      };
-      setLastStatusUpdate(updateData);
-
-      updateChatsState(prev =>
-        prev.map(c =>
-          c.conversationId === conversationId || c.id === conversationId ? { ...c, unread: 0 } : c,
-        ),
-      );
+      if (inputId && inputContent && data.senderId && !isStatusUpdate) {
+        handleIncomingMessage(data);
+      }
     },
-    [updateChatsState],
+    [handleMatchNotification, handleStatusUpdate, handleIncomingMessage],
   );
 
-  const triggerMatchesRefresh = useCallback(() => {
-    setMatchesRefreshTrigger(prev => prev + 1);
-  }, []);
+  const { isConnected } = useChatWebSocketConnection({
+    userId: user?.id,
+    onMessage: handleWebSocketMessage,
+  });
 
   return (
     <ChatContext.Provider

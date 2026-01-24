@@ -48,7 +48,6 @@ export default function ChatScreen() {
 
   return (
     <>
-      <StatusBar barStyle={isDark ? "dark-content" : "light-content"} backgroundColor="#ffffff" />
       <TabTransition>
         <View style={styles.container}>
           <LinearGradient

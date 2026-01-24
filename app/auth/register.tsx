@@ -1,21 +1,19 @@
+import { RegisterForm, RegisterHeaderSection } from "../../features/register/components";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { RegisterCredentials } from "../../types/user";
+import { useAuth } from "../../context/AuthContext";
+import { StatusBar } from "expo-status-bar";
+import { useState, useRef } from "react";
 import { router } from "expo-router";
-import React, { useState, useRef } from "react";
-import {
-  Alert,
+import { KeyboardAvoidingView,
+  TouchableOpacity,
+  StyleSheet,
   Platform,
   Animated,
+  Alert,
   Text,
-  TouchableOpacity,
   View,
-  KeyboardAvoidingView,
-  StyleSheet,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { StatusBar } from "expo-status-bar";
-
-import { useAuth } from "../../context/AuthContext";
-import { RegisterCredentials } from "../../types/user";
-import { RegisterForm, RegisterHeaderSection } from "../../features/register/components";
 
 export default function RegisterScreen() {
   const [error, setError] = useState<string | null>(null);

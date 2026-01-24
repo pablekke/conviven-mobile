@@ -1,17 +1,17 @@
-import {
-  ConversationHeader,
-  MessageInput,
-  MessagesList,
-  PartnerProfileOverlay,
-} from "@/features/chat/components";
 import { useLocalSearchParams, useFocusEffect } from "expo-router";
 import { GlassBackground } from "@/components/GlassBackground";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useChatConversation } from "@/features/chat/hooks";
 import { useTheme } from "@/context/ThemeContext";
 import { useAuth } from "@/context/AuthContext";
-import Spinner from "@/components/Spinner";
 import { useCallback, useState } from "react";
+import Spinner from "@/components/Spinner";
+import {
+  ConversationHeader,
+  MessageInput,
+  MessagesList,
+  PartnerProfileOverlay,
+} from "@/features/chat/components";
 import {
   Keyboard,
   KeyboardAvoidingView,
@@ -19,6 +19,7 @@ import {
   StatusBar,
   StyleSheet,
   TouchableWithoutFeedback,
+  TouchableOpacity,
   View,
   Text,
 } from "react-native";
@@ -36,7 +37,7 @@ export default function ConversationScreen() {
   const { colors } = useTheme();
   const { user } = useAuth();
 
-  const { messages, loading, sending, sendMessage, error } = useChatConversation(
+  const { messages, loading, sending, sendMessage, error, refreshMessages } = useChatConversation(
     userId || "",
     name,
     avatar,
@@ -53,6 +54,14 @@ export default function ConversationScreen() {
       await sendMessage(content);
     } catch (error) {
       console.error("Error al enviar mensaje:", error);
+    }
+  };
+
+  const handleRetry = async () => {
+    try {
+      await refreshMessages();
+    } catch (error) {
+      console.error("Error al reintentar:", error);
     }
   };
 
@@ -97,12 +106,14 @@ export default function ConversationScreen() {
               </View>
             ) : error ? (
               <View style={styles.loadingContainer}>
-                <View style={{ padding: 20, alignItems: "center" }}>
-                  {/* @ts-ignore */}
-                  <Text style={{ color: "red", textAlign: "center", fontFamily: "Inter-Medium" }}>
-                    Error: {error.message || "Error al cargar chats"}
+                <View style={styles.errorContainer}>
+                  <Text style={styles.errorTitle}>
+                    Error: {error.message || "Error al cargar mensajes"}
                   </Text>
-                  <Text style={{ marginTop: 8, color: "#666" }}>Revisa tu conexión a internet</Text>
+                  <Text style={styles.errorSubtitle}>Revisa tu conexión a internet</Text>
+                  <TouchableOpacity style={styles.retryButton} onPress={handleRetry}>
+                    <Text style={styles.retryButtonText}>Reintentar</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             ) : (
@@ -137,5 +148,35 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  errorContainer: {
+    padding: 20,
+    alignItems: "center",
+  },
+  errorTitle: {
+    color: "#ef4444",
+    textAlign: "center",
+    fontFamily: "Inter-SemiBold",
+    fontSize: 16,
+    marginBottom: 8,
+  },
+  errorSubtitle: {
+    color: "#666",
+    textAlign: "center",
+    fontFamily: "Inter-Regular",
+    fontSize: 14,
+    marginBottom: 20,
+  },
+  retryButton: {
+    backgroundColor: "#2563EB",
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  retryButtonText: {
+    color: "#fff",
+    fontFamily: "Inter-SemiBold",
+    fontSize: 15,
   },
 });

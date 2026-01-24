@@ -35,14 +35,16 @@ export {
 } from "./filters/neighborhoods";
 export { RoommateTab } from "./roommate";
 export { QuestionRow } from "./QuestionRow";
-export { SelectionModal } from "./SelectionModal";
-export { SectionHeader } from "./SectionHeader";
-
 export { ProfileCard } from "./ProfileCard";
 export { ProfileTabs } from "./ProfileTabs";
-export type { TabType } from "./ProfileTabs";
-export { EditProfileHeader } from "./EditProfileHeader";
-export { ExpandableTab } from "./ExpandableTab";
-export { EditProfileHeaderSection } from "./EditProfileHeaderSection";
-export { UnsavedChangesModal } from "./UnsavedChangesModal";
 export { PhotoUploadScreen } from "./photos";
+export type { TabType } from "./ProfileTabs";
+export { ExpandableTab } from "./ExpandableTab";
+export { SectionHeader } from "./SectionHeader";
+export { ProfileFooter } from "./ProfileFooter";
+export { SelectionModal } from "./SelectionModal";
+export { EditProfileHeader } from "./EditProfileHeader";
+export { LogoutConfirmModal } from "./LogoutConfirmModal";
+export { UnsavedChangesModal } from "./UnsavedChangesModal";
+export { ProfileActionButtons } from "./ProfileActionButtons";
+export { EditProfileHeaderSection } from "./EditProfileHeaderSection";
