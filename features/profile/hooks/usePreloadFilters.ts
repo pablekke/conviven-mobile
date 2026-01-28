@@ -15,6 +15,11 @@ export const usePreloadFilters = () => {
       return;
     }
 
+    const hasFilters = user.filters && Object.keys(user.filters).length > 0;
+    if (!hasFilters) {
+      return;
+    }
+
     const preloadPromises: Promise<void>[] = [];
 
     preloadPromises.push(

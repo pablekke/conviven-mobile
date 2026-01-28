@@ -11,7 +11,7 @@ export interface UseFeedUIStateReturn {
   activeLocationIndex: number;
   galleryVisible: boolean;
   mainRef: React.RefObject<ScrollView | null>;
-  scrollToTop: () => void;
+  scrollToTop: (animated?: boolean) => void;
   setLocationOpen: (value: boolean | ((prev: boolean) => boolean)) => void;
   setActiveLocationIndex: (value: number) => void;
   setGalleryVisible: (value: boolean) => void;
@@ -23,12 +23,12 @@ export function useFeedUIState({ primaryCard }: UseFeedUIStateParams): UseFeedUI
   const [galleryVisible, setGalleryVisible] = useState(false);
   const mainRef = useRef<ScrollView | null>(null);
 
-  const scrollToTop = useCallback(() => {
+  const scrollToTop = useCallback((animated = true) => {
     const scrollView = mainRef.current;
     if (!scrollView) return;
     scrollView.scrollTo({
       y: 0,
-      animated: true,
+      animated,
     });
   }, []);
 

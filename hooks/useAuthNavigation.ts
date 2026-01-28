@@ -28,12 +28,28 @@ export function useAuthNavigation() {
       return;
     }
 
-    if (!isAuthenticated && !inAuthGroup) {
-      router.replace("/auth/login");
-    } else if (isAuthenticated && inAuthGroup) {
+    if (!isAuthenticated) {
+      if (!inAuthGroup) {
+        router.replace("/auth/login");
+      }
+      return;
+    }
+
+    // Authenticated user checks
+    const hasFilters = user?.filters && Object.keys(user.filters).length > 0;
+
+    if (!hasFilters) {
+      const isAtStep1 = segments[0] === "onboarding" && segments[1] === "step1";
+      if (!isAtStep1) {
+        router.replace("/onboarding/step1");
+      }
+      return;
+    }
+
+    if (inAuthGroup) {
       router.replace(getTargetRoute());
     }
-  }, [isAuthenticated, segments, isLoading, router, getTargetRoute]);
+  }, [isAuthenticated, segments, isLoading, router, getTargetRoute, user]);
 
   useEffect(() => {
     handleNavigation().catch(error => {

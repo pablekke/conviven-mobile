@@ -211,7 +211,13 @@ function useAuthActions({
         const user = await AuthService.login(credentials);
 
         try {
-          await prefetchFeed();
+          if (user?.filters && Object.keys(user.filters).length > 0) {
+            await prefetchFeed();
+          } else {
+            console.log(
+              "[AuthContext] Skipping feed prefetch: User has no filters (onboarding needed).",
+            );
+          }
         } catch (prefetchError) {
           console.warn("[AuthContext] Error precargando feed tras login:", prefetchError);
         }

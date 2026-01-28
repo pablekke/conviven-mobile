@@ -26,6 +26,12 @@ export const useSearchPreferences = (): UseSearchPreferencesReturn => {
       return;
     }
 
+    const hasFilters = user.filters && Object.keys(user.filters).length > 0;
+    if (!hasFilters) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 

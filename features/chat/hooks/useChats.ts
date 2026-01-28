@@ -24,6 +24,17 @@ export const useChats = (): UseChatsReturn => {
   const lastProcessedStatusId = useRef<string | null>(null);
 
   const loadChats = useCallback(async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    const hasFilters = user.filters && Object.keys(user.filters).length > 0;
+    if (!hasFilters) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);

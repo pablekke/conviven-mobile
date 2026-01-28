@@ -1,10 +1,10 @@
 /* eslint-disable react-native/no-inline-styles */
+import { IncrementalLocationModal } from "../../../components/IncrementalLocationModal";
 import { View, Text, TouchableOpacity } from "react-native";
 import { useTheme } from "../../../context/ThemeContext";
-import { useState } from "react";
-import { Neighborhood } from "../types";
-import { IncrementalLocationModal } from "../../../components/IncrementalLocationModal";
 import { Feather } from "@expo/vector-icons";
+import { Neighborhood } from "../types";
+import { useState } from "react";
 
 interface FormNeighborhoodSearchProps {
   label: string;

@@ -1,4 +1,9 @@
+import { NeighborhoodSkeleton } from "../features/profile/components/filters/neighborhoods/NeighborhoodSkeleton";
 import React, { useState, useEffect, useCallback } from "react";
+import LocationService from "../services/locationService";
+import { useTheme } from "../context/ThemeContext";
+import { Neighborhood } from "../types/user";
+import { Feather } from "@expo/vector-icons";
 import {
   Modal,
   Pressable,
@@ -9,11 +14,6 @@ import {
   View,
   TextInput,
 } from "react-native";
-import { Feather } from "@expo/vector-icons";
-import LocationService from "../services/locationService";
-import { Neighborhood } from "../types/user";
-import { useTheme } from "../context/ThemeContext";
-import { NeighborhoodSkeleton } from "../features/profile/components/filters/neighborhoods/NeighborhoodSkeleton";
 
 interface IncrementalLocationModalProps {
   visible: boolean;
@@ -33,14 +33,21 @@ export const IncrementalLocationModal: React.FC<IncrementalLocationModalProps> =
   const [results, setResults] = useState<Neighborhood[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const [searchTimer, setSearchTimer] = useState<NodeJS.Timeout | number | null>(null);
+
   const search = useCallback(async (text: string) => {
     if (text.length < 3) {
       setResults([]);
+      setLoading(false);
       return;
     }
+
     setLoading(true);
+    // Mínimo tiempo de carga para evitar parpadeo feo del skeleton
+    const minLoadTime = new Promise(resolve => setTimeout(resolve, 300));
+
     try {
-      const data = await LocationService.searchNeighborhoods(text);
+      const [data] = await Promise.all([LocationService.searchNeighborhoods(text), minLoadTime]);
       setResults(data);
     } catch (error) {
       console.error("Error searching location:", error);
@@ -50,6 +57,7 @@ export const IncrementalLocationModal: React.FC<IncrementalLocationModalProps> =
   }, []);
 
   useEffect(() => {
+    // Resetear al abrir
     if (visible) {
       setQuery(initialQuery);
       if (initialQuery.length >= 3) {
@@ -58,11 +66,29 @@ export const IncrementalLocationModal: React.FC<IncrementalLocationModalProps> =
         setResults([]);
       }
     }
-  }, [visible, initialQuery, search]);
+    return () => {
+      if (searchTimer) clearTimeout(searchTimer);
+    };
+  }, [visible]);
 
   const handleTextChange = (text: string) => {
     setQuery(text);
-    search(text);
+
+    if (searchTimer) {
+      clearTimeout(searchTimer);
+    }
+
+    if (text.length < 3) {
+      setResults([]);
+      setLoading(false);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      search(text);
+    }, 500);
+
+    setSearchTimer(timer);
   };
 
   const handleSelect = (item: Neighborhood) => {

@@ -16,6 +16,10 @@ export const usePreloadActions = (
   const loadChats = useCallback(
     async (forceRefresh = false) => {
       if (!user || !isAuthenticated) return;
+
+      const hasFilters = user?.filters && Object.keys(user.filters).length > 0;
+      if (!hasFilters) return;
+
       await loadChatsAction(setState, forceRefresh);
     },
     [user, isAuthenticated, setState],
@@ -31,6 +35,10 @@ export const usePreloadActions = (
 
   const loadSearchFilters = useCallback(async () => {
     if (!user || !isAuthenticated) return;
+
+    const hasFilters = user?.filters && Object.keys(user.filters).length > 0;
+    if (!hasFilters) return;
+
     await loadSearchFiltersAction(setState);
   }, [user, isAuthenticated, setState]);
 
@@ -49,15 +57,25 @@ export const usePreloadActions = (
     try {
       const timeoutPromise = createTimeoutPromise("Preload timeout", 20000);
 
-      await Promise.race([
-        Promise.allSettled([
-          loadChats(),
-          loadProfile(true),
-          loadSearchFilters(),
+      const hasFilters = user?.filters && Object.keys(user.filters).length > 0;
+
+      const preloadPromises: Promise<any>[] = [
+        // Always try to load profile
+        loadProfile(true),
+      ];
+
+      if (hasFilters) {
+        preloadPromises.push(loadChats());
+        preloadPromises.push(loadSearchFilters());
+        preloadPromises.push(
           prefetchFeed().catch(error => {
             console.warn("[DataPreload] Error precargando feed:", error);
           }),
-        ]).then(() => {
+        );
+      }
+
+      await Promise.race([
+        Promise.allSettled(preloadPromises).then(() => {
           return new Promise(resolve => setTimeout(resolve, 100));
         }),
         timeoutPromise,

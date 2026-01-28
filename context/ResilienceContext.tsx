@@ -1,16 +1,15 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import NetInfo from "@react-native-community/netinfo";
-
-import { flushQueuedRequests } from "@/services/apiClient";
 import { loadRemoteConfig, RemoteConfig } from "@/services/remoteConfigService";
 import { persistentRequestQueue } from "@/services/resilience/requestQueue";
+import { networkMonitor } from "@/services/resilience/networkMonitor";
+import { flushQueuedRequests } from "@/services/apiClient";
+import NetInfo from "@react-native-community/netinfo";
 import {
   errorEmitter,
   maintenanceEmitter,
   offlineEmitter,
   queueEmitter,
 } from "@/services/resilience/state";
-import { networkMonitor } from "@/services/resilience/networkMonitor";
 
 interface ResilienceContextValue {
   offline: boolean;
@@ -22,6 +21,7 @@ interface ResilienceContextValue {
   isStartupError: boolean;
   isLoadingStartup: boolean;
   retryStartup: () => Promise<void>;
+  triggerStartupError: () => void;
   refreshRemoteConfig: () => Promise<void>;
   flushQueue: () => Promise<void>;
 }
@@ -49,6 +49,10 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
     }
 
     setIsLoadingStartup(false);
+  };
+
+  const triggerStartupError = () => {
+    setIsStartupError(true);
   };
 
   useEffect(() => {
@@ -187,6 +191,7 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
       isStartupError,
       isLoadingStartup,
       retryStartup,
+      triggerStartupError,
       refreshRemoteConfig: async () => {
         const config = await loadRemoteConfig();
         applyRemoteConfig(config);

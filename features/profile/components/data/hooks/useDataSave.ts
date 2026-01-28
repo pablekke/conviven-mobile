@@ -28,8 +28,8 @@ export const useDataSave = (
       const profilePayload: any = {};
       let locationPatchUser: any = null;
 
-      if (changes.firstName !== undefined) payload.firstName = changes.firstName;
-      if (changes.lastName !== undefined) payload.lastName = changes.lastName;
+      if (changes.firstName !== undefined) payload.firstName = changes.firstName.trim();
+      if (changes.lastName !== undefined) payload.lastName = changes.lastName.trimEnd();
       if (changes.birthDate !== undefined) payload.birthDate = changes.birthDate;
       if (changes.gender !== undefined) payload.gender = changes.gender;
 

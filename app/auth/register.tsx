@@ -27,8 +27,8 @@ export default function RegisterScreen() {
     try {
       setError(null);
       await register(credentials);
-      Alert.alert("Éxito", "¡Cuenta creada exitosamente! Ahora completá tu perfil.", [
-        { text: "Continuar", onPress: () => router.replace("/auth/complete-profile") },
+      Alert.alert("Éxito", "¡Cuenta creada exitosamente! Ahora completá tus preferencias.", [
+        { text: "Continuar", onPress: () => router.replace("/onboarding/step1") },
       ]);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Error al registrarse";

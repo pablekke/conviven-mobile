@@ -77,6 +77,13 @@ export const useSearchPreferencesForm = (): UseSearchPreferencesFormReturn => {
         return;
       }
 
+      const hasFilters = user.filters && Object.keys(user.filters).length > 0;
+      if (!hasFilters) {
+        setLoading(false);
+        setInitialized(true);
+        return;
+      }
+
       try {
         // Primero intentar usar datos del fullProfile cache (ya precargados)
         if (!forceRefresh && fullProfile?.searchPreferences) {

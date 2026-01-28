@@ -72,6 +72,13 @@ export const useRoommatePreferences = (): UseRoommatePreferencesReturn => {
         return;
       }
 
+      const hasFilters = user.filters && Object.keys(user.filters).length > 0;
+      if (!hasFilters) {
+        setLoading(false);
+        setInitialized(true);
+        return;
+      }
+
       try {
         if (!forceRefresh && fullProfile?.searchPreferences) {
           const apiData = mapCachedToApiData(fullProfile.searchPreferences);

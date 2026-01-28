@@ -22,9 +22,21 @@ export const useDataUpdaters = (
 
   const setLastName = useCallback(
     (value: string) => {
-      const filteredText = value.replace(/[0-9]/g, "");
-      setLastNameState(filteredText);
-      updateUser({ lastName: filteredText });
+      let filtered = value.replace(/[^a-zA-ZñáéíóúÑÁÉÍÓÚüÜ ]/gi, "");
+
+      if (filtered.length > 17) {
+        filtered = filtered.substring(0, 17);
+      }
+
+      const spaces = (filtered.match(/ /g) || []).length;
+      if (spaces > 2) {
+        const parts = filtered.split(" ");
+        filtered = parts.slice(0, 3).join(" ");
+      }
+
+      const finalValue = filtered.replace(/\s\s+/g, " ").replace(/^\s/, "");
+      setLastNameState(finalValue);
+      updateUser({ lastName: finalValue });
     },
     [updateUser, setLastNameState],
   );

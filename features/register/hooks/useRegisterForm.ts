@@ -27,8 +27,19 @@ export const useRegisterForm = ({ onSubmit }: UseRegisterFormProps) => {
   }, []);
 
   const sanitizeLastName = useCallback((text: string) => {
-    const limitedChars = text.replace(/[^a-zA-ZñáéíóúÑÁÉÍÓÚüÜ ]/gi, "");
-    return limitedChars.replace(/\s\s+/g, " ").replace(/^\s/, "");
+    let filtered = text.replace(/[^a-zA-ZñáéíóúÑÁÉÍÓÚüÜ ]/gi, "");
+
+    if (filtered.length > 17) {
+      filtered = filtered.substring(0, 17);
+    }
+
+    const spaces = (filtered.match(/ /g) || []).length;
+    if (spaces > 2) {
+      const parts = filtered.split(" ");
+      filtered = parts.slice(0, 3).join(" ");
+    }
+
+    return filtered.replace(/\s\s+/g, " ").replace(/^\s/, "");
   }, []);
 
   const sanitizeGeneral = useCallback((text: string) => {
@@ -44,7 +55,7 @@ export const useRegisterForm = ({ onSubmit }: UseRegisterFormProps) => {
   const handleSubmit = async () => {
     const cleaned = {
       firstName: firstName.trim(),
-      lastName: lastName.trim(),
+      lastName: lastName.trimEnd(),
       email: email.trim().toLowerCase(),
       password,
       confirmPassword,

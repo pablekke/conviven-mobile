@@ -237,18 +237,6 @@ class ChatService {
       });
     } catch (error) {
       console.warn("No se pudieron cargar las conversaciones:", error);
-
-      // Si es un error de sesión, no mostramos toast acá porque ya lo maneja el AuthContext/SessionManager
-      const isSessionError =
-        error instanceof Error && error.message.toLowerCase().includes("sesión vencida");
-
-      if (!isSessionError) {
-        Toast.show({
-          type: "error",
-          text1: "Error al cargar conversaciones",
-          text2: error instanceof Error ? error.message : "Error de conexión",
-        });
-      }
       return [];
     }
   }

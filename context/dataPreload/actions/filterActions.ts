@@ -54,13 +54,24 @@ export const loadSearchFiltersAction = async (
       };
     });
   } catch (error) {
-    console.error("Error precargando filtros de búsqueda:", error);
+    // It's normal for new users to not have filters yet.
+    // We suppress the error log if it looks like a "Not Found" or 404.
+    const errorMessage = error instanceof Error ? error.message : "";
+    const isNotFound =
+      errorMessage.includes("not found") ||
+      errorMessage.includes("no encontrad") ||
+      (error as any)?.status === 404;
+
+    if (!isNotFound) {
+      console.warn("⚠️ [DataPreload] Error precargando filtros (no crítico):", error);
+    }
+
     setState(prev => ({
       ...prev,
       searchFilters: null,
       searchFiltersLoading: false,
-      searchFiltersError: error instanceof Error ? error : new Error("Error desconocido"),
-      searchFiltersLastUpdated: null,
+      searchFiltersError: null, // Don't block UI with error for missing filters
+      searchFiltersLastUpdated: Date.now(), // Mark as updated so we don't retry immediately
     }));
   }
 };

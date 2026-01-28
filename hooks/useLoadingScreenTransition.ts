@@ -1,4 +1,5 @@
 import { useDataPreload } from "../context/DataPreloadContext";
+import { useResilience } from "../context/ResilienceContext";
 import { useCallback, useEffect, useState } from "react";
 import { useFeedPrefetch } from "@/features/feed/hooks";
 import { chatService } from "@/features/chat/services";
@@ -11,9 +12,10 @@ export interface UseLoadingScreenTransitionReturn {
 }
 
 export function useLoadingScreenTransition(): UseLoadingScreenTransitionReturn {
-  const { isAuthenticated, isLoading, user, isManualLogin } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const { refreshChats } = useDataPreload();
   const { prefetchFeed, clearPrefetch } = useFeedPrefetch();
+  const { triggerStartupError } = useResilience();
 
   const [showTransition, setShowTransition] = useState(true);
   const [feedLoaded, setFeedLoaded] = useState(false);
@@ -22,20 +24,31 @@ export function useLoadingScreenTransition(): UseLoadingScreenTransitionReturn {
   const [chatsAndMatchesPrefetched, setChatsAndMatchesPrefetched] = useState(false);
 
   useEffect(() => {
-    if (isAuthenticated && user && !feedLoaded && !isLoading) {
+    // Check if user has filters before prefetching. If not, they are in onboarding and don't need feed yet.
+    const hasFilters = user?.filters && Object.keys(user.filters).length > 0;
+
+    if (isAuthenticated && user && hasFilters && !feedLoaded && !isLoading) {
       prefetchFeed()
         .then(() => {
           setFeedLoaded(true);
         })
         .catch(error => {
           console.warn("[useLoadingScreenTransition] Error precargando feed:", error);
-          setFeedLoaded(true);
+          // Only trigger startup error if we really expected this to work
+          if (hasFilters) {
+            triggerStartupError();
+          }
         });
+    } else if (isAuthenticated && user && !hasFilters) {
+      // If no filters, we consider feed "loaded" (skipped) so we can transition to onboarding
+      setFeedLoaded(true);
     }
-  }, [isAuthenticated, user, feedLoaded, isLoading, prefetchFeed]);
+  }, [isAuthenticated, user, feedLoaded, isLoading, prefetchFeed, triggerStartupError]);
 
   useEffect(() => {
-    if (feedLoaded && !chatsAndMatchesPrefetched && isAuthenticated && user) {
+    const hasFilters = user?.filters && Object.keys(user.filters).length > 0;
+
+    if (feedLoaded && !chatsAndMatchesPrefetched && isAuthenticated && user && hasFilters) {
       Promise.allSettled([
         refreshChats().catch(error => {
           console.warn("[useLoadingScreenTransition] Error precargando chats:", error);
@@ -46,6 +59,8 @@ export function useLoadingScreenTransition(): UseLoadingScreenTransitionReturn {
       ]).then(() => {
         setChatsAndMatchesPrefetched(true);
       });
+    } else if (feedLoaded && !chatsAndMatchesPrefetched && isAuthenticated && user && !hasFilters) {
+      setChatsAndMatchesPrefetched(true);
     }
   }, [feedLoaded, chatsAndMatchesPrefetched, isAuthenticated, user, refreshChats]);
 
@@ -84,9 +99,7 @@ export function useLoadingScreenTransition(): UseLoadingScreenTransitionReturn {
   }, []);
 
   const showLoading =
-    !isManualLogin &&
-    loadingScreenVisible &&
-    (isLoading || (isAuthenticated && (!feedLoaded || showTransition)));
+    loadingScreenVisible && (isLoading || (isAuthenticated && (!feedLoaded || showTransition)));
 
   return {
     showLoading,

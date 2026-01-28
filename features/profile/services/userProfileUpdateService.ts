@@ -13,15 +13,21 @@ class UserProfileUpdateService {
 
     if (formData.smokingStatus) {
       apiData.smokesCigarettes = formData.smokingStatus.toUpperCase();
+    } else if (formData.smokesCigarettes) {
+      apiData.smokesCigarettes = formData.smokesCigarettes;
     }
 
     if (formData.marijuanaStatus) {
       apiData.smokesWeed =
         formData.marijuanaStatus === "social" ? "SOCIALLY" : formData.marijuanaStatus.toUpperCase();
+    } else if (formData.smokesWeed) {
+      apiData.smokesWeed = formData.smokesWeed;
     }
 
     if (formData.alcoholStatus) {
       apiData.alcohol = formData.alcoholStatus.toUpperCase();
+    } else if (formData.alcohol) {
+      apiData.alcohol = formData.alcohol;
     }
 
     if (formData.hasPets) {
@@ -30,18 +36,26 @@ class UserProfileUpdateService {
       } else {
         apiData.petsOwned = [formData.hasPets.toUpperCase()];
       }
+    } else if (formData.petsOwned) {
+      apiData.petsOwned = formData.petsOwned;
     }
 
     if (formData.acceptsPets) {
       apiData.petsOk = formData.acceptsPets.toUpperCase();
+    } else if (formData.petsOk) {
+      apiData.petsOk = formData.petsOk;
     }
 
     if (formData.tidinessLevel) {
       apiData.tidiness = formData.tidinessLevel.toUpperCase();
+    } else if (formData.tidiness) {
+      apiData.tidiness = formData.tidiness;
     }
 
     if (formData.socialLife) {
       apiData.guestsFreq = formData.socialLife.toUpperCase();
+    } else if (formData.guestsFreq) {
+      apiData.guestsFreq = formData.guestsFreq;
     }
 
     if (formData.sleepTime) {
@@ -54,6 +68,8 @@ class UserProfileUpdateService {
       } else {
         apiData.schedule = formData.sleepTime.toUpperCase() as Schedule;
       }
+    } else if (formData.schedule) {
+      apiData.schedule = formData.schedule;
     }
 
     // Campos adicionales que vienen del perfil completo (si existen en formData)

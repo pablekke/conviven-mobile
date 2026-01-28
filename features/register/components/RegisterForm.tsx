@@ -75,7 +75,7 @@ export default function RegisterForm({ onSubmit, onInputFocus }: RegisterFormPro
       />
 
       <FormNeighborhoodSearch
-        label="Barrio"
+        label="Barrio donde vives"
         onSelect={actions.handleNeighborhoodSelect}
         error={errors.neighborhood}
         selectedNeighborhoodName={state.neighborhoodName}

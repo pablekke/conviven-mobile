@@ -37,13 +37,23 @@ export const loadProfileAction = async (
       searchFiltersLastUpdated: fullProfile.filters ? Date.now() : prev.searchFiltersLastUpdated,
     }));
   } catch (error) {
-    console.error("Error precargando perfil:", error);
+    const errorMessage = error instanceof Error ? error.message : "";
+    const isNotFound =
+      errorMessage.includes("not found") ||
+      errorMessage.includes("no encontrad") ||
+      (error as any)?.status === 404;
+
+    if (!isNotFound) {
+      console.warn("⚠️ [DataPreload] Error precargando perfil (no crítico):", error);
+    }
+
+    // Si falla el perfil, puede ser usuario nuevo. No bloqueamos.
     setState(prev => ({
       ...prev,
       fullProfile: null,
       profileLoading: false,
-      profileError: error instanceof Error ? error : new Error("Error desconocido"),
-      profileLastUpdated: null,
+      profileError: null, // Don't block UI
+      profileLastUpdated: Date.now(), // Mark as updated to prevent immediate retry loop
     }));
   }
 };

@@ -2,7 +2,6 @@ import { AppState, AppStateStatus } from "react-native";
 import { API_ROOT } from "@/config/env";
 
 const CHECK_INTERVAL = 15000;
-const PING_TIMEOUT = 8000;
 
 export type NetworkStatusListener = (isOnline: boolean) => void;
 
@@ -82,19 +81,11 @@ class NetworkMonitor {
   }
 
   private async ping(): Promise<boolean> {
-    if (
-      typeof navigator !== "undefined" &&
-      typeof navigator.onLine === "boolean" &&
-      !navigator.onLine
-    ) {
-      return false;
-    }
-
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), PING_TIMEOUT);
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // Increased timeout
 
     try {
-      const response = await fetch(`${API_ROOT}/health`, {
+      await fetch(`${API_ROOT}/health`, {
         method: "GET",
         signal: controller.signal,
         headers: {
@@ -103,12 +94,13 @@ class NetworkMonitor {
       });
       clearTimeout(timeoutId);
 
-      if (!response.ok) return false;
-
-      const data = await response.json();
-      return data.status === "OK";
+      // If we get any response from the server, we are connected.
+      // Even 500s mean we reached the server.
+      // Only network errors throw.
+      return true;
     } catch (error) {
       clearTimeout(timeoutId);
+      console.warn("network-monitor:ping:failed", error);
       return false;
     }
   }

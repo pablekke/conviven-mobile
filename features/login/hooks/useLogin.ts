@@ -19,8 +19,6 @@ export function useLogin() {
         await login(credentials);
         return { success: true };
       } catch (err) {
-        console.error("[useLogin] Error:", err);
-
         let message: string;
 
         // Detectar errores HTTP con códigos de estado específicos

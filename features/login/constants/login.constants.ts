@@ -1,6 +1,10 @@
+// export const LOGIN_FORM_DEFAULTS = {
+//   email: "firulete@ejemplo.com",
+//   password: "contraseña123",
+// } as const;
 export const LOGIN_FORM_DEFAULTS = {
-  email: "firulete@ejemplo.com",
-  password: "contraseña123",
+  email: "adolfito.hitlersin@gmail.com",
+  password: "Contraseña123",
 } as const;
 
 export const LOGIN_ERROR_MESSAGES = {

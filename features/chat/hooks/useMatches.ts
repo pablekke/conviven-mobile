@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useChat } from "../context/ChatContext";
+import { useAuth } from "@/context/AuthContext";
 import { Match } from "../types/chat.types";
 import { chatService } from "../services";
 import { Image } from "react-native";
@@ -12,12 +13,24 @@ export interface UseMatchesReturn {
 }
 
 export const useMatches = (): UseMatchesReturn => {
+  const { user } = useAuth();
   const { lastMatchNotification, matchesRefreshTrigger } = useChat();
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   const loadMatches = useCallback(async (silent = false) => {
+    if (!user?.id) {
+      if (!silent) setLoading(false);
+      return;
+    }
+
+    const hasFilters = user.filters && Object.keys(user.filters).length > 0;
+    if (!hasFilters) {
+      if (!silent) setLoading(false);
+      return;
+    }
+
     try {
       if (!silent) setLoading(true);
       setError(null);

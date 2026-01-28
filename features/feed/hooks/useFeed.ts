@@ -1,3 +1,4 @@
+import { useAuth } from "@/context/AuthContext";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { FeedState, MatchAction } from "../types/feed.types";
 import { feedService, swipeService } from "../services";
@@ -19,6 +20,7 @@ export interface UseFeedReturn {
 }
 
 export function useFeed(): UseFeedReturn {
+  const { user } = useAuth();
   const [state, setState] = useState<FeedState>({
     currentIndex: 0,
     roomies: [],
@@ -37,6 +39,17 @@ export function useFeed(): UseFeedReturn {
   );
 
   const loadRoomies = useCallback(async (page = 1, reset = false) => {
+    if (!user) {
+      setState(prev => ({ ...prev, isLoading: false }));
+      return;
+    }
+
+    const hasFilters = user.filters && Object.keys(user.filters).length > 0;
+    if (!hasFilters) {
+      setState(prev => ({ ...prev, isLoading: false }));
+      return;
+    }
+
     try {
       setState(prev => ({ ...prev, isLoading: true, error: undefined }));
 

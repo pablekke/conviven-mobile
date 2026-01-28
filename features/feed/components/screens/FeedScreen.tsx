@@ -66,6 +66,7 @@ function FeedScreen() {
     activeLocationIndex,
     galleryVisible,
     mainRef,
+    scrollToTop,
     setLocationOpen,
     setActiveLocationIndex,
     setGalleryVisible,
@@ -103,8 +104,11 @@ function FeedScreen() {
   useFocusEffect(
     useCallback(() => {
       RNStatusBar.setBarStyle(isDark ? "light-content" : "dark-content", true);
-      return () => {};
-    }, [isDark]),
+      const timer = setTimeout(() => {
+        scrollToTop(false);
+      }, 10);
+      return () => clearTimeout(timer);
+    }, [isDark, scrollToTop]),
   );
 
   const content =
